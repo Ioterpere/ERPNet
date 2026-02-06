@@ -1,0 +1,42 @@
+ERPNet.sln
+│
+├── 1. Core
+│   ├── ERPNet.Domain          (Entities, Enums, Interfaces base)
+│   └── ERPNet.Application     (DTOs, Mappings, Interfaces de Repositorios, Lógica de Negocio)
+│
+├── 2. Infrastructure
+│   └── ERPNet.Database     (EF Core: DbContext, Migrations, Repositorios, Configs)
+│
+├── 3. Presentation
+│   ├── ERPNet.Api             (Controllers, Middlewares, Auth)
+│   ├── ERPNet.Web.Mobile      (Razor Pages)
+│   └── ERPNet.Web.Blazor      (Blazor Server)
+│
+├── 4. Shared
+│   └── ERPNet.Common          (Result Pattern, Helpers, ApiClient , Constants, DTOs)   
+│
+└── 5. Tests
+    └── ERPNet.Tests
+
+Idea de las tablas y lógica
+
+Usuarios: Credenciales de acceso, contraseña hasheada, ultacceso 
+Roles: Define el nivel de permiso (Admin, Operario, Jefe de Planta, Responsable de Mantenimiento, Responsable RRHH).
+Menus: columna Plataforma (Mobile/Web), otra con el nombre del menu, otra con el id del menu padre, otra con el campo path, otra con el del icono class, otra con un custom class y otra order
+PermisosRolMenu: Tabla intermedia para decir qué Rol puede ver qué Menú y si tiene algun permiso especial en esa opción (como borrar)
+RolesUsuarios
+Logs
+/c
+Empleados:Datos personales, pertenecen siempre a una seccion, pueden tener un encargado especifico
+Secciones: para que un jefe de sección solo apruebe vacaciones de su gente y no de toda la fábrica.  
+Vacaciones: Con un campo Estado (Pendiente, Aprobado, Rechazado) asciado a un empleado en una fecha.
+Turnos:puede haber turnos de cualquier día a cualquier hora
+Marcajes: Registros de entrada/salida.
+IncidenciasMarcaje(Si un día llego tarde a su turno pasado una tolerancia se genera autmaticamente, pendiente validar por RRHH y poner observaciones)
+
+
+Maquinaria
+OrdenesMantenimiento
+Tipos_Mantenimiento: Una tabla maestra simple para definir "Correctivo", "Preventivo"
+
+

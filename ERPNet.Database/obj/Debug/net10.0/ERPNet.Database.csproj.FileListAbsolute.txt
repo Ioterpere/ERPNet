@@ -1,0 +1,17 @@
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Database\bin\Debug\net10.0\ERPNet.Database.deps.json
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Database\bin\Debug\net10.0\ERPNet.Database.runtimeconfig.json
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Database\bin\Debug\net10.0\ERPNet.Database.dll
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Database\bin\Debug\net10.0\ERPNet.Database.pdb
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Database\bin\Debug\net10.0\ERPNet.Domain.dll
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Database\bin\Debug\net10.0\ERPNet.Domain.pdb
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Database\obj\Debug\net10.0\ERPNet.Database.csproj.AssemblyReference.cache
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Database\obj\Debug\net10.0\ERPNet.Database.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Database\obj\Debug\net10.0\ERPNet.Database.AssemblyInfoInputs.cache
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Database\obj\Debug\net10.0\ERPNet.Database.AssemblyInfo.cs
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Database\obj\Debug\net10.0\ERPNet.Database.csproj.CoreCompileInputs.cache
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Database\obj\Debug\net10.0\ERPNet.D.5E190E58.Up2Date
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Database\obj\Debug\net10.0\ERPNet.Database.dll
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Database\obj\Debug\net10.0\refint\ERPNet.Database.dll
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Database\obj\Debug\net10.0\ERPNet.Database.pdb
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Database\obj\Debug\net10.0\ERPNet.Database.genruntimeconfig.cache
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Database\obj\Debug\net10.0\ref\ERPNet.Database.dll

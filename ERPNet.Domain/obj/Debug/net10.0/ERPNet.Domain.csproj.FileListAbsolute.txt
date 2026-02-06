@@ -1,0 +1,11 @@
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Domain\bin\Debug\net10.0\ERPNet.Domain.deps.json
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Domain\bin\Debug\net10.0\ERPNet.Domain.dll
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Domain\bin\Debug\net10.0\ERPNet.Domain.pdb
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Domain\obj\Debug\net10.0\ERPNet.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Domain\obj\Debug\net10.0\ERPNet.Domain.AssemblyInfoInputs.cache
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Domain\obj\Debug\net10.0\ERPNet.Domain.AssemblyInfo.cs
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Domain\obj\Debug\net10.0\ERPNet.Domain.csproj.CoreCompileInputs.cache
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Domain\obj\Debug\net10.0\ERPNet.Domain.dll
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Domain\obj\Debug\net10.0\refint\ERPNet.Domain.dll
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Domain\obj\Debug\net10.0\ERPNet.Domain.pdb
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Domain\obj\Debug\net10.0\ref\ERPNet.Domain.dll

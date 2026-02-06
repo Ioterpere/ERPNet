@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="ERPNet.Api/ERPNet.Api.csproj" />
+  <Project Path="ERPNet.Application/ERPNet.Application.csproj" />
+  <Project Path="ERPNet.Common/ERPNet.Common.csproj" />
+  <Project Path="ERPNet.Database/ERPNet.Database.csproj" />
+  <Project Path="ERPNet.Domain/ERPNet.Domain.csproj" />
+</Solution>

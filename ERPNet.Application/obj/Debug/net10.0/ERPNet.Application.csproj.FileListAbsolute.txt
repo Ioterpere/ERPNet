@@ -1,0 +1,15 @@
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Application\bin\Debug\net10.0\ERPNet.Application.deps.json
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Application\bin\Debug\net10.0\ERPNet.Application.dll
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Application\bin\Debug\net10.0\ERPNet.Application.pdb
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Application\bin\Debug\net10.0\ERPNet.Domain.dll
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Application\bin\Debug\net10.0\ERPNet.Domain.pdb
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Application\obj\Debug\net10.0\ERPNet.Application.csproj.AssemblyReference.cache
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Application\obj\Debug\net10.0\ERPNet.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Application\obj\Debug\net10.0\ERPNet.Application.AssemblyInfoInputs.cache
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Application\obj\Debug\net10.0\ERPNet.Application.AssemblyInfo.cs
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Application\obj\Debug\net10.0\ERPNet.Application.csproj.CoreCompileInputs.cache
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Application\obj\Debug\net10.0\ERPNet.A.EC78F3FB.Up2Date
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Application\obj\Debug\net10.0\ERPNet.Application.dll
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Application\obj\Debug\net10.0\refint\ERPNet.Application.dll
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Application\obj\Debug\net10.0\ERPNet.Application.pdb
+C:\Users\iagoo\repos\dotnet\ERPNet\ERPNet.Application\obj\Debug\net10.0\ref\ERPNet.Application.dll
