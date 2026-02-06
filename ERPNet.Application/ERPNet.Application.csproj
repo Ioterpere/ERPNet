@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ERPNet.Domain\ERPNet.Domain.csproj" />
+    <ProjectReference Include="..\ERPNet.Common\ERPNet.Common.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
