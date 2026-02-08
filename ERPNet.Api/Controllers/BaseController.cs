@@ -1,3 +1,4 @@
+using ERPNet.Application.Auth;
 using ERPNet.Common;
 using ERPNet.Common.Enums;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +9,10 @@ namespace ERPNet.Api.Controllers;
 [Route("api/[controller]")]
 public abstract class BaseController : ControllerBase
 {
+    protected UsuarioContext UsuarioActual =>
+        HttpContext.Items["UsuarioContext"] as UsuarioContext
+        ?? throw new InvalidOperationException("UsuarioContext no disponible. Verifique que el middleware está configurado.");
+
     protected IActionResult FromResult(Result result)
     {
         if (result.IsSuccess)

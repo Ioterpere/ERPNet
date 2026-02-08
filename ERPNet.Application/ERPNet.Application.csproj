@@ -5,6 +5,12 @@
     <ProjectReference Include="..\ERPNet.Common\ERPNet.Common.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.0-preview.2.25163.2" />
+    <PackageReference Include="Scrutor" Version="7.0.0" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

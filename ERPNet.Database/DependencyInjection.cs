@@ -1,0 +1,22 @@
+using ERPNet.Database.Context;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace ERPNet.Database;
+
+public static class DependencyInjection
+{
+    public static IServiceCollection AddDatabase(this IServiceCollection services, string connectionString)
+    {
+        services.AddDbContext<ERPNetDbContext>(options =>
+            options.UseSqlServer(connectionString));
+
+        services.Scan(scan => scan
+            .FromAssemblyOf<ERPNetDbContext>()
+            .AddClasses(c => c.Where(t => t.Name.EndsWith("Repository")))
+            .AsImplementedInterfaces()
+            .WithScopedLifetime());
+
+        return services;
+    }
+}

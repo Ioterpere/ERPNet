@@ -14,4 +14,6 @@ public class Usuario : BaseEntity
 
     public ICollection<RolUsuario> RolesUsuarios { get; set; } = [];
     public ICollection<Log> Logs { get; set; } = [];
+    public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
+    public ICollection<LogIntentoLogin> IntentosLogin { get; set; } = [];
 }

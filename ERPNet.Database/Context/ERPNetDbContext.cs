@@ -6,15 +6,15 @@ namespace ERPNet.Database.Context;
 
 public class ERPNetDbContext(DbContextOptions<ERPNetDbContext> options) : DbContext(options)
 {
-    // Seguridad
     public DbSet<Usuario> Usuarios => Set<Usuario>();
     public DbSet<Rol> Roles => Set<Rol>();
     public DbSet<RolUsuario> RolesUsuarios => Set<RolUsuario>();
     public DbSet<Menu> Menus => Set<Menu>();
     public DbSet<PermisoRolMenu> PermisosRolMenu => Set<PermisoRolMenu>();
     public DbSet<Log> Logs => Set<Log>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<LogIntentoLogin> IntentosLogin => Set<LogIntentoLogin>();
 
-    // RRHH
     public DbSet<Seccion> Secciones => Set<Seccion>();
     public DbSet<Empleado> Empleados => Set<Empleado>();
     public DbSet<Turno> Turnos => Set<Turno>();
@@ -23,7 +23,6 @@ public class ERPNetDbContext(DbContextOptions<ERPNetDbContext> options) : DbCont
     public DbSet<Marcaje> Marcajes => Set<Marcaje>();
     public DbSet<IncidenciaMarcaje> IncidenciasMarcaje => Set<IncidenciaMarcaje>();
 
-    // Mantenimiento
     public DbSet<Maquinaria> Maquinarias => Set<Maquinaria>();
     public DbSet<TipoMantenimiento> TiposMantenimiento => Set<TipoMantenimiento>();
     public DbSet<OrdenMantenimiento> OrdenesMantenimiento => Set<OrdenMantenimiento>();

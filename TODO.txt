@@ -18,6 +18,7 @@ ERPNet.sln
 └── 5. Tests
     └── ERPNet.Tests
 
+
 Idea de las tablas y lógica
 
 Usuarios: Credenciales de acceso, contraseña hasheada, ultacceso 
@@ -26,17 +27,14 @@ Menus: columna Plataforma (Mobile/Web), otra con el nombre del menu, otra con el
 PermisosRolMenu: Tabla intermedia para decir qué Rol puede ver qué Menú y si tiene algun permiso especial en esa opción (como borrar)
 RolesUsuarios
 Logs
-/c
 Empleados:Datos personales, pertenecen siempre a una seccion, pueden tener un encargado especifico
 Secciones: para que un jefe de sección solo apruebe vacaciones de su gente y no de toda la fábrica.  
 Vacaciones: Con un campo Estado (Pendiente, Aprobado, Rechazado) asciado a un empleado en una fecha.
 Turnos:puede haber turnos de cualquier día a cualquier hora
 Marcajes: Registros de entrada/salida.
 IncidenciasMarcaje(Si un día llego tarde a su turno pasado una tolerancia se genera autmaticamente, pendiente validar por RRHH y poner observaciones)
-
-
 Maquinaria
 OrdenesMantenimiento
-Tipos_Mantenimiento: Una tabla maestra simple para definir "Correctivo", "Preventivo"
+TiposMantenimiento: Una tabla maestra simple para definir "Correctivo", "Preventivo"
 
 

@@ -4,4 +4,5 @@
   <Project Path="ERPNet.Common/ERPNet.Common.csproj" />
   <Project Path="ERPNet.Database/ERPNet.Database.csproj" />
   <Project Path="ERPNet.Domain/ERPNet.Domain.csproj" />
+  <Project Path="ERPNet.Testing/ERPNet.Testing.csproj" />
 </Solution>
