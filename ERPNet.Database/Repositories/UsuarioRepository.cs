@@ -18,6 +18,17 @@ public class UsuarioRepository(ERPNetDbContext context) : IUsuarioRepository
             .FirstOrDefaultAsync(u => u.Id == id);
     }
 
+    public async Task<Usuario?> GetByIdConPermisosAsync(int id)
+    {
+        return await context.Usuarios
+            .Include(u => u.Empleado)
+            .Include(u => u.RolesUsuarios)
+                .ThenInclude(ru => ru.Rol)
+                    .ThenInclude(r => r.PermisosRolRecurso)
+                        .ThenInclude(p => p.Recurso)
+            .FirstOrDefaultAsync(u => u.Id == id);
+    }
+
     public async Task<Usuario?> GetByEmailAsync(string email)
     {
         return await context.Usuarios
