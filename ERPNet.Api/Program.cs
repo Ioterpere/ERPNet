@@ -20,7 +20,7 @@ builder.Services.AddDatabase(builder.Configuration.GetConnectionString("DefaultC
 builder.Services.AddApplication();
 
 builder.Services.AddMemoryCache();
-builder.Services.AddSingleton<ICacheService, MemoryCacheService>();
+builder.Services.AddSingleton<ICacheService, MemoryCacheService>().AddOptions<CacheSettings>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 
 #endregion
@@ -29,6 +29,7 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.Configure<LoginSettings>(builder.Configuration.GetSection("LoginSettings"));
+builder.Services.Configure<CacheSettings>(builder.Configuration.GetSection("CacheSettings"));
 
 #endregion
 

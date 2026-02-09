@@ -1,10 +1,14 @@
+using ERPNet.Application.Auth;
 using ERPNet.Application.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 
 namespace ERPNet.Api.Services;
 
-public class MemoryCacheService(IMemoryCache cache) : ICacheService
+public class MemoryCacheService(IMemoryCache cache, IOptions<CacheSettings> cacheSettings) : ICacheService
 {
+    private readonly CacheSettings _cacheSettings = cacheSettings.Value;
+
     public T? Get<T>(string key)
     {
         cache.TryGetValue(key, out T? value);
@@ -15,7 +19,7 @@ public class MemoryCacheService(IMemoryCache cache) : ICacheService
     {
         var options = new MemoryCacheEntryOptions
         {
-            AbsoluteExpirationRelativeToNow = expiration ?? TimeSpan.FromMinutes(30)
+            AbsoluteExpirationRelativeToNow = expiration ?? TimeSpan.FromMinutes(_cacheSettings.DefaultExpirationMinutes)
         };
 
         cache.Set(key, value, options);
