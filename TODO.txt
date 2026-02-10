@@ -1,21 +1,17 @@
 ERPNet.sln
 │
 ├── 1. Core
-│   ├── ERPNet.Domain          (Entities, Enums, Interfaces base)
-│   └── ERPNet.Application     (DTOs, Mappings, Interfaces de Repositorios, Lógica de Negocio)
+│   ├── ERPNet.Domain           (Entities, Enums, Interfaces de repos, Lógica de Negocio)
+│   └── ERPNet.Application      (DTOs, Mappings, Interfaces base)
 │
 ├── 2. Infrastructure
-│   └── ERPNet.Database     (EF Core: DbContext, Migrations, Repositorios, Configs)
+│   └── ERPNet.Database         (EF Core: DbContext, Migrations, Repositorios, Configs) y otras partes de infraestructura
 │
 ├── 3. Presentation
-│   ├── ERPNet.Api             (Controllers, Middlewares, Auth)
-│   ├── ERPNet.Web.Mobile      (Razor Pages)
-│   └── ERPNet.Web.Blazor      (Blazor Server)
+│   ├── ERPNet.Api              (Controllers, Middlewares, Servicios e implementaciones, Settings)
+│   └── ERPNet.Web              (Razor Pages)
 │
-├── 4. Shared
-│   └── ERPNet.Common          (Result Pattern, Helpers, ApiClient , Constants, DTOs)   
-│
-└── 5. Tests
+└── 4. Tests
     └── ERPNet.Tests
 
 
