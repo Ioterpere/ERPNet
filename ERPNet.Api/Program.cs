@@ -10,6 +10,7 @@ using ERPNet.Database;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -87,17 +88,36 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddControllers();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        document.Components ??= new();
+        document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
+        
+        document.Components.SecuritySchemes["Bearer"] = new OpenApiSecurityScheme
+        {
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            Description = "Ingresa tu token JWT"
+        };
+
+        return Task.CompletedTask;
+    });
+});
 
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi().AllowAnonymous();
+    
     app.MapScalarApiReference(options =>
     {
-        options.AddPreferredSecuritySchemes("Bearer")
-               .AddHttpAuthentication("Bearer", _ => { });
+        options
+            .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
+            .AddPreferredSecuritySchemes("Bearer"); // O este si el anterior no funciona
     }).AllowAnonymous();
 }
 
