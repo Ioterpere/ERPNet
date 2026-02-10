@@ -2,6 +2,7 @@ using ERPNet.Infrastructure.Database.Context;
 using ERPNet.Domain.Enums;
 using ERPNet.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -9,8 +10,11 @@ namespace ERPNet.Testing.Seeders;
 
 public class DbSeeder(ITestOutputHelper output)
 {
-    private const string ConnectionString =
-        "Server=localhost\\SQLEXPRESS;Database=ERPNet;Trusted_Connection=true;TrustServerCertificate=true";
+    private static readonly string ConnectionString = new ConfigurationBuilder()
+        .SetBasePath(Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "ERPNet.Api")))
+        .AddJsonFile("appsettings.json")
+        .Build()
+        .GetConnectionString("DefaultConnection")!;
 
     [Fact(DisplayName = "Seed: Migrar BD y crear datos iniciales")]
     public async Task SeedDatabase()
