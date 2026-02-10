@@ -42,7 +42,7 @@ Patrón Consulta() — Filtrado por Alcance en Repositorios
 =========================================================
 Para repos que necesiten filtrar datos según el Alcance del usuario (Global/Seccion/Propio):
 
-1. Inyectar IUsuarioContextAccessor en el repositorio
+1. Inyectar ICurrentUserProvider en el repositorio
 2. Declarar el RecursoCodigo que protege la entidad
 3. Método privado Consulta() que aplica el filtro:
 

@@ -24,7 +24,7 @@ builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<ICacheService, MemoryCacheService>().AddOptions<CacheSettings>();
 builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped<IUsuarioContextAccessor, HttpUsuarioContextAccessor>();
+builder.Services.AddScoped<ICurrentUserProvider, HttpCurrentUserProvider>();
 
 #endregion
 

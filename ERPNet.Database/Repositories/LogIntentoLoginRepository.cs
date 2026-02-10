@@ -24,8 +24,4 @@ public class LogIntentoLoginRepository(ERPNetDbContext context) : ILogIntentoLog
             .CountAsync(l => l.DireccionIp == ip && !l.Exitoso && l.FechaIntento >= desde);
     }
 
-    public async Task SaveChangesAsync()
-    {
-        await context.SaveChangesAsync();
-    }
 }

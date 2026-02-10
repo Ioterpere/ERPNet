@@ -1,4 +1,5 @@
 using ERPNet.Database.Context;
+using ERPNet.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -16,6 +17,8 @@ public static class DependencyInjection
             .AddClasses(c => c.Where(t => t.Name.EndsWith("Repository")))
             .AsImplementedInterfaces()
             .WithScopedLifetime());
+
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;
     }

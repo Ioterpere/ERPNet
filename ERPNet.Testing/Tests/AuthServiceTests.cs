@@ -15,6 +15,8 @@ public class AuthServiceTests
     private readonly IUsuarioRepository _usuarioRepo = Substitute.For<IUsuarioRepository>();
     private readonly IRefreshTokenRepository _refreshTokenRepo = Substitute.For<IRefreshTokenRepository>();
     private readonly ILogIntentoLoginRepository _logIntentoRepo = Substitute.For<ILogIntentoLoginRepository>();
+    private readonly ILogRepository _logRepo = Substitute.For<ILogRepository>();
+    private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ITokenService _tokenService = Substitute.For<ITokenService>();
 
     private readonly AuthService _sut;
@@ -49,6 +51,8 @@ public class AuthServiceTests
             _usuarioRepo,
             _refreshTokenRepo,
             _logIntentoRepo,
+            _logRepo,
+            _unitOfWork,
             _tokenService,
             jwtSettings,
             loginSettings);

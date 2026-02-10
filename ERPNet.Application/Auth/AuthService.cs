@@ -11,6 +11,8 @@ public class AuthService(
     IUsuarioRepository usuarioRepository,
     IRefreshTokenRepository refreshTokenRepository,
     ILogIntentoLoginRepository logIntentoLoginRepository,
+    ILogRepository logRepository,
+    IUnitOfWork unitOfWork,
     ITokenService tokenService,
     IOptions<JwtSettings> jwtSettings,
     IOptions<LoginSettings> loginSettings) : IAuthService
@@ -52,6 +54,16 @@ public class AuthService(
                 await RegistrarIntentoAsync(request.Email, ip, true, usuario.Id);
                 await usuarioRepository.UpdateUltimoAccesoAsync(usuario.Id, DateTime.UtcNow);
 
+                logRepository.Add(new Log
+                {
+                    Accion = "Login",
+                    Entidad = "Usuario",
+                    EntidadId = usuario.Id.ToString(),
+                    Fecha = DateTime.UtcNow,
+                    UsuarioId = usuario.Id,
+                    Detalle = $"IP: {ip}"
+                });
+
                 var response = GenerarTokens(usuario);
                 await GuardarRefreshTokenAsync(response.RefreshToken, usuario.Id);
 
@@ -86,7 +98,7 @@ public class AuthService(
         if (refreshToken.IsRevocado)
         {
             await refreshTokenRepository.RevokeAllByUsuarioIdAsync(refreshToken.UsuarioId);
-            await refreshTokenRepository.SaveChangesAsync();
+            await unitOfWork.SaveChangesAsync();
             return Result<AuthResponse>.Failure(
                 "Token reutilizado. Todos los tokens han sido revocados por seguridad.",
                 ErrorType.Unauthorized);
@@ -117,8 +129,17 @@ public class AuthService(
 
         if (refreshToken is { IsActivo: true })
         {
+            logRepository.Add(new Log
+            {
+                Accion = "Logout",
+                Entidad = "Usuario",
+                EntidadId = refreshToken.UsuarioId.ToString(),
+                Fecha = DateTime.UtcNow,
+                UsuarioId = refreshToken.UsuarioId
+            });
+
             refreshToken.FechaRevocacion = DateTime.UtcNow;
-            await refreshTokenRepository.SaveChangesAsync();
+            await unitOfWork.SaveChangesAsync();
         }
 
         // Idempotente: no falla si el token no existe o ya esta revocado
@@ -150,7 +171,7 @@ public class AuthService(
         };
 
         await refreshTokenRepository.AddAsync(entity);
-        await refreshTokenRepository.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync();
     }
 
     private async Task RegistrarIntentoAsync(string email, string ip, bool exitoso, int? usuarioId)
@@ -165,6 +186,6 @@ public class AuthService(
         };
 
         await logIntentoLoginRepository.AddAsync(log);
-        await logIntentoLoginRepository.SaveChangesAsync();
+        await unitOfWork.SaveChangesAsync();
     }
 }

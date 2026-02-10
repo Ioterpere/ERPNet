@@ -10,7 +10,9 @@ using Microsoft.AspNetCore.Mvc;
 namespace ERPNet.Api.Controllers;
 
 [Recurso(RecursoCodigo.Aplicacion)]
-public class MenusController(IMenuRepository menuRepository) : BaseController
+public class MenusController(
+    IMenuRepository menuRepository,
+    IUnitOfWork unitOfWork) : BaseController
 {
     [HttpGet]
     [SinPermiso]
@@ -37,9 +39,9 @@ public class MenusController(IMenuRepository menuRepository) : BaseController
     public async Task<IActionResult> Create([FromBody] CreateMenuRequest request)
     {
         var menu = request.ToEntity();
-        menu.CreatedBy = UsuarioActual.Id;
 
         await menuRepository.CreateAsync(menu);
+        await unitOfWork.SaveChangesAsync();
 
         return CreatedFromResult(
             Result<MenuResponse>.Success(menu.ToResponse()),

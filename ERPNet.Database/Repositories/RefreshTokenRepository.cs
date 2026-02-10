@@ -27,8 +27,4 @@ public class RefreshTokenRepository(ERPNetDbContext context) : IRefreshTokenRepo
             .ExecuteUpdateAsync(s => s.SetProperty(rt => rt.FechaRevocacion, DateTime.UtcNow));
     }
 
-    public async Task SaveChangesAsync()
-    {
-        await context.SaveChangesAsync();
-    }
 }

@@ -18,7 +18,6 @@ public static class UsuarioMappings
         Email = request.Email,
         PasswordHash = passwordHash,
         EmpleadoId = request.EmpleadoId,
-        Activo = true,
-        CreatedAt = DateTime.UtcNow
+        Activo = true
     };
 }

@@ -13,6 +13,7 @@ namespace ERPNet.Api.Controllers;
 [Recurso(RecursoCodigo.Aplicacion)]
 public class UsuariosController(
     IUsuarioRepository usuarioRepository,
+    IUnitOfWork unitOfWork,
     ICacheService cache) : BaseController
 {
     [HttpGet]
@@ -53,9 +54,9 @@ public class UsuariosController(
             return FromResult(Result.Failure("Ya existe un usuario con ese email.", ErrorType.Conflict));
 
         var usuario = request.ToEntity(BCrypt.Net.BCrypt.HashPassword(request.Password));
-        usuario.CreatedBy = UsuarioActual.Id;
 
         await usuarioRepository.CreateAsync(usuario);
+        await unitOfWork.SaveChangesAsync();
 
         return CreatedFromResult(
             Result<UsuarioResponse>.Success(usuario.ToResponse()),
@@ -85,10 +86,8 @@ public class UsuariosController(
         if (request.Activo.HasValue)
             usuario.Activo = request.Activo.Value;
 
-        usuario.UpdatedAt = DateTime.UtcNow;
-        usuario.UpdatedBy = UsuarioActual.Id;
-
-        await usuarioRepository.UpdateAsync(usuario);
+        usuarioRepository.Update(usuario);
+        await unitOfWork.SaveChangesAsync();
         cache.Remove($"usuario:{id}");
 
         return FromResult(Result.Success());
@@ -102,7 +101,8 @@ public class UsuariosController(
         if (usuario is null)
             return FromResult(Result.Failure("Usuario no encontrado.", ErrorType.NotFound));
 
-        await usuarioRepository.SoftDeleteAsync(id, UsuarioActual.Id);
+        usuario.IsDeleted = true;
+        await unitOfWork.SaveChangesAsync();
         cache.Remove($"usuario:{id}");
 
         return FromResult(Result.Success());

@@ -10,7 +10,6 @@ public interface IUsuarioRepository
     Task<Usuario?> GetByEmailAsync(string email);
     Task<bool> ExisteEmailAsync(string email, int? excluirId = null);
     Task<Usuario> CreateAsync(Usuario usuario);
-    Task UpdateAsync(Usuario usuario);
-    Task SoftDeleteAsync(int id, int deletedBy);
+    void Update(Usuario usuario);
     Task UpdateUltimoAccesoAsync(int usuarioId, DateTime fecha);
 }

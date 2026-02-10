@@ -43,25 +43,13 @@ public class UsuarioRepository(ERPNetDbContext context) : IUsuarioRepository
 
     public async Task<Usuario> CreateAsync(Usuario usuario)
     {
-        context.Usuarios.Add(usuario);
-        await context.SaveChangesAsync();
+        await context.Usuarios.AddAsync(usuario);
         return usuario;
     }
 
-    public async Task UpdateAsync(Usuario usuario)
+    public void Update(Usuario usuario)
     {
         context.Usuarios.Update(usuario);
-        await context.SaveChangesAsync();
-    }
-
-    public async Task SoftDeleteAsync(int id, int deletedBy)
-    {
-        await context.Usuarios
-            .Where(u => u.Id == id)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(u => u.IsDeleted, true)
-                .SetProperty(u => u.DeletedBy, deletedBy)
-                .SetProperty(u => u.DeletedAt, DateTime.UtcNow));
     }
 
     public async Task UpdateUltimoAccesoAsync(int usuarioId, DateTime fecha)

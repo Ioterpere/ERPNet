@@ -24,7 +24,6 @@ public static class MenuMappings
         Orden = request.Orden,
         Plataforma = request.Plataforma,
         MenuPadreId = request.MenuPadreId,
-        RecursoId = request.RecursoId,
-        CreatedAt = DateTime.UtcNow
+        RecursoId = request.RecursoId
     };
 }

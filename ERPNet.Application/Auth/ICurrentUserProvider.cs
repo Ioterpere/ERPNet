@@ -1,6 +1,6 @@
 namespace ERPNet.Application.Auth;
 
-public interface IUsuarioContextAccessor
+public interface ICurrentUserProvider
 {
     UsuarioContext? Current { get; }
 }

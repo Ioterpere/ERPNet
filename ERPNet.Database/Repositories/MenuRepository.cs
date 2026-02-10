@@ -28,8 +28,7 @@ public class MenuRepository(ERPNetDbContext context) : IMenuRepository
 
     public async Task<Menu> CreateAsync(Menu menu)
     {
-        context.Menus.Add(menu);
-        await context.SaveChangesAsync();
+        await context.Menus.AddAsync(menu);
         return menu;
     }
 }
