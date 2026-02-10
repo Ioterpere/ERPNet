@@ -1,7 +1,9 @@
+using ERPNet.Domain.Enums;
+
 namespace ERPNet.Api.Attributes;
 
 [AttributeUsage(AttributeTargets.Class)]
-public class RecursoAttribute(string codigo) : Attribute
+public class RecursoAttribute(RecursoCodigo codigo) : Attribute
 {
-    public string Codigo { get; } = codigo;
+    public RecursoCodigo Codigo { get; } = codigo;
 }

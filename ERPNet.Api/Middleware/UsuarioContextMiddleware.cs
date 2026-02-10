@@ -2,6 +2,7 @@ using System.Security.Claims;
 using ERPNet.Application.Auth;
 using ERPNet.Application.Interfaces;
 using ERPNet.Application.Repositories;
+using ERPNet.Domain.Enums;
 
 namespace ERPNet.Api.Middleware;
 
@@ -27,7 +28,7 @@ public class UsuarioContextMiddleware(RequestDelegate next)
                 {
                     var permisos = usuario.RolesUsuarios
                         .SelectMany(ru => ru.Rol.PermisosRolRecurso)
-                        .GroupBy(p => p.Recurso.Codigo)
+                        .GroupBy(p => (RecursoCodigo)p.RecursoId)
                         .Select(g => new PermisoUsuario(
                             g.Key,
                             g.Any(p => p.CanCreate),

@@ -1,6 +1,6 @@
 using ERPNet.Database.Context;
-using ERPNet.Domain.Entities;
 using ERPNet.Domain.Enums;
+using ERPNet.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 using Xunit.Abstractions;
@@ -21,15 +21,13 @@ public class DbSeeder(ITestOutputHelper output)
 
         using var context = new ERPNetDbContext(options);
 
+        output.WriteLine("Eliminando BD existente...");
+        await context.Database.EnsureDeletedAsync();
+        output.WriteLine("BD eliminada.");
+
         output.WriteLine("Aplicando migraciones...");
         await context.Database.MigrateAsync();
         output.WriteLine("Migraciones aplicadas.");
-
-        if (await context.Usuarios.AnyAsync())
-        {
-            output.WriteLine("Ya existen datos. Seed omitido.");
-            return;
-        }
 
         output.WriteLine("Insertando datos de prueba...");
 
@@ -58,42 +56,23 @@ public class DbSeeder(ITestOutputHelper output)
         context.Empleados.AddRange(empAdmin, empEncargado, empOperario);
         await context.SaveChangesAsync();
 
-        // Recursos
-        var recursoVacaciones = new Recurso
-        {
-            Codigo = "vacaciones", Descripcion = "Gestion de vacaciones",
-            CreatedAt = DateTime.UtcNow,
-        };
-        var recursoEmpleados = new Recurso
-        {
-            Codigo = "empleados", Descripcion = "Gestion de empleados",
-            CreatedAt = DateTime.UtcNow,
-        };
-        var recursoTurnos = new Recurso
-        {
-            Codigo = "turnos", Descripcion = "Gestion de turnos",
-            CreatedAt = DateTime.UtcNow,
-        };
-        context.Recursos.AddRange(recursoVacaciones, recursoEmpleados, recursoTurnos);
-        await context.SaveChangesAsync();
-
-        // Menus (vinculados a recursos)
+        // Menus (vinculados a recursos — los Recursos se crean via HasData en la migracion)
         var menuVacaciones = new Menu
         {
             Nombre = "Vacaciones", Path = "/vacaciones", Orden = 1,
-            Plataforma = Plataforma.Web, RecursoId = recursoVacaciones.Id,
+            Plataforma = Plataforma.Web, RecursoId = (int)RecursoCodigo.Vacaciones,
             CreatedAt = DateTime.UtcNow,
         };
         var menuEmpleados = new Menu
         {
             Nombre = "Empleados", Path = "/empleados", Orden = 2,
-            Plataforma = Plataforma.Web, RecursoId = recursoEmpleados.Id,
+            Plataforma = Plataforma.Web, RecursoId = (int)RecursoCodigo.Empleados,
             CreatedAt = DateTime.UtcNow,
         };
         var menuTurnos = new Menu
         {
             Nombre = "Turnos", Path = "/turnos", Orden = 3,
-            Plataforma = Plataforma.Web, RecursoId = recursoTurnos.Id,
+            Plataforma = Plataforma.Web, RecursoId = (int)RecursoCodigo.Turnos,
             CreatedAt = DateTime.UtcNow,
         };
         context.Menus.AddRange(menuVacaciones, menuEmpleados, menuTurnos);
@@ -119,41 +98,41 @@ public class DbSeeder(ITestOutputHelper output)
         await context.SaveChangesAsync();
 
         // Permisos
+        // Admin: acceso Global con todos los flags a TODOS los recursos
+        var permisosAdmin = Enum.GetValues<RecursoCodigo>()
+            .Select(r => new PermisoRolRecurso
+            {
+                RolId = rolAdmin.Id, RecursoId = (int)r,
+                CanCreate = true, CanEdit = true, CanDelete = true, Alcance = Alcance.Global,
+            });
+
+        context.PermisosRolRecurso.AddRange(permisosAdmin);
         context.PermisosRolRecurso.AddRange(
-            // Admin: todo Global en los 3 recursos
+            // Encargado: Vacaciones con Create a nivel Seccion
             new PermisoRolRecurso
             {
-                RolId = rolAdmin.Id, RecursoId = recursoVacaciones.Id,
-                CanCreate = true, CanEdit = true, CanDelete = true, Alcance = Alcance.Global,
+                RolId = rolEncargado.Id, RecursoId = (int)RecursoCodigo.Vacaciones,
+                CanCreate = true, CanEdit = false, CanDelete = false, Alcance = Alcance.Seccion,
             },
+            // Encargado: Turnos puede editar a nivel de Seccion
             new PermisoRolRecurso
             {
-                RolId = rolAdmin.Id, RecursoId = recursoEmpleados.Id,
-                CanCreate = true, CanEdit = true, CanDelete = true, Alcance = Alcance.Global,
-            },
-            new PermisoRolRecurso
-            {
-                RolId = rolAdmin.Id, RecursoId = recursoTurnos.Id,
-                CanCreate = true, CanEdit = true, CanDelete = true, Alcance = Alcance.Global,
-            },
-            // Encargado: Vacaciones con Create/Edit a nivel Seccion
-            new PermisoRolRecurso
-            {
-                RolId = rolEncargado.Id, RecursoId = recursoVacaciones.Id,
-                CanCreate = true, CanEdit = true, CanDelete = false, Alcance = Alcance.Seccion,
-            },
-            // Encargado: Turnos solo lectura a nivel Seccion
-            new PermisoRolRecurso
-            {
-                RolId = rolEncargado.Id, RecursoId = recursoTurnos.Id,
+                RolId = rolEncargado.Id, RecursoId = (int)RecursoCodigo.Turnos,
                 CanCreate = false, CanEdit = false, CanDelete = false, Alcance = Alcance.Seccion,
             },
-            // Empleado: Vacaciones solo Create sobre sus propios datos
+            // Empleado: Vacaciones solo lectura sobre sus propios datos
             new PermisoRolRecurso
             {
-                RolId = rolEmpleado.Id, RecursoId = recursoVacaciones.Id,
-                CanCreate = true, CanEdit = false, CanDelete = false, Alcance = Alcance.Propio,
+                RolId = rolEmpleado.Id, RecursoId = (int)RecursoCodigo.Vacaciones,
+                CanCreate = false, CanEdit = false, CanDelete = false, Alcance = Alcance.Propio,
+            },
+            // Empleado: Turnos solo lectura sobre sus propios datos
+            new PermisoRolRecurso
+            {
+                RolId = rolEmpleado.Id, RecursoId = (int)RecursoCodigo.Turnos,
+                CanCreate = false, CanEdit = false, CanDelete = false, Alcance = Alcance.Propio,
             });
+
         await context.SaveChangesAsync();
 
         // Usuarios
@@ -192,4 +171,5 @@ public class DbSeeder(ITestOutputHelper output)
         output.WriteLine("  carlos@erpnet.com / Carlos123! (Encargado + Empleado)");
         output.WriteLine("  maria@erpnet.com / Maria123! (Empleado)");
     }
+
 }

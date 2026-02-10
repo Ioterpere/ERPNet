@@ -15,32 +15,6 @@ public abstract class BaseController : ControllerBase
         HttpContext.Items["UsuarioContext"] as UsuarioContext
         ?? throw new InvalidOperationException("UsuarioContext no disponible. Verifique que el middleware está configurado.");
 
-    protected bool TienePermiso(string recursoCodigo, Func<PermisoUsuario, bool> check)
-    {
-        var permiso = UsuarioActual.Permisos.FirstOrDefault(p => p.Codigo == recursoCodigo);
-        return permiso is not null && check(permiso);
-    }
-
-    protected bool TienePermiso(Func<PermisoUsuario, bool> check)
-        => TienePermiso(GetRecursoFromAttribute(), check);
-
-    protected Alcance GetAlcance(string recursoCodigo)
-    {
-        var permiso = UsuarioActual.Permisos.FirstOrDefault(p => p.Codigo == recursoCodigo);
-        return permiso?.Alcance ?? Alcance.Propio;
-    }
-
-    protected Alcance GetAlcance()
-        => GetAlcance(GetRecursoFromAttribute());
-
-    private string GetRecursoFromAttribute()
-    {
-        var attr = (RecursoAttribute?)Attribute.GetCustomAttribute(GetType(), typeof(RecursoAttribute));
-        return attr?.Codigo
-            ?? throw new InvalidOperationException(
-                $"El controller '{GetType().Name}' no tiene el atributo [Recurso]. Use la sobrecarga que recibe el codigo de recurso.");
-    }
-
     protected IActionResult FromResult(Result result)
     {
         if (result.IsSuccess)

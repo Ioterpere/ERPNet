@@ -3,8 +3,8 @@ using ERPNet.Api.Middleware;
 using ERPNet.Application.Auth;
 using ERPNet.Application.Interfaces;
 using ERPNet.Application.Repositories;
-using ERPNet.Domain.Entities;
 using ERPNet.Domain.Enums;
+using ERPNet.Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using NSubstitute;
 using Xunit;
@@ -46,9 +46,6 @@ public class UsuarioContextMiddlewareTests
         };
     }
 
-    private static Recurso CrearRecurso(int id, string codigo) =>
-        new() { Id = id, Codigo = codigo };
-
     private static RolUsuario CrearRolConPermisos(int rolId, params PermisoRolRecurso[] permisos)
     {
         var rol = new Rol { Id = rolId, Nombre = $"Rol{rolId}" };
@@ -58,8 +55,8 @@ public class UsuarioContextMiddlewareTests
         return new RolUsuario { RolId = rolId, Rol = rol };
     }
 
-    private static PermisoRolRecurso Permiso(Recurso recurso, bool create, bool edit, bool delete, Alcance alcance) =>
-        new() { RecursoId = recurso.Id, Recurso = recurso, CanCreate = create, CanEdit = edit, CanDelete = delete, Alcance = alcance };
+    private static PermisoRolRecurso Permiso(RecursoCodigo recurso, bool create, bool edit, bool delete, Alcance alcance) =>
+        new() { RecursoId = (int)recurso, CanCreate = create, CanEdit = edit, CanDelete = delete, Alcance = alcance };
 
     private UsuarioContext? EjecutarMiddleware(Usuario usuario)
     {
@@ -89,9 +86,8 @@ public class UsuarioContextMiddlewareTests
     [Fact(DisplayName = "Middleware: usuario valido setea Id, Email, EmpleadoId y SeccionId")]
     public void UsuarioValido_SeteaDatosBasicos()
     {
-        var recurso = CrearRecurso(1, "vacaciones");
         var usuario = CrearUsuario(5, seccionId: 3,
-            CrearRolConPermisos(1, Permiso(recurso, true, false, false, Alcance.Propio)));
+            CrearRolConPermisos(1, Permiso(RecursoCodigo.Vacaciones, true, false, false, Alcance.Propio)));
 
         var ctx = EjecutarMiddleware(usuario);
 
@@ -138,15 +134,14 @@ public class UsuarioContextMiddlewareTests
     [Fact(DisplayName = "Middleware: un rol con un recurso se mapea directamente")]
     public void UnRol_UnRecurso_MapeaDirecto()
     {
-        var recurso = CrearRecurso(1, "vacaciones");
         var usuario = CrearUsuario(1, 1,
-            CrearRolConPermisos(1, Permiso(recurso, true, false, false, Alcance.Propio)));
+            CrearRolConPermisos(1, Permiso(RecursoCodigo.Vacaciones, true, false, false, Alcance.Propio)));
 
         var ctx = EjecutarMiddleware(usuario)!;
 
         Assert.Single(ctx.Permisos);
         var p = ctx.Permisos[0];
-        Assert.Equal("vacaciones", p.Codigo);
+        Assert.Equal(RecursoCodigo.Vacaciones, p.Codigo);
         Assert.True(p.CanCreate);
         Assert.False(p.CanEdit);
         Assert.False(p.CanDelete);
@@ -166,27 +161,24 @@ public class UsuarioContextMiddlewareTests
     [Fact(DisplayName = "Middleware: un rol con multiples recursos genera una entrada por recurso")]
     public void UnRol_MultiplesRecursos_EntradaPorRecurso()
     {
-        var vacaciones = CrearRecurso(1, "vacaciones");
-        var turnos = CrearRecurso(2, "turnos");
         var usuario = CrearUsuario(1, 1,
             CrearRolConPermisos(1,
-                Permiso(vacaciones, true, true, true, Alcance.Global),
-                Permiso(turnos, true, false, false, Alcance.Propio)));
+                Permiso(RecursoCodigo.Vacaciones, true, true, true, Alcance.Global),
+                Permiso(RecursoCodigo.Turnos, true, false, false, Alcance.Propio)));
 
         var ctx = EjecutarMiddleware(usuario)!;
 
         Assert.Equal(2, ctx.Permisos.Count);
-        Assert.Contains(ctx.Permisos, p => p.Codigo == "vacaciones");
-        Assert.Contains(ctx.Permisos, p => p.Codigo == "turnos");
+        Assert.Contains(ctx.Permisos, p => p.Codigo == RecursoCodigo.Vacaciones);
+        Assert.Contains(ctx.Permisos, p => p.Codigo == RecursoCodigo.Turnos);
     }
 
     [Fact(DisplayName = "Middleware: dos roles mismo recurso - booleanos se combinan con OR")]
     public void DosRoles_MismoRecurso_BooleanosOR()
     {
-        var recurso = CrearRecurso(1, "vacaciones");
         var usuario = CrearUsuario(1, 1,
-            CrearRolConPermisos(1, Permiso(recurso, true, false, false, Alcance.Propio)),
-            CrearRolConPermisos(2, Permiso(recurso, false, true, false, Alcance.Propio)));
+            CrearRolConPermisos(1, Permiso(RecursoCodigo.Vacaciones, true, false, false, Alcance.Propio)),
+            CrearRolConPermisos(2, Permiso(RecursoCodigo.Vacaciones, false, true, false, Alcance.Propio)));
 
         var ctx = EjecutarMiddleware(usuario)!;
 
@@ -200,10 +192,9 @@ public class UsuarioContextMiddlewareTests
     [Fact(DisplayName = "Middleware: dos roles mismo recurso - alcance toma el mas amplio")]
     public void DosRoles_MismoRecurso_AlcanceMaximo()
     {
-        var recurso = CrearRecurso(1, "vacaciones");
         var usuario = CrearUsuario(1, 1,
-            CrearRolConPermisos(1, Permiso(recurso, true, false, false, Alcance.Propio)),
-            CrearRolConPermisos(2, Permiso(recurso, false, true, false, Alcance.Seccion)));
+            CrearRolConPermisos(1, Permiso(RecursoCodigo.Vacaciones, true, false, false, Alcance.Propio)),
+            CrearRolConPermisos(2, Permiso(RecursoCodigo.Vacaciones, false, true, false, Alcance.Seccion)));
 
         var ctx = EjecutarMiddleware(usuario)!;
 
@@ -214,11 +205,10 @@ public class UsuarioContextMiddlewareTests
     [Fact(DisplayName = "Middleware: tres roles mismo recurso - Global gana sobre Seccion y Propio")]
     public void TresRoles_MismoRecurso_GlobalGana()
     {
-        var recurso = CrearRecurso(1, "vacaciones");
         var usuario = CrearUsuario(1, 1,
-            CrearRolConPermisos(1, Permiso(recurso, false, false, false, Alcance.Propio)),
-            CrearRolConPermisos(2, Permiso(recurso, false, false, false, Alcance.Seccion)),
-            CrearRolConPermisos(3, Permiso(recurso, false, false, false, Alcance.Global)));
+            CrearRolConPermisos(1, Permiso(RecursoCodigo.Vacaciones, false, false, false, Alcance.Propio)),
+            CrearRolConPermisos(2, Permiso(RecursoCodigo.Vacaciones, false, false, false, Alcance.Seccion)),
+            CrearRolConPermisos(3, Permiso(RecursoCodigo.Vacaciones, false, false, false, Alcance.Global)));
 
         var ctx = EjecutarMiddleware(usuario)!;
 
@@ -229,22 +219,20 @@ public class UsuarioContextMiddlewareTests
     [Fact(DisplayName = "Middleware: dos roles recursos distintos no se mezclan")]
     public void DosRoles_RecursosDistintos_NoSeMezclan()
     {
-        var vacaciones = CrearRecurso(1, "vacaciones");
-        var turnos = CrearRecurso(2, "turnos");
         var usuario = CrearUsuario(1, 1,
-            CrearRolConPermisos(1, Permiso(vacaciones, true, false, false, Alcance.Seccion)),
-            CrearRolConPermisos(2, Permiso(turnos, false, true, false, Alcance.Global)));
+            CrearRolConPermisos(1, Permiso(RecursoCodigo.Vacaciones, true, false, false, Alcance.Seccion)),
+            CrearRolConPermisos(2, Permiso(RecursoCodigo.Turnos, false, true, false, Alcance.Global)));
 
         var ctx = EjecutarMiddleware(usuario)!;
 
         Assert.Equal(2, ctx.Permisos.Count);
 
-        var pVacaciones = ctx.Permisos.First(p => p.Codigo == "vacaciones");
+        var pVacaciones = ctx.Permisos.First(p => p.Codigo == RecursoCodigo.Vacaciones);
         Assert.True(pVacaciones.CanCreate);
         Assert.False(pVacaciones.CanEdit);
         Assert.Equal(Alcance.Seccion, pVacaciones.Alcance);
 
-        var pTurnos = ctx.Permisos.First(p => p.Codigo == "turnos");
+        var pTurnos = ctx.Permisos.First(p => p.Codigo == RecursoCodigo.Turnos);
         Assert.False(pTurnos.CanCreate);
         Assert.True(pTurnos.CanEdit);
         Assert.Equal(Alcance.Global, pTurnos.Alcance);
@@ -257,10 +245,9 @@ public class UsuarioContextMiddlewareTests
     [Fact(DisplayName = "Middleware: Encargado+Empleado en Vacaciones merge Create+Edit Seccion")]
     public void EncargadoMasEmpleado_Vacaciones_MergeCorrecto()
     {
-        var recurso = CrearRecurso(1, "vacaciones");
         var usuario = CrearUsuario(1, 1,
-            CrearRolConPermisos(1, Permiso(recurso, true, true, false, Alcance.Seccion)),
-            CrearRolConPermisos(2, Permiso(recurso, true, false, false, Alcance.Propio)));
+            CrearRolConPermisos(1, Permiso(RecursoCodigo.Vacaciones, true, true, false, Alcance.Seccion)),
+            CrearRolConPermisos(2, Permiso(RecursoCodigo.Vacaciones, true, false, false, Alcance.Propio)));
 
         var ctx = EjecutarMiddleware(usuario)!;
 
@@ -275,26 +262,24 @@ public class UsuarioContextMiddlewareTests
     [Fact(DisplayName = "Middleware: Encargado+Empleado multiples recursos merge completo")]
     public void EncargadoMasEmpleado_MultiplesRecursos_MergeCompleto()
     {
-        var vacaciones = CrearRecurso(1, "vacaciones");
-        var turnos = CrearRecurso(2, "turnos");
         var usuario = CrearUsuario(1, 1,
             CrearRolConPermisos(1,
-                Permiso(vacaciones, true, true, false, Alcance.Seccion),
-                Permiso(turnos, false, false, false, Alcance.Seccion)),
+                Permiso(RecursoCodigo.Vacaciones, true, true, false, Alcance.Seccion),
+                Permiso(RecursoCodigo.Turnos, false, false, false, Alcance.Seccion)),
             CrearRolConPermisos(2,
-                Permiso(vacaciones, true, false, false, Alcance.Propio)));
+                Permiso(RecursoCodigo.Vacaciones, true, false, false, Alcance.Propio)));
 
         var ctx = EjecutarMiddleware(usuario)!;
 
         Assert.Equal(2, ctx.Permisos.Count);
 
-        var pVacaciones = ctx.Permisos.First(p => p.Codigo == "vacaciones");
+        var pVacaciones = ctx.Permisos.First(p => p.Codigo == RecursoCodigo.Vacaciones);
         Assert.True(pVacaciones.CanCreate);
         Assert.True(pVacaciones.CanEdit);
         Assert.False(pVacaciones.CanDelete);
         Assert.Equal(Alcance.Seccion, pVacaciones.Alcance);
 
-        var pTurnos = ctx.Permisos.First(p => p.Codigo == "turnos");
+        var pTurnos = ctx.Permisos.First(p => p.Codigo == RecursoCodigo.Turnos);
         Assert.False(pTurnos.CanCreate);
         Assert.False(pTurnos.CanEdit);
         Assert.False(pTurnos.CanDelete);

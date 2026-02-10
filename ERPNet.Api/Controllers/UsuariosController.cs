@@ -1,13 +1,16 @@
-using ERPNet.Application.Mappings;
+using ERPNet.Application.DTOs.Mappings;
 using ERPNet.Application.Interfaces;
 using ERPNet.Application.Repositories;
 using ERPNet.Common;
 using ERPNet.Common.Enums;
 using Microsoft.AspNetCore.Mvc;
 using ERPNet.Application.DTOs;
+using ERPNet.Api.Attributes;
+using ERPNet.Domain.Enums;
 
 namespace ERPNet.Api.Controllers;
 
+[Recurso(RecursoCodigo.Aplicacion)]
 public class UsuariosController(
     IUsuarioRepository usuarioRepository,
     ICacheService cache) : BaseController
@@ -20,7 +23,19 @@ public class UsuariosController(
         return FromResult(Result<List<UsuarioResponse>>.Success(response));
     }
 
-    [HttpGet("{id}")]
+    [SinPermiso]
+    [HttpGet("me")]
+    public async Task<IActionResult> GetMe()
+    {
+        var usuario = await usuarioRepository.GetByIdAsync(UsuarioActual.Id);
+
+        if (usuario is null)
+            return FromResult(Result.Failure("Usuario no encontrado.", ErrorType.NotFound));
+
+        return FromResult(Result<UsuarioResponse>.Success(usuario.ToResponse()));
+    }
+
+    [HttpGet("{id}", Name = nameof(GetById))]
     public async Task<IActionResult> GetById(int id)
     {
         var usuario = await usuarioRepository.GetByIdAsync(id);

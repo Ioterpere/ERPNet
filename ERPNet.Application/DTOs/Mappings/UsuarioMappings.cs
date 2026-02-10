@@ -1,7 +1,6 @@
-using ERPNet.Application.DTOs;
 using ERPNet.Domain.Entities;
 
-namespace ERPNet.Application.Mappings;
+namespace ERPNet.Application.DTOs.Mappings;
 
 public static class UsuarioMappings
 {

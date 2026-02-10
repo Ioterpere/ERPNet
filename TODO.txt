@@ -38,3 +38,32 @@ OrdenesMantenimiento
 TiposMantenimiento: Una tabla maestra simple para definir "Correctivo", "Preventivo"
 
 
+Patrón Consulta() — Filtrado por Alcance en Repositorios
+=========================================================
+Para repos que necesiten filtrar datos según el Alcance del usuario (Global/Seccion/Propio):
+
+1. Inyectar IUsuarioContextAccessor en el repositorio
+2. Declarar el RecursoCodigo que protege la entidad
+3. Método privado Consulta() que aplica el filtro:
+
+    private static readonly RecursoCodigo Recurso = RecursoCodigo.Vacaciones;
+
+    private IQueryable<Vacacion> Consulta()
+    {
+        var query = context.Vacaciones.AsQueryable();
+        var alcance = ctxAccessor.Current?.Permisos
+            .FirstOrDefault(p => p.Codigo == Recurso)?.Alcance;
+
+        if (alcance is null) return query;
+
+        return alcance switch
+        {
+            Alcance.Global  => query,
+            Alcance.Seccion => query.Where(v => v.Empleado.SeccionId == ctxAccessor.Current!.SeccionId),
+            Alcance.Propio  => query.Where(v => v.EmpleadoId == ctxAccessor.Current!.EmpleadoId),
+            _ => query.Where(_ => false)
+        };
+    }
+
+4. Usar Consulta() en GetAllAsync, GetByIdAsync, SoftDeleteAsync, etc.
+5. Métodos internos (auth, seeding) van directo a context.Entidad sin Consulta()

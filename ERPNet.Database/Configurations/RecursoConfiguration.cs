@@ -1,3 +1,4 @@
+using ERPNet.Domain.Enums;
 using ERPNet.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -8,9 +9,10 @@ public class RecursoConfiguration : IEntityTypeConfiguration<Recurso>
 {
     public void Configure(EntityTypeBuilder<Recurso> builder)
     {
-        builder.Property(r => r.Codigo).HasMaxLength(50);
-        builder.HasIndex(r => r.Codigo).IsUnique();
+        builder.Property(r => r.Codigo).HasMaxLength(200);
 
-        builder.Property(r => r.Descripcion).HasMaxLength(500);
+        builder.HasData(
+            Enum.GetValues<RecursoCodigo>()
+                .Select(c => new { Id = (int)c, Codigo = c.ToString() }));
     }
 }

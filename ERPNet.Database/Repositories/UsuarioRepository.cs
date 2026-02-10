@@ -25,7 +25,6 @@ public class UsuarioRepository(ERPNetDbContext context) : IUsuarioRepository
             .Include(u => u.RolesUsuarios)
                 .ThenInclude(ru => ru.Rol)
                     .ThenInclude(r => r.PermisosRolRecurso)
-                        .ThenInclude(p => p.Recurso)
             .FirstOrDefaultAsync(u => u.Id == id);
     }
 

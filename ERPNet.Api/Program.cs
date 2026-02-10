@@ -20,8 +20,10 @@ builder.Services.AddDatabase(builder.Configuration.GetConnectionString("DefaultC
 builder.Services.AddApplication();
 
 builder.Services.AddMemoryCache();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<ICacheService, MemoryCacheService>().AddOptions<CacheSettings>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IUsuarioContextAccessor, HttpUsuarioContextAccessor>();
 
 #endregion
 
@@ -105,6 +107,7 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<UsuarioContextMiddleware>();
+app.UseMiddleware<ControlAccesoMiddleware>();
 app.MapControllers();
 
 #endregion
