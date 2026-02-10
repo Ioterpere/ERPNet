@@ -5,7 +5,7 @@ ERPNet.sln
 │   └── ERPNet.Application      (DTOs, Mappings, Interfaces base)
 │
 ├── 2. Infrastructure
-│   └── ERPNet.Database         (EF Core: DbContext, Migrations, Repositorios, Configs) y otras partes de infraestructura
+│   └── ERPNet.Infrastructure   (Database/, Mail/, FileStorage... → EF Core, Migrations, Repositorios, Configs)
 │
 ├── 3. Presentation
 │   ├── ERPNet.Api              (Controllers, Middlewares, Servicios e implementaciones, Settings)

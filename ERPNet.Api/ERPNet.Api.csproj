@@ -18,7 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ERPNet.Application\ERPNet.Application.csproj" />
-    <ProjectReference Include="..\ERPNet.Database\ERPNet.Database.csproj" />
+    <ProjectReference Include="..\ERPNet.Infrastructure\ERPNet.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

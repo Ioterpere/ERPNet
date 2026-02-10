@@ -6,7 +6,7 @@ using ERPNet.Application;
 using ERPNet.Application.Auth;
 using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Application.Interfaces;
-using ERPNet.Database;
+using ERPNet.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;

@@ -1,4 +1,4 @@
-using ERPNet.Database.Context;
+using ERPNet.Infrastructure.Database.Context;
 using ERPNet.Domain.Enums;
 using ERPNet.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
