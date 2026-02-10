@@ -1,4 +1,4 @@
-namespace ERPNet.Common.Enums;
+namespace ERPNet.Application.Enums;
 
 public enum ErrorType
 {

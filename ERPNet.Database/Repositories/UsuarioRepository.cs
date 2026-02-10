@@ -1,4 +1,4 @@
-using ERPNet.Application.Repositories;
+using ERPNet.Domain.Repositories;
 using ERPNet.Database.Context;
 using ERPNet.Domain.Entities;
 using Microsoft.EntityFrameworkCore;

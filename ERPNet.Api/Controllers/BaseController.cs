@@ -1,7 +1,7 @@
 using ERPNet.Api.Attributes;
 using ERPNet.Application.Auth;
-using ERPNet.Common;
-using ERPNet.Common.Enums;
+using ERPNet.Application;
+using ERPNet.Application.Enums;
 using ERPNet.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 

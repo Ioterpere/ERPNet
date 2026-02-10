@@ -1,7 +1,7 @@
 using ERPNet.Domain.Enums;
 using ERPNet.Domain.Entities;
 
-namespace ERPNet.Application.Repositories;
+namespace ERPNet.Domain.Repositories;
 
 public interface IMenuRepository
 {

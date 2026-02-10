@@ -2,7 +2,7 @@ using System.Security.Claims;
 using ERPNet.Api.Middleware;
 using ERPNet.Application.Auth;
 using ERPNet.Application.Interfaces;
-using ERPNet.Application.Repositories;
+using ERPNet.Domain.Repositories;
 using ERPNet.Domain.Enums;
 using ERPNet.Domain.Entities;
 using Microsoft.AspNetCore.Http;

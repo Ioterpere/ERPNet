@@ -1,6 +1,6 @@
 using ERPNet.Domain.Entities;
 
-namespace ERPNet.Application.Repositories;
+namespace ERPNet.Domain.Repositories;
 
 public interface ILogIntentoLoginRepository
 {

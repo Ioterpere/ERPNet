@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using ERPNet.Application.Auth;
 using ERPNet.Application.Interfaces;
-using ERPNet.Application.Repositories;
+using ERPNet.Domain.Repositories;
 using ERPNet.Domain.Enums;
 
 namespace ERPNet.Api.Middleware;
