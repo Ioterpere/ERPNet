@@ -1,5 +1,7 @@
 using ERPNet.Application.Auth.DTOs;
 using ERPNet.Application.Auth.Interfaces;
+using ERPNet.Application.Email;
+using ERPNet.Application.Email.Models;
 using ERPNet.Domain.Repositories;
 using ERPNet.Application.Enums;
 using ERPNet.Domain.Entities;
@@ -14,6 +16,7 @@ public class AuthService(
     ILogRepository logRepository,
     IUnitOfWork unitOfWork,
     ITokenService tokenService,
+    IEmailService emailService,
     IOptions<JwtSettings> jwtSettings,
     IOptions<LoginSettings> loginSettings) : IAuthService
 {
@@ -66,6 +69,12 @@ public class AuthService(
 
                 var response = GenerarTokens(usuario);
                 await GuardarRefreshTokenAsync(response.RefreshToken, usuario.Id);
+
+                await emailService.EnviarAsync(new MensajeEmail(
+                    usuario.Email,
+                    "Inicio de sesion exitoso",
+                    PlantillaEmail.Bienvenida,
+                    new BienvenidaEmailModel(usuario.Email, "https://erpnet.local")));
 
                 return Result<AuthResponse>.Success(response);
             }

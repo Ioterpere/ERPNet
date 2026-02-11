@@ -1,0 +1,24 @@
+@model ERPNet.Application.Email.Models.BienvenidaEmailModel
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 8px; padding: 32px; }
+        h1 { color: #2c3e50; }
+        .btn { display: inline-block; padding: 12px 24px; background: #3498db; color: #fff; text-decoration: none; border-radius: 4px; }
+        .footer { margin-top: 32px; font-size: 12px; color: #999; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bienvenido a ERPNet, @Model.Nombre</h1>
+        <p>Tu cuenta ha sido creada exitosamente. Ya puedes acceder al sistema.</p>
+        <p><a class="btn" href="@Model.UrlAcceso">Acceder al sistema</a></p>
+        <div class="footer">
+            <p>Este es un correo automático, por favor no responda a este mensaje.</p>
+        </div>
+    </div>
+</body>
+</html>

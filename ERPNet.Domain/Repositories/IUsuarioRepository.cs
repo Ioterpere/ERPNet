@@ -12,4 +12,5 @@ public interface IUsuarioRepository
     Task<Usuario> CreateAsync(Usuario usuario);
     void Update(Usuario usuario);
     Task UpdateUltimoAccesoAsync(int usuarioId, DateTime fecha);
+    Task<List<string>> GetEmailsByRolAsync(string nombreRol);
 }

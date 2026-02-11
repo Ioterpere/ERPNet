@@ -9,6 +9,7 @@ public class Log
     public string? EntidadId { get; set; }
     public DateTime Fecha { get; set; }
     public string? Detalle { get; set; }
+    public string? CodigoError { get; set; }
 
     public Usuario? Usuario { get; set; }
 }

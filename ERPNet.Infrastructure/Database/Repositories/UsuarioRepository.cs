@@ -58,4 +58,12 @@ public class UsuarioRepository(ERPNetDbContext context) : IUsuarioRepository
             .Where(u => u.Id == usuarioId)
             .ExecuteUpdateAsync(s => s.SetProperty(u => u.UltimoAcceso, fecha));
     }
+
+    public async Task<List<string>> GetEmailsByRolAsync(string nombreRol)
+    {
+        return await context.Usuarios
+            .Where(u => u.Activo && u.RolesUsuarios.Any(ru => ru.Rol.Nombre == nombreRol))
+            .Select(u => u.Email)
+            .ToListAsync();
+    }
 }

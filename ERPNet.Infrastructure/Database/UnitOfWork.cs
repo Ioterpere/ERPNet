@@ -1,14 +1,14 @@
 using ERPNet.Application.Auth;
+using ERPNet.Application.Interfaces;
 using ERPNet.Infrastructure.Database.Context;
 using ERPNet.Domain.Common;
-using ERPNet.Domain.Entities;
 using ERPNet.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace ERPNet.Infrastructure.Database;
 
-public class UnitOfWork(ERPNetDbContext context, ICurrentUserProvider currentUser) : IUnitOfWork
+public class UnitOfWork(ERPNetDbContext context, ICurrentUserProvider currentUser, ILogService logService) : IUnitOfWork
 {
     private static readonly HashSet<string> CamposAuditoria =
     [
@@ -57,7 +57,7 @@ public class UnitOfWork(ERPNetDbContext context, ICurrentUserProvider currentUse
 
         if (auditEntries.Count > 0)
         {
-            CreateLogs(auditEntries, usuarioId, ahora);
+            CreateLogs(auditEntries, usuarioId);
             await context.SaveChangesAsync(ct);
         }
     }
@@ -68,19 +68,16 @@ public class UnitOfWork(ERPNetDbContext context, ICurrentUserProvider currentUse
         return prop.IsModified && (bool)prop.CurrentValue! == true;
     }
 
-    private void CreateLogs(List<AuditEntry> entries, int? usuarioId, DateTime fecha)
+    private void CreateLogs(List<AuditEntry> entries, int? usuarioId)
     {
         foreach (var (entry, accion) in entries)
         {
-            context.Logs.Add(new Log
-            {
-                UsuarioId = usuarioId,
-                Accion = accion,
-                Entidad = entry.Metadata.ClrType.Name,
-                EntidadId = entry.Entity.Id.ToString(),
-                Fecha = fecha,
-                Detalle = accion == "Editar" ? BuildModifiedDetail(entry) : null
-            });
+            logService.Entidad(
+                accion,
+                entry.Metadata.ClrType.Name,
+                entry.Entity.Id.ToString(),
+                usuarioId,
+                accion == "Editar" ? BuildModifiedDetail(entry) : null);
         }
     }
 

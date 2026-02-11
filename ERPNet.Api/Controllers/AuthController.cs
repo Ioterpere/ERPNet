@@ -1,3 +1,4 @@
+using ERPNet.Api.Attributes;
 using ERPNet.Application.Auth.DTOs;
 using ERPNet.Application.Auth.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -44,5 +45,15 @@ public class AuthController(IAuthService authService) : BaseController
         }
 
         return HttpContext.Connection.RemoteIpAddress?.MapToIPv4().ToString() ?? "unknown";
+    }
+
+    [SinPermiso]
+    [AllowAnonymous]
+    [HttpGet("test-error")]
+    public IActionResult TestError()
+    {
+        throw new InvalidOperationException(
+            "Excepcion de prueba",
+            new ArgumentException("Inner exception de prueba"));
     }
 }

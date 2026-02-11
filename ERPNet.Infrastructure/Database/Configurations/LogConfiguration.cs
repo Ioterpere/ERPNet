@@ -12,6 +12,7 @@ public class LogConfiguration : IEntityTypeConfiguration<Log>
         builder.Property(l => l.Entidad).HasMaxLength(100);
         builder.Property(l => l.EntidadId).HasMaxLength(50);
         builder.Property(l => l.Detalle).HasMaxLength(2000);
+        builder.Property(l => l.CodigoError).HasMaxLength(50);
 
         builder.HasOne(l => l.Usuario)
             .WithMany(u => u.Logs)

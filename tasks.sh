@@ -57,6 +57,14 @@ run_task() {
       fi
       dotnet ef database drop --force --project "$PROJECT" --startup-project "$STARTUP"
       ;;
+    7|mailhog)
+      if ! command -v docker &>/dev/null; then
+        echo "  Docker no encontrado. Instalar Docker Desktop:" >&2
+        echo "  https://docs.docker.com/desktop/setup/install/windows-install/" >&2
+        return 1
+      fi
+      docker compose up -d mailhog
+      ;;
     0|exit)
       exit 0
       ;;
@@ -84,6 +92,7 @@ while true; do
   echo "  4) migrate      Aplicar migraciones"
   echo "  5) seed         Ejecutar seeder"
   echo "  6) dropseed     Borrar DB"
+  echo "  7) mailhog      Levantar MailHog (Docker)"
   echo "  0) salir"
   echo ""
   read -rp "  > " choice
