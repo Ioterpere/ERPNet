@@ -1,13 +1,16 @@
 using ERPNet.Application.Email;
+using ERPNet.Application.Reports.Interfaces;
 using ERPNet.Infrastructure.Database;
 using ERPNet.Infrastructure.Database.Context;
 using ERPNet.Infrastructure.Email;
+using ERPNet.Infrastructure.Reports;
 using ERPNet.Application.Interfaces;
 using ERPNet.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
+using QuestPDF.Infrastructure;
 
 namespace ERPNet.Infrastructure;
 
@@ -47,6 +50,15 @@ public static class DependencyInjection
 
         services.AddScoped<RazorViewToStringRenderer>();
         services.AddScoped<IEmailService, EmailService>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddReporting(this IServiceCollection services)
+    {
+        QuestPDF.Settings.License = LicenseType.Community;
+
+        services.AddScoped<IReporteEmpleadoService, ReporteEmpleadoService>();
 
         return services;
     }

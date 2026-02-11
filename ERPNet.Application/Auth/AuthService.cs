@@ -14,7 +14,6 @@ public class AuthService(
     IUsuarioRepository usuarioRepository,
     IRefreshTokenRepository refreshTokenRepository,
     ILogIntentoLoginRepository logIntentoLoginRepository,
-    ILogRepository logRepository,
     ILogService logService,
     IUnitOfWork unitOfWork,
     ITokenService tokenService,
@@ -131,15 +130,7 @@ public class AuthService(
 
         if (refreshToken is { IsActivo: true })
         {
-            logRepository.Add(new Log
-            {
-                Accion = "Logout",
-                Entidad = "Usuario",
-                EntidadId = refreshToken.UsuarioId.ToString(),
-                Fecha = DateTime.UtcNow,
-                UsuarioId = refreshToken.UsuarioId
-            });
-
+            await logService.EventAsync("Logout", $"Logout manual", refreshToken.UsuarioId);
             refreshToken.FechaRevocacion = DateTime.UtcNow;
             await unitOfWork.SaveChangesAsync();
         }

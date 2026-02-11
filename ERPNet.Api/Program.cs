@@ -20,6 +20,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDatabase(builder.Configuration.GetConnectionString("DefaultConnection")!);
 builder.Services.AddApplication();
 builder.Services.AddEmailServices(builder.Configuration);
+builder.Services.AddReporting();
 
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();

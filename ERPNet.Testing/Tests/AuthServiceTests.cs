@@ -8,6 +8,7 @@ using ERPNet.Domain.Entities;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using Xunit;
+using ERPNet.Application.Interfaces;
 
 namespace ERPNet.Testing.Tests;
 
@@ -16,7 +17,7 @@ public class AuthServiceTests
     private readonly IUsuarioRepository _usuarioRepo = Substitute.For<IUsuarioRepository>();
     private readonly IRefreshTokenRepository _refreshTokenRepo = Substitute.For<IRefreshTokenRepository>();
     private readonly ILogIntentoLoginRepository _logIntentoRepo = Substitute.For<ILogIntentoLoginRepository>();
-    private readonly ILogRepository _logRepo = Substitute.For<ILogRepository>();
+    private readonly ILogService _logService = Substitute.For<ILogService>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ITokenService _tokenService = Substitute.For<ITokenService>();
     private readonly IEmailService _emailService = Substitute.For<IEmailService>();
@@ -53,7 +54,7 @@ public class AuthServiceTests
             _usuarioRepo,
             _refreshTokenRepo,
             _logIntentoRepo,
-            _logRepo,
+            _logService,
             _unitOfWork,
             _tokenService,
             _emailService,
