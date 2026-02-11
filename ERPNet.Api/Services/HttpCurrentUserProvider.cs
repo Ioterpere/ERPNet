@@ -1,4 +1,5 @@
 using ERPNet.Application.Auth;
+using ERPNet.Application.Auth.Interfaces;
 
 namespace ERPNet.Api.Services;
 

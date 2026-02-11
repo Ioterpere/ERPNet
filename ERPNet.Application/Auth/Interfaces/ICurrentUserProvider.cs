@@ -1,4 +1,4 @@
-namespace ERPNet.Application.Auth;
+namespace ERPNet.Application.Auth.Interfaces;
 
 public interface ICurrentUserProvider
 {
