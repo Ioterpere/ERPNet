@@ -6,6 +6,19 @@ namespace ERPNet.Infrastructure.Database;
 
 public class LogService(ERPNetDbContext context) : ILogService
 {
+    public async Task EventAsync(string accion, string detalle, int? usuarioId = null, CancellationToken ct = default)
+    {
+        context.Logs.Add(new Log
+        {
+            Accion = accion,
+            Fecha = DateTime.UtcNow,
+            Detalle = detalle,
+            UsuarioId = usuarioId
+        });
+
+        await context.SaveChangesAsync(ct);
+    }
+
     public async Task ErrorAsync(Exception ex, string? codigoError = null, CancellationToken ct = default)
     {
         context.Logs.Add(new Log

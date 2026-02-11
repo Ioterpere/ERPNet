@@ -36,7 +36,7 @@
     {
       "label": "stop-services",
       "type": "shell",
-      "command": "docker compose down",
+      "command": "docker compose stop mailhog",
       "presentation": { "reveal": "silent" },
       "problemMatcher": []
     }

@@ -6,6 +6,7 @@ using ERPNet.Domain.Repositories;
 using ERPNet.Application.Enums;
 using ERPNet.Domain.Entities;
 using Microsoft.Extensions.Options;
+using ERPNet.Application.Interfaces;
 
 namespace ERPNet.Application.Auth;
 
@@ -14,6 +15,7 @@ public class AuthService(
     IRefreshTokenRepository refreshTokenRepository,
     ILogIntentoLoginRepository logIntentoLoginRepository,
     ILogRepository logRepository,
+    ILogService logService,
     IUnitOfWork unitOfWork,
     ITokenService tokenService,
     IEmailService emailService,
@@ -56,16 +58,7 @@ public class AuthService(
             {
                 await RegistrarIntentoAsync(request.Email, ip, true, usuario.Id);
                 await usuarioRepository.UpdateUltimoAccesoAsync(usuario.Id, DateTime.UtcNow);
-
-                logRepository.Add(new Log
-                {
-                    Accion = "Login",
-                    Entidad = "Usuario",
-                    EntidadId = usuario.Id.ToString(),
-                    Fecha = DateTime.UtcNow,
-                    UsuarioId = usuario.Id,
-                    Detalle = $"IP: {ip}"
-                });
+                await logService.EventAsync("Login", $"IP: {ip}", usuario.Id);
 
                 var response = GenerarTokens(usuario);
                 await GuardarRefreshTokenAsync(response.RefreshToken, usuario.Id);
