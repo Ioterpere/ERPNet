@@ -4,6 +4,7 @@ using ERPNet.Infrastructure.Database.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ERPNet.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ERPNetDbContext))]
-    partial class ERPNetDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260211142502_AddFileStorage")]
+    partial class AddFileStorage
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -48,8 +51,20 @@ namespace ERPNet.Infrastructure.Database.Migrations
                     b.Property<int?>("DeletedBy")
                         .HasColumnType("int");
 
+                    b.Property<string>("Entidad")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("EntidadId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("EsThumbnail")
                         .HasColumnType("bit");
+
+                    b.Property<string>("Etiqueta")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
@@ -65,6 +80,8 @@ namespace ERPNet.Infrastructure.Database.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ArchivoOriginalId");
+
+                    b.HasIndex("Entidad", "EntidadId");
 
                     b.ToTable("Archivos");
                 });
@@ -155,9 +172,6 @@ namespace ERPNet.Infrastructure.Database.Migrations
                     b.Property<int?>("EncargadoId")
                         .HasColumnType("int");
 
-                    b.Property<Guid?>("FotoId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -181,10 +195,6 @@ namespace ERPNet.Infrastructure.Database.Migrations
                         .IsUnique();
 
                     b.HasIndex("EncargadoId");
-
-                    b.HasIndex("FotoId")
-                        .IsUnique()
-                        .HasFilter("[FotoId] IS NOT NULL");
 
                     b.HasIndex("SeccionId");
 
@@ -337,9 +347,6 @@ namespace ERPNet.Infrastructure.Database.Migrations
                     b.Property<bool>("Activa")
                         .HasColumnType("bit");
 
-                    b.Property<Guid?>("CertificadoCeId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Codigo")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -357,17 +364,8 @@ namespace ERPNet.Infrastructure.Database.Migrations
                     b.Property<int?>("DeletedBy")
                         .HasColumnType("int");
 
-                    b.Property<Guid?>("FichaTecnicaId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("FotoId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
-
-                    b.Property<Guid?>("ManualId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -389,28 +387,12 @@ namespace ERPNet.Infrastructure.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CertificadoCeId")
-                        .IsUnique()
-                        .HasFilter("[CertificadoCeId] IS NOT NULL");
-
                     b.HasIndex("Codigo")
                         .IsUnique();
 
-                    b.HasIndex("FichaTecnicaId")
-                        .IsUnique()
-                        .HasFilter("[FichaTecnicaId] IS NOT NULL");
-
-                    b.HasIndex("FotoId")
-                        .IsUnique()
-                        .HasFilter("[FotoId] IS NOT NULL");
-
-                    b.HasIndex("ManualId")
-                        .IsUnique()
-                        .HasFilter("[ManualId] IS NOT NULL");
-
                     b.HasIndex("SeccionId");
 
-                    b.ToTable("Maquinas");
+                    b.ToTable("Maquinarias");
                 });
 
             modelBuilder.Entity("ERPNet.Domain.Entities.Marcaje", b =>
@@ -1080,11 +1062,6 @@ namespace ERPNet.Infrastructure.Database.Migrations
                         .HasForeignKey("EncargadoId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("ERPNet.Domain.Entities.Archivo", "Foto")
-                        .WithOne()
-                        .HasForeignKey("ERPNet.Domain.Entities.Empleado", "FotoId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.HasOne("ERPNet.Domain.Entities.Seccion", "Seccion")
                         .WithMany("Empleados")
                         .HasForeignKey("SeccionId")
@@ -1092,8 +1069,6 @@ namespace ERPNet.Infrastructure.Database.Migrations
                         .IsRequired();
 
                     b.Navigation("Encargado");
-
-                    b.Navigation("Foto");
 
                     b.Navigation("Seccion");
                 });
@@ -1138,38 +1113,10 @@ namespace ERPNet.Infrastructure.Database.Migrations
 
             modelBuilder.Entity("ERPNet.Domain.Entities.Maquinaria", b =>
                 {
-                    b.HasOne("ERPNet.Domain.Entities.Archivo", "CertificadoCe")
-                        .WithOne()
-                        .HasForeignKey("ERPNet.Domain.Entities.Maquinaria", "CertificadoCeId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.HasOne("ERPNet.Domain.Entities.Archivo", "FichaTecnica")
-                        .WithOne()
-                        .HasForeignKey("ERPNet.Domain.Entities.Maquinaria", "FichaTecnicaId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.HasOne("ERPNet.Domain.Entities.Archivo", "Foto")
-                        .WithOne()
-                        .HasForeignKey("ERPNet.Domain.Entities.Maquinaria", "FotoId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.HasOne("ERPNet.Domain.Entities.Archivo", "Manual")
-                        .WithOne()
-                        .HasForeignKey("ERPNet.Domain.Entities.Maquinaria", "ManualId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.HasOne("ERPNet.Domain.Entities.Seccion", "Seccion")
                         .WithMany("Maquinarias")
                         .HasForeignKey("SeccionId")
                         .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("CertificadoCe");
-
-                    b.Navigation("FichaTecnica");
-
-                    b.Navigation("Foto");
-
-                    b.Navigation("Manual");
 
                     b.Navigation("Seccion");
                 });

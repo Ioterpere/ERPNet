@@ -3,13 +3,16 @@ using ERPNet.Application.Reports.Interfaces;
 using ERPNet.Infrastructure.Database;
 using ERPNet.Infrastructure.Database.Context;
 using ERPNet.Infrastructure.Email;
+using ERPNet.Infrastructure.FileStorage;
 using ERPNet.Infrastructure.Reports;
+using ERPNet.Application.FileStorage;
 using ERPNet.Application.Interfaces;
 using ERPNet.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
+using Minio;
 using QuestPDF.Infrastructure;
 
 namespace ERPNet.Infrastructure;
@@ -19,7 +22,8 @@ public static class DependencyInjection
     public static IServiceCollection AddDatabase(this IServiceCollection services, string connectionString)
     {
         services.AddDbContext<ERPNetDbContext>(options =>
-            options.UseSqlServer(connectionString));
+            options.UseSqlServer(connectionString, sql =>
+                sql.EnableRetryOnFailure()));
 
         services.Scan(scan => scan
             .FromAssemblyOf<ERPNetDbContext>()
@@ -59,6 +63,25 @@ public static class DependencyInjection
         QuestPDF.Settings.License = LicenseType.Community;
 
         services.AddScoped<IReporteEmpleadoService, ReporteEmpleadoService>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddFileStorage(this IServiceCollection services, IConfiguration config)
+    {
+        services.Configure<FileStorageSettings>(config.GetSection("FileStorageSettings"));
+
+        services.AddSingleton<IMinioClient>(sp =>
+        {
+            var settings = config.GetSection("FileStorageSettings").Get<FileStorageSettings>()!;
+            return new MinioClient()
+                .WithEndpoint(settings.Endpoint)
+                .WithCredentials(settings.AccessKey, settings.SecretKey)
+                .WithSSL(settings.UseSSL)
+                .Build();
+        });
+
+        services.AddScoped<IFileStorageService, MinioFileStorageService>();
 
         return services;
     }

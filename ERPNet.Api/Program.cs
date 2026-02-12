@@ -21,6 +21,7 @@ builder.Services.AddDatabase(builder.Configuration.GetConnectionString("DefaultC
 builder.Services.AddApplication();
 builder.Services.AddEmailServices(builder.Configuration);
 builder.Services.AddReporting();
+builder.Services.AddFileStorage(builder.Configuration);
 
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();

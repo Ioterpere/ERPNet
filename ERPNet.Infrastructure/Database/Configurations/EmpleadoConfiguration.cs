@@ -22,5 +22,10 @@ public class EmpleadoConfiguration : IEntityTypeConfiguration<Empleado>
             .WithMany(e => e.Subordinados)
             .HasForeignKey(e => e.EncargadoId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(e => e.Foto)
+            .WithOne()
+            .HasForeignKey<Empleado>(e => e.FotoId)
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }

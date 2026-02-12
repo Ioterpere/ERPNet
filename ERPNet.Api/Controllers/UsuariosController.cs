@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using ERPNet.Application.DTOs;
 using ERPNet.Api.Attributes;
 using ERPNet.Domain.Enums;
+using ERPNet.Api.Controllers.Common;
 
 namespace ERPNet.Api.Controllers;
 
@@ -101,7 +102,7 @@ public class UsuariosController(
         if (usuario is null)
             return FromResult(Result.Failure("Usuario no encontrado.", ErrorType.NotFound));
 
-        usuario.IsDeleted = true;
+        usuarioRepository.Delete(usuario);
         await unitOfWork.SaveChangesAsync();
         cache.Remove($"usuario:{id}");
 

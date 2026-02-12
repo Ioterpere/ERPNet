@@ -17,5 +17,25 @@ public class MaquinariaConfiguration : IEntityTypeConfiguration<Maquinaria>
             .WithMany(s => s.Maquinarias)
             .HasForeignKey(m => m.SeccionId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne(m => m.FichaTecnica)
+            .WithOne()
+            .HasForeignKey<Maquinaria>(m => m.FichaTecnicaId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.HasOne(m => m.Manual)
+            .WithOne()
+            .HasForeignKey<Maquinaria>(m => m.ManualId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.HasOne(m => m.CertificadoCe)
+            .WithOne()
+            .HasForeignKey<Maquinaria>(m => m.CertificadoCeId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.HasOne(m => m.Foto)
+            .WithOne()
+            .HasForeignKey<Maquinaria>(m => m.FotoId)
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }

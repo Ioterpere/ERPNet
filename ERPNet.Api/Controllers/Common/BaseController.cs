@@ -1,11 +1,11 @@
-using ERPNet.Api.Attributes;
-using ERPNet.Application.Auth;
+using System.Net.Mime;
 using ERPNet.Application;
+using ERPNet.Application.Auth;
 using ERPNet.Application.Enums;
-using ERPNet.Domain.Enums;
+using ERPNet.Application.FileStorage.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ERPNet.Api.Controllers;
+namespace ERPNet.Api.Controllers.Common;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -37,6 +37,22 @@ public abstract class BaseController : ControllerBase
             return CreatedAtRoute(routeName, routeValues, result.Value);
 
         return BuildErrorResponse(result);
+    }
+
+    protected async Task<IActionResult> DescargarArchivo(Result<ArchivoDescarga> result, CancellationToken ct)
+    {
+        if (!result.IsSuccess)
+            return FromResult(result);
+
+        var descarga = result.Value!;
+        Response.ContentType = descarga.ContentType;
+        Response.Headers.ContentDisposition = new ContentDisposition
+        {
+            FileName = descarga.NombreArchivo,
+            Inline = false
+        }.ToString();
+        await descarga.EscribirContenido(Response.Body, ct);
+        return new EmptyResult();
     }
 
     private IActionResult BuildErrorResponse(Result result)

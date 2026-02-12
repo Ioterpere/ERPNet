@@ -24,9 +24,11 @@ public class ERPNetDbContext(DbContextOptions<ERPNetDbContext> options) : DbCont
     public DbSet<Marcaje> Marcajes => Set<Marcaje>();
     public DbSet<IncidenciaMarcaje> IncidenciasMarcaje => Set<IncidenciaMarcaje>();
 
-    public DbSet<Maquinaria> Maquinarias => Set<Maquinaria>();
+    public DbSet<Maquinaria> Maquinas => Set<Maquinaria>();
     public DbSet<TipoMantenimiento> TiposMantenimiento => Set<TipoMantenimiento>();
     public DbSet<OrdenMantenimiento> OrdenesMantenimiento => Set<OrdenMantenimiento>();
+
+    public DbSet<Archivo> Archivos => Set<Archivo>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

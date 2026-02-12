@@ -14,29 +14,22 @@
       "problemMatcher": "$msCompile"
     },
     {
-      "label": "mailhog-up",
+      "label": "services-up",
       "type": "shell",
-      "command": "docker compose up -d",
-      "presentation": { "reveal": "silent" },
-      "problemMatcher": []
-    },
-    {
-      "label": "open-mailhog",
-      "type": "shell",
-      "command": "start http://localhost:8025",
+      "command": "$openMH = $true; $openMIO = $true; try { $c = [Net.Sockets.TcpClient]::new('localhost', 8025); $c.Close(); $openMH = $false } catch {}; try { $c = [Net.Sockets.TcpClient]::new('localhost', 9001); $c.Close(); $openMIO = $false } catch {}; docker compose up -d; if ($openMH) { Start-Process 'http://localhost:8025' }; if ($openMIO) { Start-Process 'http://localhost:9001' }",
       "presentation": { "reveal": "silent" },
       "problemMatcher": []
     },
     {
       "label": "start-services",
-      "dependsOn": ["build", "mailhog-up", "open-mailhog"],
+      "dependsOn": ["build", "services-up"],
       "dependsOrder": "sequence",
       "problemMatcher": []
     },
     {
       "label": "stop-services",
       "type": "shell",
-      "command": "docker compose stop mailhog",
+      "command": "docker compose stop",
       "presentation": { "reveal": "silent" },
       "problemMatcher": []
     }

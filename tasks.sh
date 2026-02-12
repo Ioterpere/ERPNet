@@ -21,6 +21,14 @@ confirm_db() {
   [[ "$resp" =~ ^[sS]$ ]]
 }
 
+require_docker() {
+  if ! command -v docker &>/dev/null; then
+    echo "  Docker no encontrado. Instalar Docker Desktop:" >&2
+    echo "  https://docs.docker.com/desktop/setup/install/windows-install/" >&2
+    return 1
+  fi
+}
+
 run_task() {
   case "$1" in
     1|build)
@@ -50,20 +58,28 @@ run_task() {
     5|seed)
       dotnet test ERPNet.Testing --filter "FullyQualifiedName~DbSeeder"
       ;;
-    6|dropseed)
+    6|drop)
       if ! confirm_db; then
         echo "  Cancelado."
         return 0
       fi
       dotnet ef database drop --force --project "$PROJECT" --startup-project "$STARTUP"
       ;;
-    7|mailhog)
-      if ! command -v docker &>/dev/null; then
-        echo "  Docker no encontrado. Instalar Docker Desktop:" >&2
-        echo "  https://docs.docker.com/desktop/setup/install/windows-install/" >&2
-        return 1
-      fi
-      docker compose up -d mailhog
+    7|dockup)
+      require_docker || return 1
+      docker compose up -d
+      ;;
+    8|dockdown)
+      require_docker || return 1
+      docker compose down
+      ;;
+    9|clearminio)
+      require_docker || return 1
+      local bucket
+      bucket=$(grep '"BucketName"' "$STARTUP/appsettings.json" | sed 's/.*": *"//;s/".*//')
+      echo "  Vaciando bucket: $bucket"
+      docker compose exec minio sh -c "mc alias set local http://localhost:9000 erpnet ERPNet_Dev123! --api S3v4 >/dev/null 2>&1 && mc rm --recursive --force local/$bucket" 2>/dev/null || true
+      echo "  Bucket vaciado."
       ;;
     0|exit)
       exit 0
@@ -91,8 +107,10 @@ while true; do
   echo "  3) migration    Crear migracion"
   echo "  4) migrate      Aplicar migraciones"
   echo "  5) seed         Ejecutar seeder"
-  echo "  6) dropseed     Borrar DB"
-  echo "  7) mailhog      Levantar MailHog (Docker)"
+  echo "  6) drop         Borrar DB"
+  echo "  7) dockup       Levantar contenedores"
+  echo "  8) dockdown     Parar contenedores"
+  echo "  9) clearminio   Vaciar bucket MinIO"
   echo "  0) salir"
   echo ""
   read -rp "  > " choice
