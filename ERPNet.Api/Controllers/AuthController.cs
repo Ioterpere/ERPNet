@@ -36,17 +36,8 @@ public class AuthController(IAuthService authService) : BaseController
         return FromResult(result);
     }
 
-    private string GetIpAddress()
-    {
-        if (Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedFor))
-        {
-            var ip = forwardedFor.ToString().Split(',', StringSplitOptions.TrimEntries).FirstOrDefault();
-            if (!string.IsNullOrEmpty(ip))
-                return ip;
-        }
-
-        return HttpContext.Connection.RemoteIpAddress?.MapToIPv4().ToString() ?? "unknown";
-    }
+    private string GetIpAddress() =>
+        HttpContext.Connection.RemoteIpAddress?.MapToIPv4().ToString() ?? "unknown";
 
     [SinPermiso]
     [AllowAnonymous]
