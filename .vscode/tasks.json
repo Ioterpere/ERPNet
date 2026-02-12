@@ -7,31 +7,97 @@
       "command": "dotnet",
       "args": [
         "build",
-        "${workspaceFolder}/ERPNet.Api/ERPNet.Api.csproj",
+        "${workspaceFolder}/ERPNet.slnx",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary;ForceNoAlign"
       ],
+      "group": { "kind": "build", "isDefault": true },
       "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "test",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "test",
+        "${workspaceFolder}/ERPNet.Testing",
+        "--filter", "FullyQualifiedName!~DbSeeder"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "migration",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "ef", "migrations", "add", "${input:migrationName}",
+        "--project", "${workspaceFolder}/ERPNet.Infrastructure",
+        "--startup-project", "${workspaceFolder}/ERPNet.Api",
+        "--output-dir", "Database/Migrations"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "migrate",
+      "type": "shell",
+      "command": "if ('${input:confirmMigrate}' -eq 'Confirmar') { dotnet ef database update --project ERPNet.Infrastructure --startup-project ERPNet.Api } else { Write-Host 'Cancelado.' }",
+      "problemMatcher": []
+    },
+    {
+      "label": "seed",
+      "type": "process",
+      "command": "dotnet",
+      "args": [
+        "test",
+        "${workspaceFolder}/ERPNet.Testing",
+        "--filter", "FullyQualifiedName~DbSeeder"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "drop",
+      "type": "shell",
+      "command": "if ('${input:confirmDrop}' -eq 'Confirmar') { dotnet ef database drop --force --project ERPNet.Infrastructure --startup-project ERPNet.Api } else { Write-Host 'Cancelado.' }",
+      "problemMatcher": []
     },
     {
       "label": "services-up",
       "type": "shell",
       "command": "$openMH = $true; $openMIO = $true; try { $c = [Net.Sockets.TcpClient]::new('localhost', 8025); $c.Close(); $openMH = $false } catch {}; try { $c = [Net.Sockets.TcpClient]::new('localhost', 9001); $c.Close(); $openMIO = $false } catch {}; docker compose up -d; if ($openMH) { Start-Process 'http://localhost:8025' }; if ($openMIO) { Start-Process 'http://localhost:9001' }",
-      "presentation": { "reveal": "silent" },
       "problemMatcher": []
     },
     {
-      "label": "start-services",
-      "dependsOn": ["build", "services-up"],
-      "dependsOrder": "sequence",
-      "problemMatcher": []
-    },
-    {
-      "label": "stop-services",
+      "label": "services-stop",
       "type": "shell",
       "command": "docker compose stop",
-      "presentation": { "reveal": "silent" },
       "problemMatcher": []
+    },
+    {
+      "label": "clear-minio",
+      "type": "shell",
+      "command": "$bucket = (Get-Content ERPNet.Api/appsettings.json | ConvertFrom-Json).MinIO.BucketName; Write-Host \"Vaciando bucket: $bucket\"; docker compose exec minio mc alias set local http://localhost:9000 erpnet 'ERPNet_Dev123!' --api S3v4; docker compose exec minio mc rm --recursive --force --dangerous \"local/$bucket\"; Write-Host 'Bucket vaciado.'",
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "migrationName",
+      "description": "Nombre de la migración",
+      "type": "promptString"
+    },
+    {
+      "id": "confirmMigrate",
+      "description": "¿Aplicar migraciones pendientes a la base de datos?",
+      "type": "pickString",
+      "options": ["Confirmar", "Cancelar"],
+      "default": "Cancelar"
+    },
+    {
+      "id": "confirmDrop",
+      "description": "⚠ ¿BORRAR la base de datos? Esta acción es irreversible.",
+      "type": "pickString",
+      "options": ["Confirmar", "Cancelar"],
+      "default": "Cancelar"
     }
   ]
 }
