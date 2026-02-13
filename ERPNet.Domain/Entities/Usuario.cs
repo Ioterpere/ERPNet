@@ -1,10 +1,11 @@
 using ERPNet.Domain.Common;
+using ERPNet.Domain.Common.Values;
 
 namespace ERPNet.Domain.Entities;
 
 public class Usuario : BaseEntity
 {
-    public string Email { get; set; } = null!;
+    public Email Email { get; set; }
     public string PasswordHash { get; set; } = null!;
     public DateTime? UltimoAcceso { get; set; }
     public bool Activo { get; set; }

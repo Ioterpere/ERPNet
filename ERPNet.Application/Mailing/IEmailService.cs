@@ -1,4 +1,4 @@
-namespace ERPNet.Application.Email;
+namespace ERPNet.Application.Mailing;
 
 public interface IEmailService
 {

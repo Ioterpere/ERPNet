@@ -1,8 +1,8 @@
-using ERPNet.Application.Email;
+using ERPNet.Application.Mailing;
 using ERPNet.Application.Reports.Interfaces;
 using ERPNet.Infrastructure.Database;
 using ERPNet.Infrastructure.Database.Context;
-using ERPNet.Infrastructure.Email;
+using ERPNet.Infrastructure.Mailing;
 using ERPNet.Infrastructure.FileStorage;
 using ERPNet.Infrastructure.Reports;
 using ERPNet.Application.FileStorage;
@@ -49,7 +49,7 @@ public static class DependencyInjection
                 options.FileProviders.Add(
                     new EmbeddedFileProvider(
                         typeof(EmailService).Assembly,
-                        "ERPNet.Infrastructure.Email.Templates"));
+                        "ERPNet.Infrastructure.Mailing.Templates"));
             });
 
         services.AddScoped<RazorViewToStringRenderer>();

@@ -11,7 +11,6 @@ public class EmpleadoConfiguration : IEntityTypeConfiguration<Empleado>
         builder.HasIndex(e => e.DNI).IsUnique();
         builder.Property(e => e.Nombre).HasMaxLength(100);
         builder.Property(e => e.Apellidos).HasMaxLength(200);
-        builder.Property(e => e.DNI).HasMaxLength(20);
 
         builder.HasOne(e => e.Seccion)
             .WithMany(s => s.Empleados)

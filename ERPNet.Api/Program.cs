@@ -88,7 +88,10 @@ builder.Services.AddRateLimiter(options =>
 
 #region Pipeline
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ERPNet.Api.Filters.ValidationFilter>();
+});
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi(options =>

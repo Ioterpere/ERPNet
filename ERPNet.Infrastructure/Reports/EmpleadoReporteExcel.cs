@@ -30,7 +30,7 @@ public static class EmpleadoReporteExcel
             ws.Cell(row, 1).Value = i + 1;
             ws.Cell(row, 2).Value = emp.Nombre;
             ws.Cell(row, 3).Value = emp.Apellidos;
-            ws.Cell(row, 4).Value = emp.DNI;
+            ws.Cell(row, 4).Value = emp.DNI.Value;
             ws.Cell(row, 5).Value = emp.Seccion?.Nombre ?? "—";
             ws.Cell(row, 6).Value = emp.Activo ? "Si" : "No";
         }

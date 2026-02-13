@@ -51,9 +51,6 @@ public class UsuariosController(
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateUsuarioRequest request)
     {
-        if (await usuarioRepository.ExisteEmailAsync(request.Email))
-            return FromResult(Result.Failure("Ya existe un usuario con ese email.", ErrorType.Conflict));
-
         var usuario = request.ToEntity(BCrypt.Net.BCrypt.HashPassword(request.Password));
 
         await usuarioRepository.CreateAsync(usuario);
@@ -73,21 +70,13 @@ public class UsuariosController(
         if (usuario is null)
             return FromResult(Result.Failure("Usuario no encontrado.", ErrorType.NotFound));
 
-        if (request.Email is not null && request.Email != usuario.Email)
+        if (request.Email is not null && request.Email != usuario.Email.Value)
         {
             if (await usuarioRepository.ExisteEmailAsync(request.Email, id))
                 return FromResult(Result.Failure("Ya existe un usuario con ese email.", ErrorType.Conflict));
-
-            usuario.Email = request.Email;
         }
 
-        if (request.EmpleadoId.HasValue)
-            usuario.EmpleadoId = request.EmpleadoId.Value;
-
-        if (request.Activo.HasValue)
-            usuario.Activo = request.Activo.Value;
-
-        usuarioRepository.Update(usuario);
+        request.ApplyTo(usuario);
         await unitOfWork.SaveChangesAsync();
         cache.Remove($"usuario:{id}");
 

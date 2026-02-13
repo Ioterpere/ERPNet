@@ -1,4 +1,4 @@
-using ERPNet.Application.Email;
+using ERPNet.Application.Mailing;
 using ERPNet.Application.Interfaces;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.DependencyInjection;
@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MimeKit;
 
-namespace ERPNet.Infrastructure.Email;
+namespace ERPNet.Infrastructure.Mailing;
 
 public class EmailBackgroundService(
     EmailChannel channel,

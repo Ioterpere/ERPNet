@@ -1,6 +1,6 @@
-using ERPNet.Application.Email;
+using ERPNet.Application.Mailing;
 
-namespace ERPNet.Infrastructure.Email;
+namespace ERPNet.Infrastructure.Mailing;
 
 public class EmailService(EmailChannel channel) : IEmailService
 {

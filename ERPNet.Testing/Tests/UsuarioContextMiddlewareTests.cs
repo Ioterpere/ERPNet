@@ -2,6 +2,7 @@ using System.Security.Claims;
 using ERPNet.Api.Middleware;
 using ERPNet.Application.Auth;
 using ERPNet.Application.Interfaces;
+using ERPNet.Domain.Common.Values;
 using ERPNet.Domain.Repositories;
 using ERPNet.Domain.Enums;
 using ERPNet.Domain.Entities;
@@ -34,13 +35,13 @@ public class UsuarioContextMiddlewareTests
     {
         var empleado = new Empleado
         {
-            Id = 1, Nombre = "Test", Apellidos = "User", DNI = "00000000A",
+            Id = 1, Nombre = "Test", Apellidos = "User", DNI = Dni.From("00000000T"),
             Activo = true, SeccionId = seccionId,
         };
 
         return new Usuario
         {
-            Id = id, Email = "test@erpnet.com", PasswordHash = "hash",
+            Id = id, Email = Email.From("test@erpnet.com"), PasswordHash = "hash",
             Activo = true, EmpleadoId = 1, Empleado = empleado,
             RolesUsuarios = roles.ToList(),
         };

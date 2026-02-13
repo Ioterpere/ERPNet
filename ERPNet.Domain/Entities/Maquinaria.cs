@@ -43,4 +43,10 @@ public class Maquinaria : BaseEntity, IHasArchivos<CampoArchivoMaquinaria>
             case CampoArchivoMaquinaria.Foto: FotoId = id; break;
         }
     }
+
+    public bool AceptaContentType(CampoArchivoMaquinaria campo, string contentType) => campo switch
+    {
+        CampoArchivoMaquinaria.Foto => contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase),
+        _ => true
+    };
 }

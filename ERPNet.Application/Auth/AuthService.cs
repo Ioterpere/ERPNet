@@ -1,7 +1,7 @@
 using ERPNet.Application.Auth.DTOs;
 using ERPNet.Application.Auth.Interfaces;
-using ERPNet.Application.Email;
-using ERPNet.Application.Email.Models;
+using ERPNet.Application.Mailing;
+using ERPNet.Application.Mailing.Models;
 using ERPNet.Domain.Repositories;
 using ERPNet.Application.Enums;
 using ERPNet.Domain.Entities;

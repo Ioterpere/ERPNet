@@ -28,6 +28,9 @@ public abstract class ArchivoBaseController<TEntidad, TEnum>(
         if (entidad is null)
             return NotFound();
 
+        if (!entidad.AceptaContentType(campoEnum, archivo.ContentType))
+            return BadRequest(new { error = "Tipo de archivo no permitido para este campo." });
+
         var slotActual = entidad.GetArchivoId(campoEnum);
         if (slotActual is not null)
         {

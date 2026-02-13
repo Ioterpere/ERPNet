@@ -1,5 +1,7 @@
 using ERPNet.Domain.Common;
+using ERPNet.Domain.Common.Values;
 using ERPNet.Domain.Entities;
+using ERPNet.Infrastructure.Database.Configurations.Converters;
 using Microsoft.EntityFrameworkCore;
 
 namespace ERPNet.Infrastructure.Database.Context;
@@ -29,6 +31,17 @@ public class ERPNetDbContext(DbContextOptions<ERPNetDbContext> options) : DbCont
     public DbSet<OrdenMantenimiento> OrdenesMantenimiento => Set<OrdenMantenimiento>();
 
     public DbSet<Archivo> Archivos => Set<Archivo>();
+
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        configurationBuilder.Properties<Email>()
+            .HaveConversion<EmailConverter>()
+            .HaveMaxLength(256);
+
+        configurationBuilder.Properties<Dni>()
+            .HaveConversion<DniConverter>()
+            .HaveMaxLength(20);
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

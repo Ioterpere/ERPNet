@@ -41,7 +41,7 @@ public class UsuarioRepository(ERPNetDbContext context) : Repository<Usuario>(co
     {
         return await Context.Usuarios
             .Where(u => u.Activo && u.RolesUsuarios.Any(ru => ru.Rol.Nombre == nombreRol))
-            .Select(u => u.Email)
+            .Select(u => (string)u.Email)
             .ToListAsync();
     }
 }

@@ -1,4 +1,5 @@
 using ERPNet.Domain.Common;
+using ERPNet.Domain.Common.Values;
 using ERPNet.Domain.Enums;
 
 namespace ERPNet.Domain.Entities;
@@ -7,7 +8,7 @@ public class Empleado : BaseEntity, IHasArchivos<CampoArchivoEmpleado>
 {
     public string Nombre { get; set; } = null!;
     public string Apellidos { get; set; } = null!;
-    public string DNI { get; set; } = null!;
+    public Dni DNI { get; set; }
     public bool Activo { get; set; }
 
     public int SeccionId { get; set; }
@@ -38,4 +39,10 @@ public class Empleado : BaseEntity, IHasArchivos<CampoArchivoEmpleado>
             case CampoArchivoEmpleado.Foto: FotoId = id; break;
         }
     }
+
+    public bool AceptaContentType(CampoArchivoEmpleado campo, string contentType) => campo switch
+    {
+        CampoArchivoEmpleado.Foto => contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase),
+        _ => true
+    };
 }

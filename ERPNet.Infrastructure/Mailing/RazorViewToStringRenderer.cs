@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
 
-namespace ERPNet.Infrastructure.Email;
+namespace ERPNet.Infrastructure.Mailing;
 
 public class RazorViewToStringRenderer(
     IRazorViewEngine viewEngine,

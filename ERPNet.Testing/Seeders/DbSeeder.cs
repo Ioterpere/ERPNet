@@ -1,4 +1,5 @@
 using ERPNet.Infrastructure.Database.Context;
+using ERPNet.Domain.Common.Values;
 using ERPNet.Domain.Enums;
 using ERPNet.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -44,17 +45,17 @@ public class DbSeeder(ITestOutputHelper output)
         // Empleados
         var empAdmin = new Empleado
         {
-            Nombre = "Admin", Apellidos = "Sistema", DNI = "00000000A",
+            Nombre = "Admin", Apellidos = "Sistema", DNI = Dni.From("00000000T"),
             Activo = true, SeccionId = seccionAdmin.Id, CreatedAt = DateTime.UtcNow,
         };
         var empEncargado = new Empleado
         {
-            Nombre = "Carlos", Apellidos = "Lopez", DNI = "11111111B",
+            Nombre = "Carlos", Apellidos = "Lopez", DNI = Dni.From("11111111H"),
             Activo = true, SeccionId = seccionProduccion.Id, CreatedAt = DateTime.UtcNow,
         };
         var empOperario = new Empleado
         {
-            Nombre = "Maria", Apellidos = "Garcia", DNI = "22222222C",
+            Nombre = "Maria", Apellidos = "Garcia", DNI = Dni.From("22222222J"),
             Activo = true, SeccionId = seccionProduccion.Id, CreatedAt = DateTime.UtcNow,
         };
         context.Empleados.AddRange(empAdmin, empEncargado, empOperario);
@@ -142,19 +143,19 @@ public class DbSeeder(ITestOutputHelper output)
         // Usuarios
         var usuarioAdmin = new Usuario
         {
-            Email = "admin@erpnet.com",
+            Email = Email.From("admin@erpnet.com"),
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
             Activo = true, EmpleadoId = empAdmin.Id, CreatedAt = DateTime.UtcNow,
         };
         var usuarioEncargado = new Usuario
         {
-            Email = "carlos@erpnet.com",
+            Email = Email.From("carlos@erpnet.com"),
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Carlos123!"),
             Activo = true, EmpleadoId = empEncargado.Id, CreatedAt = DateTime.UtcNow,
         };
         var usuarioOperario = new Usuario
         {
-            Email = "maria@erpnet.com",
+            Email = Email.From("maria@erpnet.com"),
             PasswordHash = BCrypt.Net.BCrypt.HashPassword("Maria123!"),
             Activo = true, EmpleadoId = empOperario.Id, CreatedAt = DateTime.UtcNow,
         };

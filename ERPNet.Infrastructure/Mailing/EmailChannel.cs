@@ -1,7 +1,7 @@
 using System.Threading.Channels;
-using ERPNet.Application.Email;
+using ERPNet.Application.Mailing;
 
-namespace ERPNet.Infrastructure.Email;
+namespace ERPNet.Infrastructure.Mailing;
 
 public class EmailChannel
 {

@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.0-preview.2.25163.2" />
     <PackageReference Include="Scrutor" Version="7.0.0" />
   </ItemGroup>

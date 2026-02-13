@@ -1,4 +1,4 @@
-namespace ERPNet.Application.Email.Models;
+namespace ERPNet.Application.Mailing.Models;
 
 public record ExcepcionEmailModel(
     string Mensaje,

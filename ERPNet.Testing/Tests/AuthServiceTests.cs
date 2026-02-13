@@ -1,7 +1,8 @@
 using ERPNet.Application.Auth;
 using ERPNet.Application.Auth.DTOs;
 using ERPNet.Application.Auth.Interfaces;
-using ERPNet.Application.Email;
+using ERPNet.Application.Mailing;
+using ERPNet.Domain.Common.Values;
 using ERPNet.Domain.Repositories;
 using ERPNet.Application.Enums;
 using ERPNet.Domain.Entities;
@@ -65,7 +66,7 @@ public class AuthServiceTests
     private Usuario CrearUsuarioTest() => new()
     {
         Id = 1,
-        Email = TestEmail,
+        Email = Email.From(TestEmail),
         PasswordHash = BCrypt.Net.BCrypt.HashPassword(TestPassword),
         Activo = true,
         EmpleadoId = 1,
