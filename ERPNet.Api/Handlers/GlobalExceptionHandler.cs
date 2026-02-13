@@ -1,6 +1,6 @@
 using ERPNet.Application.Mailing;
 using ERPNet.Application.Mailing.Models;
-using ERPNet.Application.Interfaces;
+using ERPNet.Application.Common.Interfaces;
 using ERPNet.Domain.Repositories;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;

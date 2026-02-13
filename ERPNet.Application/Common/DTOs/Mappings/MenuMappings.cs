@@ -1,6 +1,6 @@
 using ERPNet.Domain.Entities;
 
-namespace ERPNet.Application.DTOs.Mappings;
+namespace ERPNet.Application.Common.DTOs.Mappings;
 
 public static class MenuMappings
 {

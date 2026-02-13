@@ -1,4 +1,4 @@
-using ERPNet.Application;
+using ERPNet.Application.Common;
 using ERPNet.Application.FileStorage;
 using ERPNet.Application.FileStorage.DTOs;
 using ERPNet.Domain.Common;

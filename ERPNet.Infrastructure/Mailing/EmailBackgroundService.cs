@@ -1,5 +1,5 @@
 using ERPNet.Application.Mailing;
-using ERPNet.Application.Interfaces;
+using ERPNet.Application.Common.Interfaces;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

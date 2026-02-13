@@ -1,7 +1,7 @@
 using System.Net.Mime;
-using ERPNet.Application;
+using ERPNet.Application.Common;
 using ERPNet.Application.Auth;
-using ERPNet.Application.Enums;
+using ERPNet.Application.Common.Enums;
 using ERPNet.Application.FileStorage.DTOs;
 using Microsoft.AspNetCore.Mvc;
 

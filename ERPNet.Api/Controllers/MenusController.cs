@@ -1,9 +1,9 @@
 using ERPNet.Api.Attributes;
-using ERPNet.Application.DTOs;
-using ERPNet.Application.DTOs.Mappings;
+using ERPNet.Application.Common.DTOs;
+using ERPNet.Application.Common.DTOs.Mappings;
 using ERPNet.Domain.Repositories;
-using ERPNet.Application;
-using ERPNet.Application.Enums;
+using ERPNet.Application.Common;
+using ERPNet.Application.Common.Enums;
 using ERPNet.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 using ERPNet.Api.Controllers.Common;

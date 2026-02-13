@@ -1,4 +1,4 @@
-namespace ERPNet.Application.DTOs;
+namespace ERPNet.Application.Common.DTOs;
 
 public class MenuResponse
 {

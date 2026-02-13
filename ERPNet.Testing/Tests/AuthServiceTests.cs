@@ -4,12 +4,12 @@ using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Application.Mailing;
 using ERPNet.Domain.Common.Values;
 using ERPNet.Domain.Repositories;
-using ERPNet.Application.Enums;
+using ERPNet.Application.Common.Enums;
 using ERPNet.Domain.Entities;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using Xunit;
-using ERPNet.Application.Interfaces;
+using ERPNet.Application.Common.Interfaces;
 
 namespace ERPNet.Testing.Tests;
 

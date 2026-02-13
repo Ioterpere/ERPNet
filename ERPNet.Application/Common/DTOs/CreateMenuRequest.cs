@@ -1,6 +1,6 @@
 using ERPNet.Domain.Enums;
 
-namespace ERPNet.Application.DTOs;
+namespace ERPNet.Application.Common.DTOs;
 
 public class CreateMenuRequest
 {

@@ -1,6 +1,6 @@
-using ERPNet.Application.Enums;
+using ERPNet.Application.Common.Enums;
 
-namespace ERPNet.Application;
+namespace ERPNet.Application.Common;
 
 public class Result
 {

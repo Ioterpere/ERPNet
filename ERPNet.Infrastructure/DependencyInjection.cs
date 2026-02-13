@@ -6,7 +6,7 @@ using ERPNet.Infrastructure.Mailing;
 using ERPNet.Infrastructure.FileStorage;
 using ERPNet.Infrastructure.Reports;
 using ERPNet.Application.FileStorage;
-using ERPNet.Application.Interfaces;
+using ERPNet.Application.Common.Interfaces;
 using ERPNet.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace ERPNet.Application.DTOs.Validators;
+namespace ERPNet.Application.Common.DTOs.Validators;
 
 public class UpdateUsuarioRequestValidator : AbstractValidator<UpdateUsuarioRequest>
 {

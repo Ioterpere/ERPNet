@@ -1,8 +1,8 @@
 using ERPNet.Api.Attributes;
 using ERPNet.Api.Controllers.Common;
-using ERPNet.Application;
-using ERPNet.Application.DTOs;
-using ERPNet.Application.DTOs.Mappings;
+using ERPNet.Application.Common;
+using ERPNet.Application.Common.DTOs;
+using ERPNet.Application.Common.DTOs.Mappings;
 using ERPNet.Domain.Enums;
 using ERPNet.Domain.Filters;
 using ERPNet.Domain.Repositories;

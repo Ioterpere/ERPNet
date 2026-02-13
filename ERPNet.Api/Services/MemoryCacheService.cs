@@ -1,5 +1,5 @@
 using ERPNet.Application.Auth;
-using ERPNet.Application.Interfaces;
+using ERPNet.Application.Common.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 

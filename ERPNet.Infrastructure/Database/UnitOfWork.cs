@@ -1,5 +1,5 @@
 using ERPNet.Application.Auth.Interfaces;
-using ERPNet.Application.Interfaces;
+using ERPNet.Application.Common.Interfaces;
 using ERPNet.Infrastructure.Database.Context;
 using ERPNet.Domain.Common;
 using ERPNet.Domain.Repositories;

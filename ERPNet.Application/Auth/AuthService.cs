@@ -3,10 +3,11 @@ using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Application.Mailing;
 using ERPNet.Application.Mailing.Models;
 using ERPNet.Domain.Repositories;
-using ERPNet.Application.Enums;
+using ERPNet.Application.Common;
+using ERPNet.Application.Common.Enums;
 using ERPNet.Domain.Entities;
 using Microsoft.Extensions.Options;
-using ERPNet.Application.Interfaces;
+using ERPNet.Application.Common.Interfaces;
 
 namespace ERPNet.Application.Auth;
 

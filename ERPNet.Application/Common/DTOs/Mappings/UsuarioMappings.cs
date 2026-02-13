@@ -1,7 +1,7 @@
 using ERPNet.Domain.Common.Values;
 using ERPNet.Domain.Entities;
 
-namespace ERPNet.Application.DTOs.Mappings;
+namespace ERPNet.Application.Common.DTOs.Mappings;
 
 public static class UsuarioMappings
 {

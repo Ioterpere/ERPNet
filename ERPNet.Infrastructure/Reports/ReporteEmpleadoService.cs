@@ -1,5 +1,5 @@
-using ERPNet.Application;
-using ERPNet.Application.Enums;
+using ERPNet.Application.Common;
+using ERPNet.Application.Common.Enums;
 using ERPNet.Application.Reports;
 using ERPNet.Application.Reports.DTOs;
 using ERPNet.Application.Reports.Interfaces;

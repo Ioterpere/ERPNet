@@ -1,4 +1,4 @@
-using ERPNet.Application.Interfaces;
+using ERPNet.Application.Common.Interfaces;
 using ERPNet.Domain.Entities;
 using ERPNet.Infrastructure.Database.Context;
 

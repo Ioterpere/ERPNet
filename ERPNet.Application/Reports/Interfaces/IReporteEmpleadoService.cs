@@ -1,3 +1,4 @@
+using ERPNet.Application.Common;
 using ERPNet.Application.Reports.DTOs;
 
 namespace ERPNet.Application.Reports.Interfaces;

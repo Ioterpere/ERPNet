@@ -1,6 +1,6 @@
-using ERPNet.Application;
+using ERPNet.Application.Common;
 using ERPNet.Application.Auth.Interfaces;
-using ERPNet.Application.Enums;
+using ERPNet.Application.Common.Enums;
 using ERPNet.Application.FileStorage;
 using ERPNet.Application.FileStorage.DTOs;
 using ERPNet.Application.FileStorage.DTOs.Mappings;

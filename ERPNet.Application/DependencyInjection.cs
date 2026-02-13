@@ -1,6 +1,6 @@
 using ERPNet.Application.Auth;
 using ERPNet.Application.Auth.Interfaces;
-using ERPNet.Application.DTOs.Validators;
+using ERPNet.Application.Common.DTOs.Validators;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
