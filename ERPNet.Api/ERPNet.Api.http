@@ -1,6 +1,0 @@
-@ERPNet.Api_HostAddress = http://localhost:5211
-
-GET {{ERPNet.Api_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
