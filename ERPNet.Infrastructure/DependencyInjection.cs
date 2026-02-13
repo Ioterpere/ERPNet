@@ -53,7 +53,9 @@ public static class DependencyInjection
             });
 
         services.AddScoped<RazorViewToStringRenderer>();
+        services.AddSingleton<EmailChannel>();
         services.AddScoped<IEmailService, EmailService>();
+        services.AddHostedService<EmailBackgroundService>();
 
         return services;
     }
