@@ -4,6 +4,7 @@ using ERPNet.Infrastructure.Database.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ERPNet.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ERPNetDbContext))]
-    partial class ERPNetDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260213125515_Cambios en Menu")]
+    partial class CambiosenMenu
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -613,9 +616,6 @@ namespace ERPNet.Infrastructure.Database.Migrations
                     b.Property<bool>("CanEdit")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
                     b.HasKey("RolId", "RecursoId");
 
                     b.HasIndex("RecursoId");
@@ -689,9 +689,6 @@ namespace ERPNet.Infrastructure.Database.Migrations
 
                     b.Property<DateTime?>("FechaRevocacion")
                         .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
 
                     b.Property<string>("ReemplazadoPor")
                         .HasMaxLength(512)
@@ -768,9 +765,6 @@ namespace ERPNet.Infrastructure.Database.Migrations
 
                     b.Property<int>("RolId")
                         .HasColumnType("int");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
 
                     b.HasKey("UsuarioId", "RolId");
 

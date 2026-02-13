@@ -9,8 +9,8 @@ public static class MenuMappings
         Id = menu.Id,
         Nombre = menu.Nombre,
         Path = menu.Path,
-        IconClass = menu.IconClass,
-        CustomClass = menu.CustomClass,
+        IconClass = menu.Icon,
+        CustomClass = menu.Tag,
         Orden = menu.Orden,
         SubMenus = menu.SubMenus.Select(s => s.ToResponse()).ToList()
     };
@@ -19,8 +19,8 @@ public static class MenuMappings
     {
         Nombre = request.Nombre,
         Path = request.Path,
-        IconClass = request.IconClass,
-        CustomClass = request.CustomClass,
+        Icon = request.IconClass,
+        Tag = request.CustomClass,
         Orden = request.Orden,
         Plataforma = request.Plataforma,
         MenuPadreId = request.MenuPadreId,

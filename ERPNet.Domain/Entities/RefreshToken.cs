@@ -1,6 +1,8 @@
+using ERPNet.Domain.Common;
+
 namespace ERPNet.Domain.Entities;
 
-public class RefreshToken
+public class RefreshToken : ISoftDeletable
 {
     public int Id { get; set; }
     public string Token { get; set; } = null!; // SHA-256 hash
@@ -15,4 +17,5 @@ public class RefreshToken
     public bool IsExpirado => DateTime.UtcNow >= FechaExpiracion;
     public bool IsRevocado => FechaRevocacion is not null;
     public bool IsActivo => !IsExpirado && !IsRevocado;
+    public bool IsDeleted { get; set; }
 }

@@ -8,8 +8,6 @@ public class ArchivoConfiguration : IEntityTypeConfiguration<Archivo>
 {
     public void Configure(EntityTypeBuilder<Archivo> builder)
     {
-        builder.HasQueryFilter(a => !a.IsDeleted);
-
         builder.Property(a => a.NombreOriginal).HasMaxLength(500);
         builder.Property(a => a.ContentType).HasMaxLength(100);
 

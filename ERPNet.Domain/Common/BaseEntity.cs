@@ -1,6 +1,6 @@
 namespace ERPNet.Domain.Common;
 
-public abstract class BaseEntity
+public abstract class BaseEntity : ISoftDeletable
 {
     public int Id { get; set; }
     public DateTime CreatedAt { get; set; }

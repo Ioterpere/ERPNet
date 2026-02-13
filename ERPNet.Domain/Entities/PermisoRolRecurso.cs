@@ -1,8 +1,9 @@
+using ERPNet.Domain.Common;
 using ERPNet.Domain.Enums;
 
 namespace ERPNet.Domain.Entities;
 
-public class PermisoRolRecurso
+public class PermisoRolRecurso : ISoftDeletable
 {
     public int RolId { get; set; }
     public Rol Rol { get; set; } = null!;
@@ -14,4 +15,5 @@ public class PermisoRolRecurso
     public bool CanEdit { get; set; }
     public bool CanDelete { get; set; }
     public Alcance Alcance { get; set; }
+    public bool IsDeleted { get; set; }
 }

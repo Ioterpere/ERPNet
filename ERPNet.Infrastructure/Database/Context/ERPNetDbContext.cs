@@ -48,10 +48,10 @@ public class ERPNetDbContext(DbContextOptions<ERPNetDbContext> options) : DbCont
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ERPNetDbContext).Assembly);
 
-        // Global query filter para soft delete en todas las entidades que hereden de BaseEntity
+        // Global query filter para soft delete en todas las entidades que implementen ISoftDeletable
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
-            if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
+            if (typeof(ISoftDeletable).IsAssignableFrom(entityType.ClrType))
             {
                 var method = typeof(ERPNetDbContext)
                     .GetMethod(nameof(ApplySoftDeleteFilter),
@@ -63,7 +63,7 @@ public class ERPNetDbContext(DbContextOptions<ERPNetDbContext> options) : DbCont
         }
     }
 
-    private static void ApplySoftDeleteFilter<T>(ModelBuilder modelBuilder) where T : BaseEntity
+    private static void ApplySoftDeleteFilter<T>(ModelBuilder modelBuilder) where T : class, ISoftDeletable
     {
         modelBuilder.Entity<T>().HasQueryFilter(e => !e.IsDeleted);
     }

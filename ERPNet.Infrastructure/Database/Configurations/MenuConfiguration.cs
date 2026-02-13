@@ -10,8 +10,8 @@ public class MenuConfiguration : IEntityTypeConfiguration<Menu>
     {
         builder.Property(m => m.Nombre).HasMaxLength(200);
         builder.Property(m => m.Path).HasMaxLength(500);
-        builder.Property(m => m.IconClass).HasMaxLength(100);
-        builder.Property(m => m.CustomClass).HasMaxLength(100);
+        builder.Property(m => m.Icon).HasMaxLength(100);
+        builder.Property(m => m.Tag).HasMaxLength(100);
 
         builder.HasOne(m => m.MenuPadre)
             .WithMany(m => m.SubMenus)
