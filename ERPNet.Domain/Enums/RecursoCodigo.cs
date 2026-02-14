@@ -9,6 +9,10 @@ public enum RecursoCodigo
     Empleados = 2,
     Vacaciones = 3,
     Turnos = 4,
-    Maquinaria = 5,
-    Mantenimiento = 6
+    Marcajes = 5,
+    Maquinaria = 6,
+    Mantenimiento = 7,
+    OrdenesFabrica = 8,
+    Clientes = 9,
+    Facturas = 10
 }
