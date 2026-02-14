@@ -16,8 +16,9 @@ public class LogsController(ILogRepository logRepository) : BaseController
     [HttpGet]
     public async Task<IActionResult> GetLogs([FromQuery] LogFilter request)
     {
-        var logs = await logRepository.GetFilteredAsync(request);
+        var (logs, total) = await logRepository.GetFilteredAsync(request);
         var response = logs.Select(l => l.ToResponse()).ToList();
-        return FromResult(Result<List<LogResponse>>.Success(response));
+        return FromResult(Result<ListaPaginada<LogResponse>>.Success(
+            ListaPaginada<LogResponse>.Crear(response, total, request)));
     }
 }

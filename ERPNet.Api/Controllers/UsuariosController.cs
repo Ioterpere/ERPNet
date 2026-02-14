@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using ERPNet.Application.Common.DTOs;
 using ERPNet.Api.Attributes;
 using ERPNet.Domain.Enums;
+using ERPNet.Domain.Filters;
 using ERPNet.Api.Controllers.Common;
 using ERPNet.Application.Auth.DTOs;
 using ERPNet.Application.Auth.DTOs.Mappings;
@@ -20,11 +21,12 @@ public class UsuariosController(
     ICacheService cache) : BaseController
 {
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] PaginacionFilter filtro)
     {
-        var usuarios = await usuarioRepository.GetAllAsync();
+        var (usuarios, total) = await usuarioRepository.GetPaginatedAsync(filtro);
         var response = usuarios.Select(u => u.ToResponse()).ToList();
-        return FromResult(Result<List<UsuarioResponse>>.Success(response));
+        return FromResult(Result<ListaPaginada<UsuarioResponse>>.Success(
+            ListaPaginada<UsuarioResponse>.Crear(response, total, filtro)));
     }
 
     [SinPermiso]

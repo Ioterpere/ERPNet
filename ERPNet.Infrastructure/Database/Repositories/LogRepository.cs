@@ -13,7 +13,7 @@ public class LogRepository(ERPNetDbContext context) : ILogRepository
         context.Logs.Add(log);
     }
 
-    public async Task<List<Log>> GetFilteredAsync(LogFilter filter)
+    public async Task<(List<Log> Items, int TotalRegistros)> GetFilteredAsync(LogFilter filter)
     {
         var query = context.Logs.AsQueryable();
 
@@ -35,10 +35,13 @@ public class LogRepository(ERPNetDbContext context) : ILogRepository
         if (filter.Hasta.HasValue)
             query = query.Where(l => l.Fecha <= filter.Hasta.Value);
 
-        return await query
+        var total = await query.CountAsync();
+        var items = await query
             .OrderByDescending(l => l.Fecha)
             .Skip((filter.Pagina - 1) * filter.PorPagina)
             .Take(filter.PorPagina)
             .ToListAsync();
+
+        return (items, total);
     }
 }
