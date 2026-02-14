@@ -49,7 +49,7 @@ public class AuthService(
             {
                 await RegistrarIntentoAsync(request.Email, ip, false, usuario.Id);
                 return Result<AuthResponse>.Failure(
-                    "Cuenta bloqueada temporalmente por demasiados intentos fallidos.",
+                    "Credenciales inválidas.",
                     ErrorType.Unauthorized);
             }
 
