@@ -8,6 +8,7 @@ using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Application.Common.Interfaces;
 using ERPNet.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -86,6 +87,17 @@ builder.Services.AddRateLimiter(options =>
 
 #endregion
 
+#region Forwarded Headers
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+#endregion
+
 #region CORS
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
@@ -143,6 +155,7 @@ if (app.Environment.IsDevelopment())
     }).AllowAnonymous();
 }
 
+app.UseForwardedHeaders();
 app.UseExceptionHandler();
 app.UseHttpsRedirection();
 app.UseCors();
