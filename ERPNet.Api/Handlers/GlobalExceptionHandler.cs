@@ -17,7 +17,7 @@ public class GlobalExceptionHandler(
         Exception exception,
         CancellationToken cancellationToken)
     {
-        string codigoError = exception.GetHashCode().ToString();
+        string codigoError =  Guid.NewGuid().ToString();
 
         var modelo = new ExcepcionEmailModel(
             Mensaje: exception.Message,

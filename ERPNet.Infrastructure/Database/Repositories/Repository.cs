@@ -21,9 +21,6 @@ public abstract class Repository<T>(ERPNetDbContext context) : IRepository<T> wh
         return entity;
     }
 
-    public virtual void Update(T entity)
-        => context.Set<T>().Update(entity);
-
     public virtual void Delete(T entity)
         => entity.IsDeleted = true;
 }
