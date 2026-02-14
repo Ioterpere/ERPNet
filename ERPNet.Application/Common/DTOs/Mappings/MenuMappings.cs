@@ -4,6 +4,7 @@ namespace ERPNet.Application.Common.DTOs.Mappings;
 
 public static class MenuMappings
 {
+
     public static MenuResponse ToResponse(this Menu menu) => new()
     {
         Id = menu.Id,
@@ -24,6 +25,6 @@ public static class MenuMappings
         Orden = request.Orden,
         Plataforma = request.Plataforma,
         MenuPadreId = request.MenuPadreId,
-        RecursoId = request.RecursoId
+        MenusRoles = request.RolIds.Select(id => new MenuRol { RolId = id }).ToList()
     };
 }

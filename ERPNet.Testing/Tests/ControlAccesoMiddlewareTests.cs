@@ -44,7 +44,7 @@ public class ControlAccesoMiddlewareTests
 
     private static UsuarioContext CrearUsuarioContext(params PermisoUsuario[] permisos)
     {
-        return new UsuarioContext(1, "test@erpnet.com", 1, 1, permisos.ToList());
+        return new UsuarioContext(1, "test@erpnet.com", 1, 1, permisos.ToList(), []);
     }
 
     private static PermisoUsuario Permiso(RecursoCodigo codigo, bool create, bool edit, bool delete, Alcance alcance)

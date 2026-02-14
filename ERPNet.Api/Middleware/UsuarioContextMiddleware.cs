@@ -37,12 +37,17 @@ public class UsuarioContextMiddleware(RequestDelegate next)
                             g.Max(p => p.Alcance)))
                         .ToList();
 
+                    var rolIds = usuario.RolesUsuarios
+                        .Select(ru => ru.RolId)
+                        .ToList();
+
                     usuarioContext = new UsuarioContext(
                         usuario.Id,
                         usuario.Email,
                         usuario.EmpleadoId,
                         usuario.Empleado.SeccionId,
-                        permisos);
+                        permisos,
+                        rolIds);
 
                     cache.Set(cacheKey, usuarioContext);
                 }

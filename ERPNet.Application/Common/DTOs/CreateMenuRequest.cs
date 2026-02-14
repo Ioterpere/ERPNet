@@ -11,5 +11,5 @@ public class CreateMenuRequest
     public int Orden { get; set; }
     public Plataforma Plataforma { get; set; }
     public int? MenuPadreId { get; set; }
-    public int? RecursoId { get; set; }
+    public List<int> RolIds { get; set; } = [];
 }

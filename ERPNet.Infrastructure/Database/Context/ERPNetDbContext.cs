@@ -12,6 +12,7 @@ public class ERPNetDbContext(DbContextOptions<ERPNetDbContext> options) : DbCont
     public DbSet<Rol> Roles => Set<Rol>();
     public DbSet<RolUsuario> RolesUsuarios => Set<RolUsuario>();
     public DbSet<Menu> Menus => Set<Menu>();
+    public DbSet<MenuRol> MenusRoles => Set<MenuRol>();
     public DbSet<Recurso> Recursos => Set<Recurso>();
     public DbSet<PermisoRolRecurso> PermisosRolRecurso => Set<PermisoRolRecurso>();
     public DbSet<Log> Logs => Set<Log>();

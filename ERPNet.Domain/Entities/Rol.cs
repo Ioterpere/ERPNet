@@ -9,4 +9,5 @@ public class Rol : BaseEntity
 
     public ICollection<RolUsuario> RolesUsuarios { get; set; } = [];
     public ICollection<PermisoRolRecurso> PermisosRolRecurso { get; set; } = [];
+    public ICollection<MenuRol> MenusRoles { get; set; } = [];
 }

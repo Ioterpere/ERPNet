@@ -15,6 +15,12 @@
       "problemMatcher": "$msCompile"
     },
     {
+      "label": "debug",
+      "dependsOn": ["services-up","seed", "build", "test"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
       "label": "test",
       "type": "process",
       "command": "dotnet",

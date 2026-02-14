@@ -1,3 +1,4 @@
+using ERPNet.Application.Auth;
 using ERPNet.Domain.Common.Values;
 using ERPNet.Domain.Entities;
 

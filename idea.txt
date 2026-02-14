@@ -1,0 +1,83 @@
+ERPNet.sln
+│
+├── 1. Core
+│   ├── ERPNet.Domain           (Entities, Enums, Interfaces de repos, Lógica de Negocio)
+│   └── ERPNet.Application      (DTOs, Mappings, Interfaces base)
+│
+├── 2. Infrastructure
+│   └── ERPNet.Infrastructure   (Database/, Mail/, FileStorage... → EF Core, Migrations, Repositorios, Configs)
+│
+├── 3. Presentation
+│   └── ERPNet.Api              (Controllers, Middlewares, Servicios e implementaciones, Settings)
+│
+└── 4. Tests
+    └── ERPNet.Tests
+
+
+Idea de las tablas y lógica
+
+Usuarios: Credenciales de acceso, contraseña hasheada, ultacceso 
+Roles: Define el nivel de permiso (Admin, Operario, Jefe de Planta, Responsable de Mantenimiento, Responsable RRHH).
+Menus: columna Plataforma (Mobile/Web), otra con el nombre del menu, otra con el id del menu padre, otra con el campo path, otra con el del icono class, otra con un custom class y otra order
+PermisosRolMenu: Tabla intermedia para decir qué Rol puede ver qué Menú y si tiene algun permiso especial en esa opción (como borrar)
+RolesUsuarios
+Logs
+Empleados:Datos personales, pertenecen siempre a una seccion, pueden tener un encargado especifico
+Secciones: para que un jefe de sección solo apruebe vacaciones de su gente y no de toda la fábrica.  
+Vacaciones: Con un campo Estado (Pendiente, Aprobado, Rechazado) asciado a un empleado en una fecha.
+Turnos:puede haber turnos de cualquier día a cualquier hora
+Marcajes: Registros de entrada/salida.
+IncidenciasMarcaje(Si un día llego tarde a su turno pasado una tolerancia se genera autmaticamente, pendiente validar por RRHH y poner observaciones)
+Maquinaria
+OrdenesMantenimiento
+TiposMantenimiento: Una tabla maestra simple para definir "Correctivo", "Preventivo"
+
+
+
+-Secciones: Recursos Humanos, Calidad, Mantenimiento, Producción, Contabilidad, Comercial, Carnicos, Pescados, Paletizado, Informatica
+
+-Sistema de Menus:
+
+1.Administración --Rol: Administrador
+1.1.Usuarios 
+1.2.Roles
+1.3.Menu
+
+2.Recursos Humanos
+2.1.Empleados --Roles: Encargados[SECCION], Encargados generales y Responsable RRHH (Los encargados solo pueden leer)
+2.2.Gestión de Jornadas --Roles: Encargados[SECCION], Encargados generales y Responsable RRHH (Los encargados solo pueden leer/crear)
+2.3.Incidencias de Marcaje --Roles: Encargados[SECCION], Encargados generales y Responsable RRHH (Los encargados solo pueden leer/crear)
+2.4.Validar Gestiones --Rol: Responsable RRHH
+
+3.Mantenimiento
+3.1.Maquinaria --Rol:Encargado Mantenimiento
+3.2.Ordenes de Mantenimiento --Rol: Encargado Mantenimiento
+3.3.Tareas de Mantenimiento --Rol:Encargado Mantenimiento, Operador Mantenimiento
+3.4.Reportar Avería --Rol: Reportar Averia
+
+4.Producción y Calidad
+4.1.Órdenes de Fabricación  --Rol:Encargado General, Jefe de Produccion
+4.2.Control de Calidad  --Rol:Encargado Calidad
+
+5.Gestion Comercial
+5.1.Clientes --Rol:Comercial, Contabilidad
+5.2.Facturas --Rol:Contabilidad
+
+
+-Sistema de Roles:
+
+Administrador: Tiene acceso total a todos los Recursos
+Responsable RRHH: Empleados/Turnos/Vacaciones/Marcajes (todos los permisos)
+Encargado General: Empleados (leer)   Turnos/Vacaciones/Marcajes (leer/crear), OrdenesFabrica (leer)
+Encargado [SECCION]: Un rol por cada seccion, tiene los mismos accesos que el Encargado General pero solo sobre su seccion
+Encargado Calidad: a mayores OrdenesFabrica (leer/editar)
+Encargado Mantenimiento: a mayores Maquinaria (todos los permisos) Mantenimiento (todos los permisos)
+Operario Mantenimiento: Mantenimiento (leer/crear/editar)
+Reportar Averias: Mantenimiento (crear)
+Jefe de Produccion: OrdenesFabrica (todos los permisos)
+Comercial: Clientes (todos los permisos)
+Contabilidad: Facturas (todos los permisos) Clientes (leer)
+
+
+Token de 100 años de validez (Admin)
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwianRpIjoiYTZhNTkxZTYtZmFlOS00MDkzLWE0NDEtYTFhMTU0ZmM1ZDlmIiwiZXhwIjo0OTI2NDkzOTcwLCJpc3MiOiJFUlBOZXQiLCJhdWQiOiJFUlBOZXQifQ.puoJQU543kLQMh_LS5sQMySGyhw6W0OjCdx62tHjzxE

@@ -8,6 +8,8 @@ using ERPNet.Application.Common.DTOs;
 using ERPNet.Api.Attributes;
 using ERPNet.Domain.Enums;
 using ERPNet.Api.Controllers.Common;
+using ERPNet.Application.Auth.DTOs;
+using ERPNet.Application.Auth.DTOs.Mappings;
 
 namespace ERPNet.Api.Controllers;
 
@@ -26,15 +28,10 @@ public class UsuariosController(
     }
 
     [SinPermiso]
-    [HttpGet("me")]
-    public async Task<IActionResult> GetMe()
+    [HttpGet("account")]
+    public IActionResult GetMe()
     {
-        var usuario = await usuarioRepository.GetByIdAsync(UsuarioActual.Id);
-
-        if (usuario is null)
-            return FromResult(Result.Failure("Usuario no encontrado.", ErrorType.NotFound));
-
-        return FromResult(Result<UsuarioResponse>.Success(usuario.ToResponse()));
+        return FromResult(Result<AccountResponse>.Success(UsuarioActual.ToResponse()));
     }
 
     [HttpGet("{id}", Name = nameof(GetById))]

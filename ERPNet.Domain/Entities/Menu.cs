@@ -13,9 +13,7 @@ public class Menu : BaseEntity
     public int Orden { get; set; }
     public Plataforma Plataforma { get; set; }
 
-    public int? RecursoId { get; set; }
-
     public Menu? MenuPadre { get; set; }
-    public Recurso? Recurso { get; set; }
     public ICollection<Menu> SubMenus { get; set; } = [];
+    public ICollection<MenuRol> MenusRoles { get; set; } = [];
 }

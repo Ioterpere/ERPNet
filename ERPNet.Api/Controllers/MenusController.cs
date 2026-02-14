@@ -19,8 +19,7 @@ public class MenusController(
     [SinPermiso]
     public async Task<IActionResult> GetMenus([FromQuery] Plataforma plataforma)
     {
-        var codigos = UsuarioActual.Permisos.Select(p => p.Codigo).ToList();
-        var menus = await menuRepository.GetMenusVisiblesAsync(plataforma, codigos);
+        var menus = await menuRepository.GetMenusVisiblesAsync(plataforma, UsuarioActual.RolIds);
         var response = menus.Select(m => m.ToResponse()).ToList();
         return FromResult(Result<List<MenuResponse>>.Success(response));
     }

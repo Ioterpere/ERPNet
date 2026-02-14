@@ -8,14 +8,14 @@ namespace ERPNet.Infrastructure.Database.Repositories;
 
 public class MenuRepository(ERPNetDbContext context) : Repository<Menu>(context), IMenuRepository
 {
-    public async Task<List<Menu>> GetMenusVisiblesAsync(Plataforma plataforma, List<RecursoCodigo> codigosRecurso)
+    public async Task<List<Menu>> GetMenusVisiblesAsync(Plataforma plataforma, List<int> rolIds)
     {
-        var recursoIds = codigosRecurso.Select(c => (int)c).ToList();
-
         return await Context.Menus
-            .Include(m => m.SubMenus.OrderBy(s => s.Orden))
+            .Include(m => m.SubMenus
+                .Where(s => !s.MenusRoles.Any() || s.MenusRoles.Any(mr => rolIds.Contains(mr.RolId)))
+                .OrderBy(s => s.Orden))
             .Where(m => m.Plataforma == plataforma)
-            .Where(m => m.RecursoId == null || recursoIds.Contains(m.RecursoId!.Value))
+            .Where(m => !m.MenusRoles.Any() || m.MenusRoles.Any(mr => rolIds.Contains(mr.RolId)))
             .Where(m => m.MenuPadreId == null)
             .OrderBy(m => m.Orden)
             .ToListAsync();

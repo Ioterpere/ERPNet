@@ -53,17 +53,22 @@ public class UnitOfWork(ERPNetDbContext context, ICurrentUserProvider currentUse
             }
         }
 
-        await using var transaction = await context.Database.BeginTransactionAsync(ct);
+        var strategy = context.Database.CreateExecutionStrategy();
 
-        await context.SaveChangesAsync(ct);
-
-        if (auditEntries.Count > 0)
+        await strategy.ExecuteAsync(async () =>
         {
-            CreateLogs(auditEntries, usuarioId);
-            await context.SaveChangesAsync(ct);
-        }
+            await using var transaction = await context.Database.BeginTransactionAsync(ct);
 
-        await transaction.CommitAsync(ct);
+            await context.SaveChangesAsync(ct);
+
+            if (auditEntries.Count > 0)
+            {
+                CreateLogs(auditEntries, usuarioId);
+                await context.SaveChangesAsync(ct);
+            }
+
+            await transaction.CommitAsync(ct);
+        });
     }
 
     private static bool IsSoftDelete(EntityEntry<BaseEntity> entry)
