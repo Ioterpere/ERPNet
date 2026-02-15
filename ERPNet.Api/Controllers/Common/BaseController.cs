@@ -71,6 +71,7 @@ public abstract class BaseController : ControllerBase
             ErrorType.NotFound => StatusCodes.Status404NotFound,
             ErrorType.Conflict => StatusCodes.Status409Conflict,
             ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
+            ErrorType.Forbidden => StatusCodes.Status403Forbidden,
             ErrorType.InternalError => StatusCodes.Status500InternalServerError,
             _ => StatusCodes.Status500InternalServerError
         };
@@ -100,6 +101,7 @@ public abstract class BaseController : ControllerBase
         ErrorType.NotFound => "Recurso no encontrado.",
         ErrorType.Conflict => "Conflicto.",
         ErrorType.Unauthorized => "No autorizado.",
+        ErrorType.Forbidden => "Acceso denegado.",
         ErrorType.InternalError => "Error interno del servidor.",
         _ => "Error."
     };
