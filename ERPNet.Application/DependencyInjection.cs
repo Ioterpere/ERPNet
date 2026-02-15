@@ -16,6 +16,7 @@ public static class DependencyInjection
         services.AddScoped<IUsuarioService, UsuarioService>();
         services.AddScoped<IEmpleadoService, EmpleadoService>();
         services.AddScoped<IMaquinariaService, MaquinariaService>();
+        services.AddScoped<IRolService, RolService>();
         services.AddValidatorsFromAssemblyContaining<CreateUsuarioRequestValidator>();
         return services;
     }
