@@ -9,6 +9,8 @@ public class Usuario : BaseEntity
     public string PasswordHash { get; set; } = null!;
     public DateTime? UltimoAcceso { get; set; }
     public bool Activo { get; set; }
+    public DateTime? CaducidadContrasena { get; set; }
+    public DateTime UltimoCambioContrasena { get; set; }
 
     public int EmpleadoId { get; set; }
     public Empleado Empleado { get; set; } = null!;

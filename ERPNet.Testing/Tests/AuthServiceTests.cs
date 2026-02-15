@@ -67,6 +67,8 @@ public class AuthServiceTests
         PasswordHash = BCrypt.Net.BCrypt.HashPassword(TestPassword),
         Activo = true,
         EmpleadoId = 1,
+        UltimoCambioContrasena = DateTime.UtcNow,
+        CaducidadContrasena = DateTime.UtcNow.AddDays(90),
     };
 
     #region Login
@@ -172,6 +174,33 @@ public class AuthServiceTests
             new LoginRequest { Email = TestEmail, Password = "Wrong" }, TestIp);
 
         await _logIntentoRepo.Received(1).AddAsync(Arg.Is<LogIntentoLogin>(l => !l.Exitoso));
+    }
+
+    [Fact(DisplayName = "Login: contraseña expirada devuelve RequiereCambioContrasena true")]
+    public async Task Login_ContrasenaExpirada_DevuelveRequiereCambio()
+    {
+        var usuario = CrearUsuarioTest();
+        usuario.CaducidadContrasena = DateTime.UtcNow.AddDays(-1);
+        _usuarioRepo.GetByEmailAsync(TestEmail).Returns(usuario);
+
+        var result = await _sut.LoginAsync(
+            new LoginRequest { Email = TestEmail, Password = TestPassword }, TestIp);
+
+        Assert.True(result.IsSuccess);
+        Assert.True(result.Value!.RequiereCambioContrasena);
+    }
+
+    [Fact(DisplayName = "Login: contraseña no expirada devuelve RequiereCambioContrasena false")]
+    public async Task Login_ContrasenaNoCaducada_DevuelveNoRequiereCambio()
+    {
+        var usuario = CrearUsuarioTest();
+        _usuarioRepo.GetByEmailAsync(TestEmail).Returns(usuario);
+
+        var result = await _sut.LoginAsync(
+            new LoginRequest { Email = TestEmail, Password = TestPassword }, TestIp);
+
+        Assert.True(result.IsSuccess);
+        Assert.False(result.Value!.RequiereCambioContrasena);
     }
 
     #endregion

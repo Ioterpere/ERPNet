@@ -12,7 +12,9 @@ public static class UsuarioMappings
         Email = usuario.Email.Value,
         EmpleadoId = usuario.EmpleadoId,
         Activo = usuario.Activo,
-        UltimoAcceso = usuario.UltimoAcceso
+        UltimoAcceso = usuario.UltimoAcceso,
+        CaducidadContrasena = usuario.CaducidadContrasena,
+        UltimoCambioContrasena = usuario.UltimoCambioContrasena
     };
 
     public static Usuario ToEntity(this CreateUsuarioRequest request, string passwordHash) => new()
@@ -20,7 +22,9 @@ public static class UsuarioMappings
         Email = Email.From(request.Email),
         PasswordHash = passwordHash,
         EmpleadoId = request.EmpleadoId,
-        Activo = true
+        Activo = true,
+        UltimoCambioContrasena = DateTime.UtcNow,
+        CaducidadContrasena = DateTime.UtcNow.AddDays(ContrasenaSettings.DiasExpiracionPorDefecto)
     };
 
     public static void ApplyTo(this UpdateUsuarioRequest request, Usuario usuario)
@@ -33,5 +37,8 @@ public static class UsuarioMappings
 
         if (request.Activo.HasValue)
             usuario.Activo = request.Activo.Value;
+
+        if (request.CaducidadContrasena.HasValue)
+            usuario.CaducidadContrasena = request.CaducidadContrasena.Value;
     }
 }

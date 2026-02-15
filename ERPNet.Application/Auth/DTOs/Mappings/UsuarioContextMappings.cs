@@ -11,5 +11,6 @@ public static class UsuarioContextMappings
         EmpleadoId = ctx.EmpleadoId,
         SeccionId = ctx.SeccionId,
         Roles = ctx.RolIds,
+        RequiereCambioContrasena = ctx.RequiereCambioContrasena,
     };
 }

@@ -41,13 +41,17 @@ public class UsuarioContextMiddleware(RequestDelegate next)
                         .Select(ru => ru.RolId)
                         .ToList();
 
+                    var requiereCambio = usuario.CaducidadContrasena.HasValue
+                        && usuario.CaducidadContrasena.Value < DateTime.UtcNow;
+
                     usuarioContext = new UsuarioContext(
                         usuario.Id,
                         usuario.Email,
                         usuario.EmpleadoId,
                         usuario.Empleado.SeccionId,
                         permisos,
-                        rolIds);
+                        rolIds,
+                        requiereCambio);
 
                     cache.Set(cacheKey, usuarioContext);
                 }

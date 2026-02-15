@@ -15,8 +15,12 @@ public class UpdateUsuarioRequestValidator : AbstractValidator<UpdateUsuarioRequ
             .GreaterThan(0).WithMessage("El EmpleadoId debe ser mayor que 0.")
             .When(x => x.EmpleadoId.HasValue);
 
+        RuleFor(x => x.CaducidadContrasena)
+            .GreaterThan(DateTime.UtcNow).WithMessage("La fecha de caducidad debe ser futura.")
+            .When(x => x.CaducidadContrasena.HasValue);
+
         RuleFor(x => x)
-            .Must(x => x.Email is not null || x.EmpleadoId.HasValue || x.Activo.HasValue)
+            .Must(x => x.Email is not null || x.EmpleadoId.HasValue || x.Activo.HasValue || x.CaducidadContrasena.HasValue)
             .WithMessage("Debe informar al menos un campo.");
     }
 }

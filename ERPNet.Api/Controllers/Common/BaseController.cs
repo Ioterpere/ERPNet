@@ -39,6 +39,14 @@ public abstract class BaseController : ControllerBase
         return BuildErrorResponse(result);
     }
 
+    protected IActionResult CreatedFromResult<T>(Result<T> result, string routeName, Func<T, object> routeValuesFactory)
+    {
+        if (result.IsSuccess)
+            return CreatedAtRoute(routeName, routeValuesFactory(result.Value!), result.Value);
+
+        return BuildErrorResponse(result);
+    }
+
     protected async Task<IActionResult> DescargarArchivo(Result<ArchivoDescarga> result, CancellationToken ct)
     {
         if (!result.IsSuccess)

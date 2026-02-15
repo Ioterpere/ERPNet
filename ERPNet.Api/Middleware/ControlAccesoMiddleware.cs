@@ -24,18 +24,36 @@ public class ControlAccesoMiddleware(RequestDelegate next)
             return;
         }
 
-        // [SinPermiso] en el action → se salta el control
-        if (endpoint.Metadata.GetMetadata<SinPermisoAttribute>() is not null)
-        {
-            await next(context);
-            return;
-        }
-
+        // Obtener contexto de usuario (movido antes de [SinPermiso])
         var usuarioContext = context.Items["UsuarioContext"] as UsuarioContext;
 
         if (usuarioContext is null)
         {
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return;
+        }
+
+        var esSinPermiso = endpoint.Metadata.GetMetadata<SinPermisoAttribute>() is not null;
+
+        // Contraseña caducada: solo permitir endpoints marcados con [PermitirContrasenaCaducada]
+        if (usuarioContext.RequiereCambioContrasena)
+        {
+            if (endpoint.Metadata.GetMetadata<PermitirContrasenaCaducadaAttribute>() is not null)
+            {
+                await next(context);
+                return;
+            }
+
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsJsonAsync(new { detail = "Cambio de contraseña requerido." });
+            return;
+        }
+
+        // [SinPermiso] en el action → se salta el control
+        if (esSinPermiso)
+        {
+            await next(context);
             return;
         }
 

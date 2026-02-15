@@ -57,7 +57,7 @@ public class AuthService(
                 await usuarioRepository.UpdateUltimoAccesoAsync(usuario.Id, DateTime.UtcNow);
                 await logService.EventAsync("Login", $"IP: {ip}", usuario.Id);
 
-                var response = GenerarTokens(usuario);
+                var response = GenerarTokens(usuario, ContrasenaExpirada(usuario));
                 await GuardarRefreshTokenAsync(response.RefreshToken, usuario.Id);
 
                 return Result<AuthResponse>.Success(response);
@@ -104,7 +104,7 @@ public class AuthService(
 
         // Rotar: revocar actual y crear nuevo
         var usuario = refreshToken.Usuario;
-        var response = GenerarTokens(usuario);
+        var response = GenerarTokens(usuario, ContrasenaExpirada(usuario));
         var nuevoHash = tokenService.HashToken(response.RefreshToken);
 
         refreshToken.FechaRevocacion = DateTime.UtcNow;
@@ -131,7 +131,10 @@ public class AuthService(
         return Result.Success();
     }
 
-    private AuthResponse GenerarTokens(Usuario usuario)
+    private static bool ContrasenaExpirada(Usuario usuario)
+        => usuario.CaducidadContrasena.HasValue && usuario.CaducidadContrasena.Value < DateTime.UtcNow;
+
+    private AuthResponse GenerarTokens(Usuario usuario, bool requiereCambioContrasena)
     {
         var accessToken = tokenService.GenerateAccessToken(usuario);
         var refreshToken = tokenService.GenerateRefreshToken();
@@ -140,7 +143,8 @@ public class AuthService(
         {
             AccessToken = accessToken,
             RefreshToken = refreshToken,
-            Expiration = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes)
+            Expiration = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes),
+            RequiereCambioContrasena = requiereCambioContrasena
         };
     }
 

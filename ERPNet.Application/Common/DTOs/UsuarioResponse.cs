@@ -7,4 +7,6 @@ public class UsuarioResponse
     public int EmpleadoId { get; set; }
     public bool Activo { get; set; }
     public DateTime? UltimoAcceso { get; set; }
+    public DateTime? CaducidadContrasena { get; set; }
+    public DateTime UltimoCambioContrasena { get; set; }
 }

@@ -20,12 +20,13 @@ public class ControlAccesoMiddlewareTests
         });
     }
 
-    private static Endpoint CrearEndpoint(RecursoAttribute? recurso = null, RequierePermisoAttribute? requierePermiso = null, SinPermisoAttribute? sinPermiso = null)
+    private static Endpoint CrearEndpoint(RecursoAttribute? recurso = null, RequierePermisoAttribute? requierePermiso = null, SinPermisoAttribute? sinPermiso = null, PermitirContrasenaCaducadaAttribute? permitirCaducada = null)
     {
         var metadata = new List<object>();
         if (recurso is not null) metadata.Add(recurso);
         if (requierePermiso is not null) metadata.Add(requierePermiso);
         if (sinPermiso is not null) metadata.Add(sinPermiso);
+        if (permitirCaducada is not null) metadata.Add(permitirCaducada);
 
         return new Endpoint(_ => Task.CompletedTask, new EndpointMetadataCollection(metadata), "TestEndpoint");
     }
@@ -44,7 +45,7 @@ public class ControlAccesoMiddlewareTests
 
     private static UsuarioContext CrearUsuarioContext(params PermisoUsuario[] permisos)
     {
-        return new UsuarioContext(1, "test@erpnet.com", 1, 1, permisos.ToList(), []);
+        return new UsuarioContext(1, "test@erpnet.com", 1, 1, permisos.ToList(), [], false);
     }
 
     private static PermisoUsuario Permiso(RecursoCodigo codigo, bool create, bool edit, bool delete, Alcance alcance)
@@ -83,12 +84,28 @@ public class ControlAccesoMiddlewareTests
         var endpoint = CrearEndpoint(
             recurso: new RecursoAttribute(RecursoCodigo.Aplicacion),
             sinPermiso: new SinPermisoAttribute());
-        var context = CrearHttpContext("GET", endpoint);
+        var usuarioCtx = CrearUsuarioContext();
+        var context = CrearHttpContext("GET", endpoint, usuarioCtx);
         var middleware = CrearMiddleware();
 
         await middleware.InvokeAsync(context);
 
         Assert.True(_nextLlamado);
+    }
+
+    [Fact(DisplayName = "[SinPermiso] sin UsuarioContext → 401")]
+    public async Task SinPermisoAttr_SinUsuario_401()
+    {
+        var endpoint = CrearEndpoint(
+            recurso: new RecursoAttribute(RecursoCodigo.Aplicacion),
+            sinPermiso: new SinPermisoAttribute());
+        var context = CrearHttpContext("GET", endpoint);
+        var middleware = CrearMiddleware();
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal(StatusCodes.Status401Unauthorized, context.Response.StatusCode);
+        Assert.False(_nextLlamado);
     }
 
     #endregion
@@ -278,6 +295,57 @@ public class ControlAccesoMiddlewareTests
         await middleware.InvokeAsync(context);
 
         Assert.True(_nextLlamado);
+    }
+
+    #endregion
+
+    #region Contraseña caducada
+
+    [Fact(DisplayName = "Contraseña caducada + endpoint normal → 403")]
+    public async Task ContrasenaCaducada_EndpointNormal_403()
+    {
+        var endpoint = CrearEndpoint(recurso: new RecursoAttribute(RecursoCodigo.Aplicacion));
+        var usuarioCtx = new UsuarioContext(1, "test@erpnet.com", 1, 1,
+            [Permiso(RecursoCodigo.Aplicacion, true, true, true, Alcance.Global)], [], true);
+        var context = CrearHttpContext("GET", endpoint, usuarioCtx);
+        var middleware = CrearMiddleware();
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal(StatusCodes.Status403Forbidden, context.Response.StatusCode);
+        Assert.False(_nextLlamado);
+    }
+
+    [Fact(DisplayName = "Contraseña caducada + [PermitirContrasenaCaducada] → pasa")]
+    public async Task ContrasenaCaducada_PermitirCaducada_Pasa()
+    {
+        var endpoint = CrearEndpoint(
+            recurso: new RecursoAttribute(RecursoCodigo.Aplicacion),
+            sinPermiso: new SinPermisoAttribute(),
+            permitirCaducada: new PermitirContrasenaCaducadaAttribute());
+        var usuarioCtx = new UsuarioContext(1, "test@erpnet.com", 1, 1, [], [], true);
+        var context = CrearHttpContext("PUT", endpoint, usuarioCtx);
+        var middleware = CrearMiddleware();
+
+        await middleware.InvokeAsync(context);
+
+        Assert.True(_nextLlamado);
+    }
+
+    [Fact(DisplayName = "Contraseña caducada + [SinPermiso] sin [PermitirContrasenaCaducada] → 403")]
+    public async Task ContrasenaCaducada_SinPermiso_SinPermitir_403()
+    {
+        var endpoint = CrearEndpoint(
+            recurso: new RecursoAttribute(RecursoCodigo.Aplicacion),
+            sinPermiso: new SinPermisoAttribute());
+        var usuarioCtx = new UsuarioContext(1, "test@erpnet.com", 1, 1, [], [], true);
+        var context = CrearHttpContext("GET", endpoint, usuarioCtx);
+        var middleware = CrearMiddleware();
+
+        await middleware.InvokeAsync(context);
+
+        Assert.Equal(StatusCodes.Status403Forbidden, context.Response.StatusCode);
+        Assert.False(_nextLlamado);
     }
 
     #endregion

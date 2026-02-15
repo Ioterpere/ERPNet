@@ -1,109 +1,55 @@
-using ERPNet.Application.Common.DTOs.Mappings;
-using ERPNet.Application.Common.Interfaces;
-using ERPNet.Application.Mailing;
-using ERPNet.Domain.Repositories;
 using ERPNet.Application.Common;
-using ERPNet.Application.Common.Enums;
-using Microsoft.AspNetCore.Mvc;
 using ERPNet.Application.Common.DTOs;
+using ERPNet.Application.Common.Interfaces;
+using ERPNet.Application.Auth.DTOs.Mappings;
+using ERPNet.Application.Auth.DTOs;
+using Microsoft.AspNetCore.Mvc;
 using ERPNet.Api.Attributes;
 using ERPNet.Domain.Enums;
 using ERPNet.Domain.Filters;
 using ERPNet.Api.Controllers.Common;
-using ERPNet.Application.Auth.DTOs;
-using ERPNet.Application.Auth.DTOs.Mappings;
 
 namespace ERPNet.Api.Controllers;
 
 [Recurso(RecursoCodigo.Aplicacion)]
-public class UsuariosController(
-    IUsuarioRepository usuarioRepository,
-    IUnitOfWork unitOfWork,
-    ICacheService cache,
-    IMailService mailService) : BaseController
+public class UsuariosController(IUsuarioService usuarioService) : BaseController
 {
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] PaginacionFilter filtro)
-    {
-        var (usuarios, total) = await usuarioRepository.GetPaginatedAsync(filtro);
-        var response = usuarios.Select(u => u.ToResponse()).ToList();
-        return FromResult(Result<ListaPaginada<UsuarioResponse>>.Success(
-            ListaPaginada<UsuarioResponse>.Crear(response, total, filtro)));
-    }
-
-    [SinPermiso]
-    [HttpGet("account")]
-    public IActionResult GetMe()
-    {
-        return FromResult(Result<AccountResponse>.Success(UsuarioActual.ToResponse()));
-    }
+        => FromResult(await usuarioService.GetAllAsync(filtro));
 
     [HttpGet("{id}", Name = nameof(GetById))]
     public async Task<IActionResult> GetById(int id)
-    {
-        var usuario = await usuarioRepository.GetByIdAsync(id);
-
-        if (usuario is null)
-            return FromResult(Result.Failure("Usuario no encontrado.", ErrorType.NotFound));
-
-        return FromResult(Result<UsuarioResponse>.Success(usuario.ToResponse()));
-    }
+        => FromResult(await usuarioService.GetByIdAsync(id));
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateUsuarioRequest request)
-    {
-        if (await usuarioRepository.ExisteEmailAsync(request.Email))
-            return FromResult(Result.Failure("Ya existe un usuario con ese email.", ErrorType.Conflict));
-
-        if (await usuarioRepository.ExisteEmpleadoAsync(request.EmpleadoId))
-            return FromResult(Result.Failure("Ya existe un usuario asociado a ese empleado", ErrorType.Conflict));
-
-        var usuario = request.ToEntity(BCrypt.Net.BCrypt.HashPassword(request.Password));
-
-        await usuarioRepository.CreateAsync(usuario);
-        await unitOfWork.SaveChangesAsync();
-
-        await mailService.EnviarBienvenidaAsync(usuario.Email, usuario.Email);
-
-        return CreatedFromResult(
-            Result<UsuarioResponse>.Success(usuario.ToResponse()),
+        => CreatedFromResult(
+            await usuarioService.CreateAsync(request),
             nameof(GetById),
-            new { id = usuario.Id });
-    }
+            r => new { id = r.Id });
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateUsuarioRequest request)
-    {
-        var usuario = await usuarioRepository.GetByIdAsync(id);
-
-        if (usuario is null)
-            return FromResult(Result.Failure("Usuario no encontrado.", ErrorType.NotFound));
-
-        if (request.Email is not null && request.Email != usuario.Email.Value)
-        {
-            if (await usuarioRepository.ExisteEmailAsync(request.Email, id))
-                return FromResult(Result.Failure("Ya existe un usuario con ese email.", ErrorType.Conflict));
-        }
-
-        request.ApplyTo(usuario);
-        await unitOfWork.SaveChangesAsync();
-        cache.Remove($"usuario:{id}");
-
-        return FromResult(Result.Success());
-    }
+        => FromResult(await usuarioService.UpdateAsync(id, request));
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
-    {
-        var usuario = await usuarioRepository.GetByIdAsync(id);
+        => FromResult(await usuarioService.DeleteAsync(id));
 
-        if (usuario is null)
-            return FromResult(Result.Failure("Usuario no encontrado.", ErrorType.NotFound));
+    [SinPermiso]
+    [PermitirContrasenaCaducada]
+    [HttpGet("account")]
+    public IActionResult GetMe()
+        => FromResult(Result<AccountResponse>.Success(UsuarioActual.ToResponse()));
 
-        usuarioRepository.Delete(usuario);
-        await unitOfWork.SaveChangesAsync();
-        cache.Remove($"usuario:{id}");
+    [SinPermiso]
+    [PermitirContrasenaCaducada]
+    [HttpPut("cambiar-contrasena")]
+    public async Task<IActionResult> CambiarContrasena([FromBody] CambiarContrasenaRequest request)
+        => FromResult(await usuarioService.CambiarContrasenaAsync(UsuarioActual.Id, request));
 
-        return FromResult(Result.Success());
-    }
+    [HttpPut("{id}/resetear-contrasena")]
+    public async Task<IActionResult> ResetearContrasena(int id, [FromBody] ResetearContrasenaRequest request)
+        => FromResult(await usuarioService.ResetearContrasenaAsync(id, request));
 }

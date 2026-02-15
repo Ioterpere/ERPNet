@@ -7,4 +7,5 @@ public class AccountResponse
     public int EmpleadoId { get; set; }
     public int SeccionId { get; set; }
     public List<int> Roles { get; set; } = [];
+    public bool RequiereCambioContrasena { get; set; }
 }
