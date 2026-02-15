@@ -26,8 +26,8 @@ public class EmpleadosController(
     public async Task<IActionResult> GetAll([FromQuery] PaginacionFilter filtro)
         => FromResult(await empleadoService.GetAllAsync(filtro));
 
-    [HttpGet("{id}", Name = nameof(GetEmpleadoById))]
-    public async Task<IActionResult> GetEmpleadoById(int id)
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
         => FromResult(await empleadoService.GetByIdAsync(id));
 
     [SinPermiso]
@@ -37,10 +37,7 @@ public class EmpleadosController(
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateEmpleadoRequest request)
-        => CreatedFromResult(
-            await empleadoService.CreateAsync(request),
-            nameof(GetEmpleadoById),
-            r => new { id = r.Id });
+        => CreatedFromResult(await empleadoService.CreateAsync(request));
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateEmpleadoRequest request)

@@ -15,16 +15,13 @@ public class MenusController(IMenuService menuService) : BaseController
     public async Task<IActionResult> GetMenus([FromQuery] Plataforma plataforma)
         => FromResult(await menuService.GetMenusVisiblesAsync(plataforma, UsuarioActual.RolIds));
 
-    [HttpGet("{id}", Name = nameof(GetMenuById))]
-    public async Task<IActionResult> GetMenuById(int id)
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
         => FromResult(await menuService.GetByIdAsync(id));
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateMenuRequest request)
-        => CreatedFromResult(
-            await menuService.CreateAsync(request),
-            nameof(GetMenuById),
-            r => new { id = r.Id });
+        => CreatedFromResult(await menuService.CreateAsync(request));
 
     [HttpGet("{id}/roles")]
     public async Task<IActionResult> GetRoles(int id)

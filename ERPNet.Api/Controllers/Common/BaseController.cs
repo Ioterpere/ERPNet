@@ -31,18 +31,10 @@ public abstract class BaseController : ControllerBase
         return BuildErrorResponse(result);
     }
 
-    protected IActionResult CreatedFromResult<T>(Result<T> result, string routeName, object routeValues)
+    protected IActionResult CreatedFromResult<T>(Result<T> result)
     {
         if (result.IsSuccess)
-            return CreatedAtRoute(routeName, routeValues, result.Value);
-
-        return BuildErrorResponse(result);
-    }
-
-    protected IActionResult CreatedFromResult<T>(Result<T> result, string routeName, Func<T, object> routeValuesFactory)
-    {
-        if (result.IsSuccess)
-            return CreatedAtRoute(routeName, routeValuesFactory(result.Value!), result.Value);
+            return StatusCode(StatusCodes.Status201Created, result.Value);
 
         return BuildErrorResponse(result);
     }

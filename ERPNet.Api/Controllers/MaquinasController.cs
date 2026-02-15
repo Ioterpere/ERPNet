@@ -23,16 +23,13 @@ public class MaquinasController(
     public async Task<IActionResult> GetAll([FromQuery] PaginacionFilter filtro)
         => FromResult(await maquinariaService.GetAllAsync(filtro));
 
-    [HttpGet("{id}", Name = nameof(GetMaquinaById))]
-    public async Task<IActionResult> GetMaquinaById(int id)
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
         => FromResult(await maquinariaService.GetByIdAsync(id));
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateMaquinariaRequest request)
-        => CreatedFromResult(
-            await maquinariaService.CreateAsync(request),
-            nameof(GetMaquinaById),
-            r => new { id = r.Id });
+        => CreatedFromResult(await maquinariaService.CreateAsync(request));
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateMaquinariaRequest request)

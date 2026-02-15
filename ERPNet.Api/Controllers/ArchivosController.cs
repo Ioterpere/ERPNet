@@ -26,10 +26,10 @@ public class ArchivosController(
 
         await unitOfWork.SaveChangesAsync(ct);
 
-        return CreatedFromResult(result, "GetArchivo", new { id = result.Value!.Id });
+        return CreatedFromResult(result);
     }
 
-    [HttpGet("{id:guid}", Name = "GetArchivo")]
+    [HttpGet("{id:guid}")]
     public async Task<IActionResult> Descargar(Guid id, CancellationToken ct)
     {
         var result = await fileStorage.DescargarAsync(id, ct);

@@ -15,16 +15,13 @@ public class RolesController(IRolService rolService) : BaseController
     public async Task<IActionResult> GetAll([FromQuery] PaginacionFilter filtro)
         => FromResult(await rolService.GetAllAsync(filtro));
 
-    [HttpGet("{id}", Name = nameof(GetRolById))]
-    public async Task<IActionResult> GetRolById(int id)
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(int id)
         => FromResult(await rolService.GetByIdAsync(id));
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateRolRequest request)
-        => CreatedFromResult(
-            await rolService.CreateAsync(request),
-            nameof(GetRolById),
-            r => new { id = r.Id });
+        => CreatedFromResult(await rolService.CreateAsync(request));
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateRolRequest request)

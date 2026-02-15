@@ -18,16 +18,13 @@ public class UsuariosController(IUsuarioService usuarioService) : BaseController
     public async Task<IActionResult> GetAll([FromQuery] PaginacionFilter filtro)
         => FromResult(await usuarioService.GetAllAsync(filtro));
 
-    [HttpGet("{id}", Name = nameof(GetById))]
+    [HttpGet("{id}")]
     public async Task<IActionResult> GetById(int id)
         => FromResult(await usuarioService.GetByIdAsync(id));
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateUsuarioRequest request)
-        => CreatedFromResult(
-            await usuarioService.CreateAsync(request),
-            nameof(GetById),
-            r => new { id = r.Id });
+        => CreatedFromResult(await usuarioService.CreateAsync(request));
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateUsuarioRequest request)
