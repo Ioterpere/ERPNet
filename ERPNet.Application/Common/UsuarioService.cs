@@ -119,4 +119,29 @@ public class UsuarioService(
 
         return Result.Success();
     }
+
+    public async Task<Result<List<int>>> GetRolesAsync(int usuarioId)
+    {
+        var usuario = await usuarioRepository.GetByIdAsync(usuarioId);
+
+        if (usuario is null)
+            return Result<List<int>>.Failure("Usuario no encontrado.", ErrorType.NotFound);
+
+        var rolIds = await usuarioRepository.GetRolIdsAsync(usuarioId);
+        return Result<List<int>>.Success(rolIds);
+    }
+
+    public async Task<Result> AsignarRolesAsync(int usuarioId, AsignarRolesRequest request)
+    {
+        var usuario = await usuarioRepository.GetByIdAsync(usuarioId);
+
+        if (usuario is null)
+            return Result.Failure("Usuario no encontrado.", ErrorType.NotFound);
+
+        await usuarioRepository.SincronizarRolesAsync(usuarioId, request.RolIds);
+        await unitOfWork.SaveChangesAsync();
+        cache.Remove($"usuario:{usuarioId}");
+
+        return Result.Success();
+    }
 }

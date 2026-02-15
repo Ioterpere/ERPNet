@@ -1,9 +1,6 @@
 using ERPNet.Api.Attributes;
 using ERPNet.Application.Common.DTOs;
-using ERPNet.Application.Common.DTOs.Mappings;
-using ERPNet.Domain.Repositories;
-using ERPNet.Application.Common;
-using ERPNet.Application.Common.Enums;
+using ERPNet.Application.Common.Interfaces;
 using ERPNet.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 using ERPNet.Api.Controllers.Common;
@@ -11,41 +8,29 @@ using ERPNet.Api.Controllers.Common;
 namespace ERPNet.Api.Controllers;
 
 [Recurso(RecursoCodigo.Aplicacion)]
-public class MenusController(
-    IMenuRepository menuRepository,
-    IUnitOfWork unitOfWork) : BaseController
+public class MenusController(IMenuService menuService) : BaseController
 {
     [HttpGet]
     [SinPermiso]
     public async Task<IActionResult> GetMenus([FromQuery] Plataforma plataforma)
-    {
-        var menus = await menuRepository.GetMenusVisiblesAsync(plataforma, UsuarioActual.RolIds);
-        var response = menus.Select(m => m.ToResponse()).ToList();
-        return FromResult(Result<List<MenuResponse>>.Success(response));
-    }
+        => FromResult(await menuService.GetMenusVisiblesAsync(plataforma, UsuarioActual.RolIds));
 
     [HttpGet("{id}", Name = nameof(GetMenuById))]
     public async Task<IActionResult> GetMenuById(int id)
-    {
-        var menu = await menuRepository.GetByIdAsync(id);
-
-        if (menu is null)
-            return FromResult(Result.Failure("Menu no encontrado.", ErrorType.NotFound));
-
-        return FromResult(Result<MenuResponse>.Success(menu.ToResponse()));
-    }
+        => FromResult(await menuService.GetByIdAsync(id));
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateMenuRequest request)
-    {
-        var menu = request.ToEntity();
-
-        await menuRepository.CreateAsync(menu);
-        await unitOfWork.SaveChangesAsync();
-
-        return CreatedFromResult(
-            Result<MenuResponse>.Success(menu.ToResponse()),
+        => CreatedFromResult(
+            await menuService.CreateAsync(request),
             nameof(GetMenuById),
-            new { id = menu.Id });
-    }
+            r => new { id = r.Id });
+
+    [HttpGet("{id}/roles")]
+    public async Task<IActionResult> GetRoles(int id)
+        => FromResult(await menuService.GetRolesAsync(id));
+
+    [HttpPut("{id}/roles")]
+    public async Task<IActionResult> AsignarRoles(int id, [FromBody] AsignarRolesRequest request)
+        => FromResult(await menuService.AsignarRolesAsync(id, request));
 }

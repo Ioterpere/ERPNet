@@ -10,4 +10,6 @@ public interface IUsuarioRepository : IRepository<Usuario>
     Task<bool> ExisteEmpleadoAsync(int empleadoId, int? excluirId = null);
     Task UpdateUltimoAccesoAsync(int usuarioId, DateTime fecha);
     Task<List<string>> GetEmailsByRolAsync(string nombreRol);
+    Task<List<int>> GetRolIdsAsync(int usuarioId);
+    Task SincronizarRolesAsync(int usuarioId, List<int> rolIds);
 }

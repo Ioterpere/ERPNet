@@ -50,4 +50,27 @@ public class UsuarioRepository(ERPNetDbContext context) : Repository<Usuario>(co
             .Select(u => (string)u.Email)
             .ToListAsync();
     }
+
+    public async Task<List<int>> GetRolIdsAsync(int usuarioId)
+    {
+        return await Context.RolesUsuarios
+            .Where(ru => ru.UsuarioId == usuarioId)
+            .Select(ru => ru.RolId)
+            .ToListAsync();
+    }
+
+    public async Task SincronizarRolesAsync(int usuarioId, List<int> rolIds)
+    {
+        var actuales = await Context.RolesUsuarios
+            .Where(ru => ru.UsuarioId == usuarioId)
+            .ToListAsync();
+
+        var aEliminar = actuales.Where(ru => !rolIds.Contains(ru.RolId));
+        Context.RolesUsuarios.RemoveRange(aEliminar);
+
+        var existentes = actuales.Select(ru => ru.RolId).ToHashSet();
+        var aCrear = rolIds.Where(id => !existentes.Contains(id))
+            .Select(id => new RolUsuario { UsuarioId = usuarioId, RolId = id });
+        Context.RolesUsuarios.AddRange(aCrear);
+    }
 }

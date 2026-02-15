@@ -52,4 +52,12 @@ public class UsuariosController(IUsuarioService usuarioService) : BaseController
     [HttpPut("{id}/resetear-contrasena")]
     public async Task<IActionResult> ResetearContrasena(int id, [FromBody] ResetearContrasenaRequest request)
         => FromResult(await usuarioService.ResetearContrasenaAsync(id, request));
+
+    [HttpGet("{id}/roles")]
+    public async Task<IActionResult> GetRoles(int id)
+        => FromResult(await usuarioService.GetRolesAsync(id));
+
+    [HttpPut("{id}/roles")]
+    public async Task<IActionResult> AsignarRoles(int id, [FromBody] AsignarRolesRequest request)
+        => FromResult(await usuarioService.AsignarRolesAsync(id, request));
 }

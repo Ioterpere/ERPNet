@@ -12,4 +12,6 @@ public interface IUsuarioService
     Task<Result> DeleteAsync(int id);
     Task<Result> CambiarContrasenaAsync(int usuarioId, CambiarContrasenaRequest request);
     Task<Result> ResetearContrasenaAsync(int usuarioId, ResetearContrasenaRequest request);
+    Task<Result<List<int>>> GetRolesAsync(int usuarioId);
+    Task<Result> AsignarRolesAsync(int usuarioId, AsignarRolesRequest request);
 }
