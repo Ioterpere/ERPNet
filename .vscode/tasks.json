@@ -69,7 +69,7 @@
     {
       "label": "services-up",
       "type": "shell",
-      "command": "$openMH = $true; $openMIO = $true; try { $c = [Net.Sockets.TcpClient]::new('localhost', 8025); $c.Close(); $openMH = $false } catch {}; try { $c = [Net.Sockets.TcpClient]::new('localhost', 9001); $c.Close(); $openMIO = $false } catch {}; docker compose up -d; if ($openMH) { Start-Process 'http://localhost:8025' }; if ($openMIO) { Start-Process 'http://localhost:9001' }",
+      "command": "$openMH = $true; $openMIO = $true; $openRMQ = $true; try { $c = [Net.Sockets.TcpClient]::new('localhost', 8025); $c.Close(); $openMH = $false } catch {}; try { $c = [Net.Sockets.TcpClient]::new('localhost', 9001); $c.Close(); $openMIO = $false } catch {}; try { $c = [Net.Sockets.TcpClient]::new('localhost', 15672); $c.Close(); $openRMQ = $false } catch {}; docker compose up -d; if ($openMH) { Start-Process 'http://localhost:8025' }; if ($openMIO) { Start-Process 'http://localhost:9001' }; if ($openRMQ) { Start-Process 'http://localhost:15672' }",
       "problemMatcher": []
     },
     {

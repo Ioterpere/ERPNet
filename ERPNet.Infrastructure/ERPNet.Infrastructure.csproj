@@ -18,12 +18,13 @@
     <PackageReference Include="ClosedXML" Version="0.*" />
     <PackageReference Include="Minio" Version="7.0.0" />
     <PackageReference Include="QuestPDF" Version="2025.*" />
+    <PackageReference Include="RabbitMQ.Client" Version="7.*" />
     <PackageReference Include="Scrutor" Version="7.0.0" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Email\Templates\**\*.cshtml" />
+    <EmbeddedResource Include="Mailing\Templates\**\*.cshtml" />
   </ItemGroup>
 
   <PropertyGroup>

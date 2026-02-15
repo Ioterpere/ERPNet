@@ -21,6 +21,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDatabase(builder.Configuration.GetConnectionString("DefaultConnection")!);
 builder.Services.AddApplication();
 builder.Services.AddEmailServices(builder.Configuration);
+builder.Services.AddMessaging(builder.Configuration);
 builder.Services.AddReporting();
 builder.Services.AddFileStorage(builder.Configuration);
 
@@ -92,7 +93,7 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.KnownNetworks.Clear();
+    options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });
 
@@ -100,7 +101,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 
 #region CORS
 
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+builder.Services.Configure<ErpNetSettings>(builder.Configuration.GetSection("ErpNetSettings"));
+var allowedOrigins = builder.Configuration.GetSection("ErpNetSettings:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>

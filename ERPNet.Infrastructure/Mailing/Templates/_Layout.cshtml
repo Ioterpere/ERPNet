@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 8px; padding: 32px; }
+        .footer { margin-top: 32px; font-size: 12px; color: #999; }
+    </style>
+    @RenderSection("Estilos", required: false)
+</head>
+<body>
+    <div class="container">
+        @RenderBody()
+        <div class="footer">
+            <p>Correo automatico generado por ERPNet. No responder.</p>
+        </div>
+    </div>
+</body>
+</html>

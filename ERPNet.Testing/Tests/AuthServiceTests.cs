@@ -1,7 +1,6 @@
 using ERPNet.Application.Auth;
 using ERPNet.Application.Auth.DTOs;
 using ERPNet.Application.Auth.Interfaces;
-using ERPNet.Application.Mailing;
 using ERPNet.Domain.Common.Values;
 using ERPNet.Domain.Repositories;
 using ERPNet.Application.Common.Enums;
@@ -21,7 +20,6 @@ public class AuthServiceTests
     private readonly ILogService _logService = Substitute.For<ILogService>();
     private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
     private readonly ITokenService _tokenService = Substitute.For<ITokenService>();
-    private readonly IEmailService _emailService = Substitute.For<IEmailService>();
 
     private readonly AuthService _sut;
 
@@ -58,7 +56,6 @@ public class AuthServiceTests
             _logService,
             _unitOfWork,
             _tokenService,
-            _emailService,
             jwtSettings,
             loginSettings);
     }

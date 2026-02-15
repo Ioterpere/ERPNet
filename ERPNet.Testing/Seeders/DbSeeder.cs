@@ -22,7 +22,7 @@ public class DbSeeder(ITestOutputHelper output)
     public async Task SeedDatabase()
     {
         var options = new DbContextOptionsBuilder<ERPNetDbContext>()
-            .UseSqlServer(ConnectionString)
+            .UseSqlServer(ConnectionString, sql => sql.EnableRetryOnFailure())
             .Options;
 
         using var context = new ERPNetDbContext(options);

@@ -1,54 +1,45 @@
 @model ERPNet.Application.Mailing.Models.ExcepcionEmailModel
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="utf-8" />
-    <style>
-        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 20px; }
-        .container { max-width: 700px; margin: 0 auto; background: #fff; border-radius: 8px; padding: 32px; border-left: 5px solid #e74c3c; }
-        h1 { color: #e74c3c; font-size: 20px; }
-        table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-        th { text-align: left; padding: 8px 12px; background: #f8f8f8; border: 1px solid #ddd; width: 140px; color: #555; }
-        td { padding: 8px 12px; border: 1px solid #ddd; word-break: break-all; }
-        .stacktrace { background: #2d2d2d; color: #f8f8f2; padding: 16px; border-radius: 4px; font-family: Consolas, monospace; font-size: 12px; white-space: pre-wrap; overflow-x: auto; }
-        .footer { margin-top: 24px; font-size: 12px; color: #999; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Excepcion en ERPNet</h1>
+@{
+    Layout = "/_Layout.cshtml";
+}
 
-        <table>
-            <tr><th>Código</th><td>@Model.Codigo</td></tr>
-            <tr><th>Fecha</th><td>@Model.Fecha.ToString("yyyy-MM-dd HH:mm:ss") UTC</td></tr>
-            <tr><th>Request</th><td>@Model.MetodoHttp @Model.Ruta@Model.QueryString</td></tr>
-            <tr><th>Usuario</th><td>@(Model.UsuarioEmail ?? "No autenticado")</td></tr>
-            <tr><th>IP</th><td>@(Model.DireccionIp ?? "Desconocida")</td></tr>
-            <tr><th>Excepcion</th><td>@(Model.Origen ?? "Desconocido")</td></tr>
-            <tr><th>Mensaje</th><td>@Model.Mensaje</td></tr>
-        </table>
+@section Estilos {
+<style>
+    .container { max-width: 700px; border-left: 5px solid #e74c3c; }
+    h1 { color: #e74c3c; font-size: 20px; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    th { text-align: left; padding: 8px 12px; background: #f8f8f8; border: 1px solid #ddd; width: 140px; color: #555; }
+    td { padding: 8px 12px; border: 1px solid #ddd; word-break: break-all; }
+    .stacktrace { background: #2d2d2d; color: #f8f8f2; padding: 16px; border-radius: 4px; font-family: Consolas, monospace; font-size: 12px; white-space: pre-wrap; overflow-x: auto; }
+</style>
+}
 
-        @if (!string.IsNullOrEmpty(Model.StackTrace))
-        {
-            <h3>Stack Trace</h3>
-            <div class="stacktrace">@Model.StackTrace</div>
-        }
+<h1>Excepcion en ERPNet</h1>
 
-        @if (!string.IsNullOrEmpty(Model.InnerExceptionMensaje))
-        {
-            <h3>Inner Exception</h3>
-            <table>
-                <tr><th>Mensaje</th><td>@Model.InnerExceptionMensaje</td></tr>
-            </table>
-            if (!string.IsNullOrEmpty(Model.InnerExceptionStackTrace))
-            {
-                <div class="stacktrace">@Model.InnerExceptionStackTrace</div>
-            }
-        }
+<table>
+    <tr><th>Código</th><td>@Model.Codigo</td></tr>
+    <tr><th>Fecha</th><td>@Model.Fecha.ToString("yyyy-MM-dd HH:mm:ss") UTC</td></tr>
+    <tr><th>Request</th><td>@Model.MetodoHttp @Model.Ruta@Model.QueryString</td></tr>
+    <tr><th>Usuario</th><td>@(Model.UsuarioEmail ?? "No autenticado")</td></tr>
+    <tr><th>IP</th><td>@(Model.DireccionIp ?? "Desconocida")</td></tr>
+    <tr><th>Excepcion</th><td>@(Model.Origen ?? "Desconocido")</td></tr>
+    <tr><th>Mensaje</th><td>@Model.Mensaje</td></tr>
+</table>
 
-        <div class="footer">
-            <p>Correo automatico generado por ERPNet. No responder.</p>
-        </div>
-    </div>
-</body>
-</html>
+@if (!string.IsNullOrEmpty(Model.StackTrace))
+{
+    <h3>Stack Trace</h3>
+    <div class="stacktrace">@Model.StackTrace</div>
+}
+
+@if (!string.IsNullOrEmpty(Model.InnerExceptionMensaje))
+{
+    <h3>Inner Exception</h3>
+    <table>
+        <tr><th>Mensaje</th><td>@Model.InnerExceptionMensaje</td></tr>
+    </table>
+    if (!string.IsNullOrEmpty(Model.InnerExceptionStackTrace))
+    {
+        <div class="stacktrace">@Model.InnerExceptionStackTrace</div>
+    }
+}

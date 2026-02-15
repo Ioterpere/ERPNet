@@ -1,8 +1,10 @@
 using ERPNet.Application.Mailing;
+using ERPNet.Application.Messaging;
 using ERPNet.Application.Reports.Interfaces;
 using ERPNet.Infrastructure.Database;
 using ERPNet.Infrastructure.Database.Context;
 using ERPNet.Infrastructure.Mailing;
+using ERPNet.Infrastructure.Messaging;
 using ERPNet.Infrastructure.FileStorage;
 using ERPNet.Infrastructure.Reports;
 using ERPNet.Application.FileStorage;
@@ -48,14 +50,27 @@ public static class DependencyInjection
             {
                 options.FileProviders.Add(
                     new EmbeddedFileProvider(
-                        typeof(EmailService).Assembly,
+                        typeof(RazorViewToStringRenderer).Assembly,
                         "ERPNet.Infrastructure.Mailing.Templates"));
             });
 
         services.AddScoped<RazorViewToStringRenderer>();
-        services.AddSingleton<EmailChannel>();
-        services.AddScoped<IEmailService, EmailService>();
-        services.AddHostedService<EmailBackgroundService>();
+        services.AddScoped<IEmailSender, SmtpEmailSender>();
+        services.AddScoped<IMailService, MailService>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddMessaging(
+        this IServiceCollection services, IConfiguration config)
+    {
+        services.Configure<MessageBrokerSettings>(config.GetSection("MessageBrokerSettings"));
+
+        services.AddSingleton<RabbitMqConnectionProvider>();
+        services.AddHostedService(sp => sp.GetRequiredService<RabbitMqConnectionProvider>());
+
+        services.AddScoped(typeof(IMessagePublisher<>), typeof(RabbitMqPublisher<>));
+        services.AddHostedService<EmailConsumer>();
 
         return services;
     }

@@ -38,17 +38,13 @@ public class GlobalExceptionHandler(
             var logService = scope.ServiceProvider.GetRequiredService<ILogService>();
             await logService.ErrorAsync(exception, codigoError, cancellationToken);
 
-            var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
             var usuarioRepository = scope.ServiceProvider.GetRequiredService<IUsuarioRepository>();
+            var mailService = scope.ServiceProvider.GetRequiredService<IMailService>();
 
             var emails = await usuarioRepository.GetEmailsByRolAsync("Administrador");
-            foreach (var email in emails)
+            if (emails.Count > 0)
             {
-                await emailService.EnviarAsync(new MensajeEmail(
-                    email,
-                    $"[ERPNet] Excepcion: {exception.GetType().Name}",
-                    PlantillaEmail.Excepcion,
-                    modelo));
+                await mailService.EnviarExcepcionAsync(emails, modelo, cancellationToken);
             }
         }
 

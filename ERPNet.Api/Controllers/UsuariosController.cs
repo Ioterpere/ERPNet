@@ -1,5 +1,6 @@
 using ERPNet.Application.Common.DTOs.Mappings;
 using ERPNet.Application.Common.Interfaces;
+using ERPNet.Application.Mailing;
 using ERPNet.Domain.Repositories;
 using ERPNet.Application.Common;
 using ERPNet.Application.Common.Enums;
@@ -18,7 +19,8 @@ namespace ERPNet.Api.Controllers;
 public class UsuariosController(
     IUsuarioRepository usuarioRepository,
     IUnitOfWork unitOfWork,
-    ICacheService cache) : BaseController
+    ICacheService cache,
+    IMailService mailService) : BaseController
 {
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] PaginacionFilter filtro)
@@ -50,10 +52,18 @@ public class UsuariosController(
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateUsuarioRequest request)
     {
+        if (await usuarioRepository.ExisteEmailAsync(request.Email))
+            return FromResult(Result.Failure("Ya existe un usuario con ese email.", ErrorType.Conflict));
+
+        if (await usuarioRepository.ExisteEmpleadoAsync(request.EmpleadoId))
+            return FromResult(Result.Failure("Ya existe un usuario asociado a ese empleado", ErrorType.Conflict));
+
         var usuario = request.ToEntity(BCrypt.Net.BCrypt.HashPassword(request.Password));
 
         await usuarioRepository.CreateAsync(usuario);
         await unitOfWork.SaveChangesAsync();
+
+        await mailService.EnviarBienvenidaAsync(usuario.Email, usuario.Email);
 
         return CreatedFromResult(
             Result<UsuarioResponse>.Success(usuario.ToResponse()),

@@ -15,6 +15,17 @@ services:
       - "1025:1025" # SMTP
       - "8025:8025" # Web UI
 
+  rabbitmq:
+    image: rabbitmq:4-management
+    environment:
+      RABBITMQ_DEFAULT_USER: "erpnet"
+      RABBITMQ_DEFAULT_PASS: "ERPNet_Dev123!"
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
   minio:
     image: minio/minio
     command: server /data --console-address ":9001"
@@ -29,4 +40,5 @@ services:
 
 volumes:
   sqlserver-data:
+  rabbitmq-data:
   minio-data:

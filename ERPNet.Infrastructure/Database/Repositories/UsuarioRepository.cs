@@ -30,6 +30,12 @@ public class UsuarioRepository(ERPNetDbContext context) : Repository<Usuario>(co
             .AnyAsync(u => u.Email == email && (excluirId == null || u.Id != excluirId));
     }
 
+    public async Task<bool> ExisteEmpleadoAsync(int empleadoId, int? excluirId = null)
+    {
+        return await Context.Usuarios
+            .AnyAsync(u => u.EmpleadoId == empleadoId && (excluirId == null || u.Id != excluirId));
+    }
+
     public async Task UpdateUltimoAccesoAsync(int usuarioId, DateTime fecha)
     {
         await Context.Usuarios
