@@ -1,0 +1,14 @@
+// ERPNet - Tema personalizado basado en Bootswatch Zephyr
+// Overrides de colores antes de importar el tema
+
+$primary: #2c3e6b;
+$secondary: #1a2940;
+
+// Variables de Zephyr (deben ir antes de Bootstrap)
+@import "bootswatch/dist/zephyr/variables";
+
+// Bootstrap completo
+@import "bootstrap/scss/bootstrap";
+
+// Overrides específicos de Zephyr
+@import "bootswatch/dist/zephyr/bootswatch";
