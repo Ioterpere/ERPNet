@@ -6,4 +6,5 @@
   <Project Path="ERPNet.Testing/ERPNet.Testing.csproj" />
   <Project Path="ERPNet.Web.Blazor/ERPNet.Web.Blazor.csproj" />
   <Project Path="ERPNet.Web.Blazor.Client/ERPNet.Web.Blazor.Client.csproj" />
+  <Project Path="ERPNet.Web.Blazor.Shared/ERPNet.Web.Blazor.Shared.csproj" />
 </Solution>

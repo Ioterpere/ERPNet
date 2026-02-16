@@ -9,7 +9,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ERPNet.Web.Blazor.Client\ERPNet.Web.Blazor.Client.csproj" />
+    <ProjectReference Include="..\ERPNet.Web.Blazor.Shared\ERPNet.Web.Blazor.Shared.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.2" />
+    <PackageReference Include="Yarp.ReverseProxy" Version="2.3.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.7.0" />
   </ItemGroup>
 
 </Project>
