@@ -2,23 +2,28 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "ERPNet API + Docker Services",
-      "type": "coreclr",
+      "name": "Api",
+      "type": "dotnet",
       "request": "launch",
-      "preLaunchTask": "debug",
-      // "postDebugTask": "services-stop",
-      "program": "${workspaceFolder}/ERPNet.Api/bin/Debug/net10.0/ERPNet.Api.dll",
-      "args": [],
-      "cwd": "${workspaceFolder}/ERPNet.Api",
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "console": "internalConsole",
+      "projectPath": "${workspaceFolder}/ERPNet.Api/ERPNet.Api.csproj",
+    },
+    {
+      "name": "Blazor",
+      "type": "dotnet",
+      "request": "launch",
+      "projectPath": "${workspaceFolder}/ERPNet.Web.Blazor/ERPNet.Web.Blazor.csproj",
       "serverReadyAction": {
-        "action": "debugWithChrome",
-        "pattern": "Now listening on:",
-        "uriFormat": "http://localhost:5211/scalar/v1"
+        "action": "debugWithChrome"
       }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full Stack",
+      "configurations": [
+        "Api",
+        "Blazor"
+      ]
     }
   ]
 }

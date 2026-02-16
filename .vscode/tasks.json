@@ -11,14 +11,11 @@
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary;ForceNoAlign"
       ],
-      "group": { "kind": "build", "isDefault": true },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
       "problemMatcher": "$msCompile"
-    },
-    {
-      "label": "debug",
-      "dependsOn": ["services-up","seed", "build", "test"],
-      "dependsOrder": "sequence",
-      "problemMatcher": []
     },
     {
       "label": "test",
@@ -27,7 +24,8 @@
       "args": [
         "test",
         "${workspaceFolder}/ERPNet.Testing",
-        "--filter", "FullyQualifiedName!~DbSeeder"
+        "--filter",
+        "FullyQualifiedName!~DbSeeder"
       ],
       "problemMatcher": "$msCompile"
     },
@@ -36,10 +34,16 @@
       "type": "process",
       "command": "dotnet",
       "args": [
-        "ef", "migrations", "add", "${input:migrationName}",
-        "--project", "${workspaceFolder}/ERPNet.Infrastructure",
-        "--startup-project", "${workspaceFolder}/ERPNet.Api",
-        "--output-dir", "Database/Migrations"
+        "ef",
+        "migrations",
+        "add",
+        "${input:migrationName}",
+        "--project",
+        "${workspaceFolder}/ERPNet.Infrastructure",
+        "--startup-project",
+        "${workspaceFolder}/ERPNet.Api",
+        "--output-dir",
+        "Database/Migrations"
       ],
       "problemMatcher": []
     },
@@ -56,7 +60,8 @@
       "args": [
         "test",
         "${workspaceFolder}/ERPNet.Testing",
-        "--filter", "FullyQualifiedName~DbSeeder"
+        "--filter",
+        "FullyQualifiedName~DbSeeder"
       ],
       "problemMatcher": "$msCompile"
     },
@@ -69,8 +74,8 @@
     {
       "label": "services-up",
       "type": "shell",
-      "command": "$openMH = $true; $openMIO = $true; $openRMQ = $true; try { $c = [Net.Sockets.TcpClient]::new('localhost', 8025); $c.Close(); $openMH = $false } catch {}; try { $c = [Net.Sockets.TcpClient]::new('localhost', 9001); $c.Close(); $openMIO = $false } catch {}; try { $c = [Net.Sockets.TcpClient]::new('localhost', 15672); $c.Close(); $openRMQ = $false } catch {}; docker compose up -d; if ($openMH) { Start-Process 'http://localhost:8025' }; if ($openMIO) { Start-Process 'http://localhost:9001' }; if ($openRMQ) { Start-Process 'http://localhost:15672' }",
-      "problemMatcher": []
+      "command": "docker compose up -d; Start-Sleep -Seconds 10; $urls = @('http://localhost:8025', 'http://localhost:9001', 'http://localhost:15672'); foreach ($url in $urls) { Start-Process $url }",
+      "problemMatcher": [],
     },
     {
       "label": "services-stop",
@@ -95,14 +100,20 @@
       "id": "confirmMigrate",
       "description": "¿Aplicar migraciones pendientes a la base de datos?",
       "type": "pickString",
-      "options": ["Confirmar", "Cancelar"],
+      "options": [
+        "Confirmar",
+        "Cancelar"
+      ],
       "default": "Cancelar"
     },
     {
       "id": "confirmDrop",
       "description": "⚠ ¿BORRAR la base de datos? Esta acción es irreversible.",
       "type": "pickString",
-      "options": ["Confirmar", "Cancelar"],
+      "options": [
+        "Confirmar",
+        "Cancelar"
+      ],
       "default": "Cancelar"
     }
   ]

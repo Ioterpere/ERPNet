@@ -4,4 +4,6 @@
   <Project Path="ERPNet.Infrastructure/ERPNet.Infrastructure.csproj" />
   <Project Path="ERPNet.Domain/ERPNet.Domain.csproj" />
   <Project Path="ERPNet.Testing/ERPNet.Testing.csproj" />
+  <Project Path="ERPNet.Web.Blazor/ERPNet.Web.Blazor.csproj" />
+  <Project Path="ERPNet.Web.Blazor.Client/ERPNet.Web.Blazor.Client.csproj" />
 </Solution>
