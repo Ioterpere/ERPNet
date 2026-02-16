@@ -5,7 +5,7 @@ using ERPNet.Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using Xunit;
 
-namespace ERPNet.Testing.Tests;
+namespace ERPNet.Testing.UnitTests.Middleware;
 
 public class ControlAccesoMiddlewareTests
 {

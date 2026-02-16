@@ -10,7 +10,7 @@ using NSubstitute;
 using Xunit;
 using ERPNet.Application.Common.Interfaces;
 
-namespace ERPNet.Testing.Tests;
+namespace ERPNet.Testing.UnitTests.Services;
 
 public class AuthServiceTests
 {

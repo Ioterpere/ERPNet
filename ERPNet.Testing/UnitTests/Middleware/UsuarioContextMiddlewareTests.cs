@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Http;
 using NSubstitute;
 using Xunit;
 
-namespace ERPNet.Testing.Tests;
+namespace ERPNet.Testing.UnitTests.Middleware;
 
 public class UsuarioContextMiddlewareTests
 {

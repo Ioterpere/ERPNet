@@ -1,7 +1,7 @@
 using ERPNet.Application.FileStorage;
 using Xunit;
 
-namespace ERPNet.Testing.Tests;
+namespace ERPNet.Testing.UnitTests.Validation;
 
 public class FileTypeValidatorTests
 {

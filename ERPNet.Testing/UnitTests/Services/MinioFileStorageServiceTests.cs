@@ -10,7 +10,7 @@ using Minio;
 using NSubstitute;
 using Xunit;
 
-namespace ERPNet.Testing.Tests;
+namespace ERPNet.Testing.UnitTests.Services;
 
 public class MinioFileStorageServiceTests
 {
