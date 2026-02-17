@@ -1,0 +1,28 @@
+@page "/logout"
+@rendermode InteractiveWebAssembly
+@attribute [AllowAnonymous]
+@layout EmptyLayout
+
+<PageTitle>Cerrando sesión...</PageTitle>
+
+@code {
+    [Inject] private HttpClient Http { get; set; } = null!;
+    [Inject] private NavigationManager Nav { get; set; } = null!;
+    [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await Http.PostAsync("/bff/logout", null);
+        }
+        catch { }
+
+        if (AuthStateProvider is BffAuthenticationStateProvider bffProvider)
+        {
+            bffProvider.NotifyLogout();
+        }
+
+        Nav.NavigateTo("/login", forceLoad: true);
+    }
+}

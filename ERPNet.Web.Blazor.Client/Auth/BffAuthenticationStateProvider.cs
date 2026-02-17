@@ -27,8 +27,9 @@ public class BffAuthenticationStateProvider : AuthenticationStateProvider
             _cachedUser = usuario;
             return new AuthenticationState(CreatePrincipal(usuario));
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine(ex.Message);
             _cachedUser = null;
             return Anonymous();
         }

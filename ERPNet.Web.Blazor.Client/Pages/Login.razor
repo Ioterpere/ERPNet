@@ -1,0 +1,50 @@
+@page "/login"
+@namespace ERPNet.Web.Blazor.Client.Pages
+@inherits ComponentBase
+@rendermode InteractiveWebAssembly
+@attribute [AllowAnonymous]
+@layout EmptyLayout
+
+<PageTitle>Iniciar sesión - ERPNet</PageTitle>
+
+<div class="login-container">
+    <div class="card shadow-lg" style="width: 100%; max-width: 420px;">
+        <div class="card-body p-4">
+            <div class="text-center mb-4">
+                <i class="bi bi-box-seam-fill fs-1 text-primary"></i>
+                <h3 class="mt-2 fw-bold">ERP<span class="fw-light opacity-75">Net</span></h3>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @_error
+                    <button type="button" class="btn-close" @onclick="() => _error = null"></button>
+                </div>
+            }
+
+            <EditForm Model="_loginRequest" OnValidSubmit="LoginAsync" FormName="login">
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <InputText id="email" @bind-Value="_loginRequest.Email" class="form-control"
+                               placeholder="usuario@ejemplo.com" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">Contraseña</label>
+                    <InputText id="password" @bind-Value="_loginRequest.Password" class="form-control"
+                               type="password" />
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100" disabled="@_cargando">
+                    @if (_cargando)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    }
+                    Iniciar sesión
+                </button>
+            </EditForm>
+        </div>
+    </div>
+</div>
+

@@ -1,6 +1,8 @@
 using ERPNet.Web.Blazor;
 using ERPNet.Web.Blazor.Auth;
+using ERPNet.Web.Blazor.Client.Auth;
 using ERPNet.Web.Blazor.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
@@ -8,6 +10,23 @@ var config = builder.Configuration;
 // Blazor
 builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
+
+// Auth (server-side for prerendering + cascading state)
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddAuthentication("Cookies").AddCookie(options =>
+      {
+          // NO establecer LoginPath - el BFF no debe redirigir automáticamente
+          // La autenticación la maneja el cliente WASM
+          options.Events.OnRedirectToLogin = context =>
+          {
+              context.Response.StatusCode = 401;
+              return Task.CompletedTask;
+          };
+      });
+builder.Services.AddAuthorization();
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
+// builder.Services.AddScoped<AuthenticationStateProvider, BffAuthenticationStateProvider>();
 
 // BFF settings
 builder.Services.Configure<BffSettings>(config.GetSection("BffSettings"));
@@ -42,6 +61,9 @@ else
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
 app.UseAntiforgery();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 // BFF auth endpoints (/bff/login, /bff/logout, /bff/me)
 app.MapBffAuthEndpoints();

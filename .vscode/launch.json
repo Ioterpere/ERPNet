@@ -13,9 +13,9 @@
       "request": "launch",
       "projectPath": "${workspaceFolder}/ERPNet.Web.Blazor/ERPNet.Web.Blazor.csproj",
       "serverReadyAction": {
-        "action": "debugWithChrome"
+        "action": "debugWithChrome",
       }
-    }
+    },
   ],
   "compounds": [
     {
