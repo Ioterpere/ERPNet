@@ -1,0 +1,43 @@
+@page "/authentication/login"
+@namespace ERPNet.Web.Blazor.Client.Pages
+@inherits ComponentBase
+@layout EmptyLayout
+
+<PageTitle>Iniciar sesión - ERPNet</PageTitle>
+
+<div class="login-container">
+    <div class="card shadow-lg" style="width: 100%; max-width: 420px;">
+        <div class="card-body p-4">
+            <div class="text-center mb-4">
+                <i class="bi bi-box-seam-fill fs-1 text-primary"></i>
+                <h3 class="mt-2 fw-bold">ERP<span class="fw-light opacity-75">Net</span></h3>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @_error
+                    <button type="button" class="btn-close" @onclick="() => _error = null"></button>
+                </div>
+            }
+
+            <form method="post" action="/authentication/login">
+                <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email"
+                           name="email" autocomplete="email" required />
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">Contraseña</label>
+                    <input type="password" class="form-control" id="password"
+                           name="password" autocomplete="current-password" required />
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">Entrar</button>
+            </form>
+        </div>
+    </div>
+</div>

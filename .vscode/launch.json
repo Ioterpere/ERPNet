@@ -11,7 +11,7 @@
       "name": "Blazor",
       "type": "dotnet",
       "request": "launch",
-      "projectPath": "${workspaceFolder}/ERPNet.Web.Blazor/ERPNet.Web.Blazor.csproj",
+      "projectPath": "${workspaceFolder}/ERPNet.Web.Blazor/ERPNet.Web.Blazor/ERPNet.Web.Blazor.csproj",
       "serverReadyAction": {
         "action": "debugWithChrome",
       }
