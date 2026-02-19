@@ -653,10 +653,9 @@
             {
                 Email = _editEmail,
                 Activo = _editActivo,
-                CaducidadContrasena = _editCaducidadDate.HasValue
-                    ? new DateTimeOffset(_editCaducidadDate.Value, TimeSpan.Zero)
-                    : null
+                CaducidadContrasena = _editCaducidadDate?.ToUniversalTime()
             });
+            
             Toast.Exito("Datos guardados correctamente.");
             _usuarioDetalle = await UsuariosClient.UsuariosGET2Async(Id.Value);
             var idx = _usuarios.FindIndex(u => u.Id == Id.Value);

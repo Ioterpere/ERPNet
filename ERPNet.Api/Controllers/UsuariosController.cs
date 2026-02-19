@@ -28,6 +28,7 @@ public class UsuariosController(IUsuarioService usuarioService) : BaseController
         => CreatedFromResult(await usuarioService.CreateAsync(request));
 
     [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateUsuarioRequest request)
         => FromResult(await usuarioService.UpdateAsync(id, request));
 
