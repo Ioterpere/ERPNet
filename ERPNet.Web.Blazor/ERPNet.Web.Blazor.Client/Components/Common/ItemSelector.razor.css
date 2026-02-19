@@ -44,7 +44,8 @@
 }
 
 .item-selector-item:hover,
-.item-selector-item:focus {
+.item-selector-item:focus,
+.item-selector-item.activo {
     background-color: var(--bs-tertiary-bg);
     outline: none;
 }

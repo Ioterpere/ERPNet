@@ -1,5 +1,6 @@
 @typeparam TItem
 @implements IDisposable
+@inject IJSRuntime JS
 
 <div class="item-selector" @onfocusout="OnFocusOut">
 
@@ -45,6 +46,8 @@
                    value="@_query"
                    @oninput="OnInput"
                    @onfocus="OnFocus"
+                   @onkeydown="OnKeyDown"
+                   @ref="_inputRef"
                    disabled="@Disabled"
                    autocomplete="off" />
         </div>
@@ -67,9 +70,14 @@
                 }
                 else
                 {
-                    @foreach (var item in _resultados)
+                    @for (int i = 0; i < _resultados.Count; i++)
                     {
-                        <button type="button" class="item-selector-item" @onclick="() => Seleccionar(item)">
+                        var item = _resultados[i];
+                        var index = i;
+                        <button type="button"
+                                id="@($"{_id}-{index}")"
+                                class="item-selector-item @(index == _indiceActivo ? "activo" : "")"
+                                @onclick="() => Seleccionar(item)">
                             <span class="item-selector-item-label">@GetLabel(item)</span>
                             @if (GetSubLabel?.Invoke(item) is { Length: > 0 } subItem)
                             {
@@ -114,6 +122,9 @@
     [Parameter]
     public bool Disabled { get; set; }
 
+    private readonly string _id = $"isd-{Guid.NewGuid():N}";
+    private ElementReference _inputRef;
+
     private TItem? _itemSeleccionado;
     private List<TItem> _resultados = [];
     private string _query = string.Empty;
@@ -122,9 +133,25 @@
     private bool _sinResultados;
     private CancellationTokenSource? _cts;
 
+    private int _indiceActivo = -1;
+    private bool _debeScrollar;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await JS.InvokeVoidAsync("itemSelector.registerKeys", _inputRef);
+
+        if (_debeScrollar && _indiceActivo >= 0)
+        {
+            _debeScrollar = false;
+            await JS.InvokeVoidAsync("itemSelector.scrollIntoView", $"{_id}-{_indiceActivo}");
+        }
+    }
+
     private async Task OnInput(ChangeEventArgs e)
     {
         _query = e.Value?.ToString() ?? string.Empty;
+        _indiceActivo = -1;
 
         _cts?.Cancel();
         _cts?.Dispose();
@@ -168,6 +195,38 @@
         }
     }
 
+    private Task OnKeyDown(KeyboardEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case "ArrowDown":
+                if (!_abierto || _resultados.Count == 0) break;
+                _indiceActivo = Math.Min(_indiceActivo + 1, _resultados.Count - 1);
+                _debeScrollar = true;
+                break;
+
+            case "ArrowUp":
+                if (!_abierto || _resultados.Count == 0) break;
+                _indiceActivo = Math.Max(_indiceActivo - 1, 0);
+                _debeScrollar = true;
+                break;
+
+            case "Enter":
+                if (_abierto && _indiceActivo >= 0 && _indiceActivo < _resultados.Count)
+                    return Seleccionar(_resultados[_indiceActivo]);
+                if (_abierto && _resultados.Count == 1)
+                    return Seleccionar(_resultados[0]);
+                break;
+
+            case "Escape":
+                _abierto = false;
+                _indiceActivo = -1;
+                break;
+        }
+
+        return Task.CompletedTask;
+    }
+
     private void OnFocus()
     {
         if (_resultados.Count > 0 || _sinResultados)
@@ -177,13 +236,17 @@
     private void OnFocusOut(FocusEventArgs _)
     {
         if (_abierto)
+        {
             _abierto = false;
+            _indiceActivo = -1;
+        }
     }
 
     private async Task Seleccionar(TItem item)
     {
         _itemSeleccionado = item;
         _abierto = false;
+        _indiceActivo = -1;
         _query = string.Empty;
         _resultados.Clear();
         _sinResultados = false;
@@ -196,6 +259,7 @@
         _query = string.Empty;
         _resultados.Clear();
         _abierto = false;
+        _indiceActivo = -1;
         _sinResultados = false;
         await ValueChanged.InvokeAsync(null);
     }
