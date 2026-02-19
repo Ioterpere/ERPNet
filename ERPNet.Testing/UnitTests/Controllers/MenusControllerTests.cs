@@ -1,8 +1,8 @@
 using ERPNet.Api.Controllers;
 using ERPNet.Application.Auth;
 using ERPNet.Application.Common;
-using ERPNet.Contracts;
-using ERPNet.Contracts.DTOs;
+using ERPNet.Application.Common.DTOs;
+using ERPNet.Application.Common.Enums;
 using ERPNet.Application.Common.Interfaces;
 using ERPNet.Domain.Enums;
 using Microsoft.AspNetCore.Http;
@@ -99,12 +99,12 @@ public class MenusControllerTests
     public async Task Create_Exitoso_Devuelve201()
     {
         var response = new MenuResponse { Id = 1, Nombre = "Nuevo", Orden = 1 };
-        _service.CreateAsync(Arg.Any<CreateMenuRequest>(), Arg.Any<Plataforma>())
+        _service.CreateAsync(Arg.Any<CreateMenuRequest>())
             .Returns(Result<MenuResponse>.Success(response));
 
-        var result = await _sut.Create(Plataforma.WebBlazor, new CreateMenuRequest
+        var result = await _sut.Create(new CreateMenuRequest
         {
-            Nombre = "Nuevo", Orden = 1, RolIds = [1]
+            Nombre = "Nuevo", Orden = 1, Plataforma = Plataforma.WebBlazor, RolIds = [1]
         });
 
         var objectResult = Assert.IsType<ObjectResult>(result);

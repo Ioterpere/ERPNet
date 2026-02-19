@@ -1,6 +1,6 @@
 using ERPNet.Application.Common;
-using ERPNet.Contracts;
-using ERPNet.Contracts.DTOs;
+using ERPNet.Application.Common.DTOs;
+using ERPNet.Application.Common.Enums;
 using ERPNet.Application.Common.Interfaces;
 using ERPNet.Domain.Entities;
 using ERPNet.Domain.Enums;
@@ -83,9 +83,10 @@ public class MenuServiceTests
         {
             Nombre = "Dashboard",
             Orden = 1,
+            Plataforma = Plataforma.WebBlazor
         };
 
-        var result = await _sut.CreateAsync(request, Plataforma.WebBlazor);
+        var result = await _sut.CreateAsync(request);
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Dashboard", result.Value!.Nombre);
@@ -171,9 +172,9 @@ public class MenuServiceTests
     [Fact(DisplayName = "Create: no invalida cache")]
     public async Task Create_NoInvalidaCache()
     {
-        var request = new CreateMenuRequest { Nombre = "Nuevo" };
+        var request = new CreateMenuRequest { Nombre = "Nuevo", Plataforma = Plataforma.WebBlazor };
 
-        await _sut.CreateAsync(request, Plataforma.WebBlazor);
+        await _sut.CreateAsync(request);
 
         _cache.DidNotReceive().Remove(Arg.Any<string>());
     }

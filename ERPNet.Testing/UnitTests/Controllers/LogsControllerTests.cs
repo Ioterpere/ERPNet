@@ -1,6 +1,5 @@
 using ERPNet.Api.Controllers;
-using ERPNet.Contracts;
-using ERPNet.Contracts.DTOs;
+using ERPNet.Application.Common.DTOs;
 using ERPNet.Domain.Entities;
 using ERPNet.Domain.Filters;
 using ERPNet.Domain.Repositories;

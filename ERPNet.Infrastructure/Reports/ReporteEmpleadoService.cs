@@ -1,7 +1,8 @@
+using ERPNet.Application.Common;
+using ERPNet.Application.Common.Enums;
 using ERPNet.Application.Reports;
+using ERPNet.Application.Reports.DTOs;
 using ERPNet.Application.Reports.Interfaces;
-using ERPNet.Contracts;
-using ERPNet.Contracts.Reports;
 using ERPNet.Infrastructure.Database.Context;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Fluent;

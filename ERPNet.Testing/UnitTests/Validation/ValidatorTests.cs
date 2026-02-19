@@ -1,4 +1,4 @@
-using ERPNet.Contracts.DTOs;
+using ERPNet.Application.Common.DTOs;
 using ERPNet.Application.Common.DTOs.Validators;
 using ERPNet.Domain.Repositories;
 using FluentValidation.TestHelper;

@@ -24,7 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ERPNet.Contracts\ERPNet.Contracts.csproj" />
     <ProjectReference Include="..\ERPNet.Application\ERPNet.Application.csproj" />
     <ProjectReference Include="..\ERPNet.Infrastructure\ERPNet.Infrastructure.csproj" />
   </ItemGroup>

@@ -1,8 +1,8 @@
 using ERPNet.Application.Auth;
+using ERPNet.Application.Common.DTOs;
 using ERPNet.Application.Common.DTOs.Mappings;
+using ERPNet.Application.Common.Enums;
 using ERPNet.Application.Common.Interfaces;
-using ERPNet.Contracts;
-using ERPNet.Contracts.DTOs;
 using ERPNet.Application.Mailing;
 using ERPNet.Domain.Filters;
 using ERPNet.Domain.Repositories;
@@ -20,7 +20,7 @@ public class UsuarioService(
         var (usuarios, total) = await usuarioRepository.GetPaginatedAsync(filtro);
         var response = usuarios.Select(u => u.ToResponse()).ToList();
         return Result<ListaPaginada<UsuarioResponse>>.Success(
-            ListaPaginada<UsuarioResponse>.Crear(response, total, filtro.Pagina, filtro.PorPagina));
+            ListaPaginada<UsuarioResponse>.Crear(response, total, filtro));
     }
 
     public async Task<Result<UsuarioResponse>> GetByIdAsync(int id)

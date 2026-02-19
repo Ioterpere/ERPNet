@@ -1,6 +1,6 @@
 using ERPNet.Application.FileStorage;
-using ERPNet.Contracts;
-using ERPNet.Contracts.FileStorage;
+using ERPNet.Application.Common;
+using ERPNet.Application.FileStorage.DTOs;
 using ERPNet.Domain.Common;
 using ERPNet.Domain.Repositories;
 using Microsoft.AspNetCore.Mvc;

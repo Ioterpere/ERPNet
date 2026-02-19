@@ -1,9 +1,9 @@
 using ERPNet.Api.Controllers;
 using ERPNet.Application.Auth;
-using ERPNet.Contracts.Auth;
+using ERPNet.Application.Auth.DTOs;
 using ERPNet.Application.Common;
-using ERPNet.Contracts.DTOs;
-using ERPNet.Contracts;
+using ERPNet.Application.Common.DTOs;
+using ERPNet.Application.Common.Enums;
 using ERPNet.Application.Common.Interfaces;
 using ERPNet.Domain.Filters;
 using Microsoft.AspNetCore.Http;

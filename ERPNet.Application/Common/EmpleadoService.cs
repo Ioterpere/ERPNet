@@ -1,8 +1,8 @@
 using ERPNet.Application.Auth.Interfaces;
+using ERPNet.Application.Common.DTOs;
 using ERPNet.Application.Common.DTOs.Mappings;
+using ERPNet.Application.Common.Enums;
 using ERPNet.Application.Common.Interfaces;
-using ERPNet.Contracts;
-using ERPNet.Contracts.DTOs;
 using ERPNet.Domain.Entities;
 using ERPNet.Domain.Enums;
 using ERPNet.Domain.Filters;
@@ -25,7 +25,7 @@ public class EmpleadoService(
 
         var response = empleados.Select(e => e.ToResponse()).ToList();
         return Result<ListaPaginada<EmpleadoResponse>>.Success(
-            ListaPaginada<EmpleadoResponse>.Crear(response, total, filtro.Pagina, filtro.PorPagina));
+            ListaPaginada<EmpleadoResponse>.Crear(response, total, filtro));
     }
 
     public async Task<Result<EmpleadoResponse>> GetByIdAsync(int id)

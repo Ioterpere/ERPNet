@@ -1,8 +1,8 @@
 using ERPNet.Api.Attributes;
 using ERPNet.Api.Controllers.Common;
 using ERPNet.Application.Common.DTOs.Mappings;
-using ERPNet.Contracts;
-using ERPNet.Contracts.DTOs;
+using ERPNet.Application.Common;
+using ERPNet.Application.Common.DTOs;
 using ERPNet.Domain.Enums;
 using ERPNet.Domain.Filters;
 using ERPNet.Domain.Repositories;
@@ -19,6 +19,6 @@ public class LogsController(ILogRepository logRepository) : BaseController
         var (logs, total) = await logRepository.GetFilteredAsync(request);
         var response = logs.Select(l => l.ToResponse()).ToList();
         return FromResult(Result<ListaPaginada<LogResponse>>.Success(
-            ListaPaginada<LogResponse>.Crear(response, total, request.Pagina, request.PorPagina)));
+            ListaPaginada<LogResponse>.Crear(response, total, request)));
     }
 }

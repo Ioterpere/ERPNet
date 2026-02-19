@@ -1,10 +1,10 @@
 using ERPNet.Api.Controllers;
 using ERPNet.Application.Common;
-using ERPNet.Contracts.DTOs;
-using ERPNet.Contracts;
+using ERPNet.Application.Common.DTOs;
+using ERPNet.Application.Common.Enums;
 using ERPNet.Application.Common.Interfaces;
 using ERPNet.Application.FileStorage;
-using ERPNet.Contracts.Reports;
+using ERPNet.Application.Reports.DTOs;
 using ERPNet.Application.Reports.Interfaces;
 using ERPNet.Domain.Filters;
 using ERPNet.Domain.Repositories;

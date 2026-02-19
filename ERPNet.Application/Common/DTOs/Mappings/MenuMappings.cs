@@ -1,6 +1,4 @@
-using ERPNet.Contracts.DTOs;
 using ERPNet.Domain.Entities;
-using ERPNet.Domain.Enums;
 
 namespace ERPNet.Application.Common.DTOs.Mappings;
 
@@ -18,14 +16,14 @@ public static class MenuMappings
         SubMenus = menu.SubMenus.Select(s => s.ToResponse()).ToList()
     };
 
-    public static Menu ToEntity(this CreateMenuRequest request, Plataforma plataforma) => new()
+    public static Menu ToEntity(this CreateMenuRequest request) => new()
     {
         Nombre = request.Nombre,
         Path = request.Path,
         Icon = request.IconClass,
         Tag = request.CustomClass,
         Orden = request.Orden,
-        Plataforma = plataforma,
+        Plataforma = request.Plataforma,
         MenuPadreId = request.MenuPadreId,
         MenusRoles = request.RolIds.Select(id => new MenuRol { RolId = id }).ToList()
     };

@@ -1,7 +1,7 @@
 using ERPNet.Api.Attributes;
 using ERPNet.Api.Controllers.Common;
-using ERPNet.Contracts;
-using ERPNet.Contracts.DTOs;
+using ERPNet.Application.Common;
+using ERPNet.Application.Common.DTOs;
 using ERPNet.Application.Common.Interfaces;
 using ERPNet.Application.FileStorage;
 using ERPNet.Domain.Entities;

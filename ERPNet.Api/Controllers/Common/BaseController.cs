@@ -1,7 +1,8 @@
 using System.Net.Mime;
 using ERPNet.Application.Auth;
-using ERPNet.Contracts;
-using ERPNet.Contracts.FileStorage;
+using ERPNet.Application.Common;
+using ERPNet.Application.Common.Enums;
+using ERPNet.Application.FileStorage.DTOs;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ERPNet.Api.Controllers.Common;

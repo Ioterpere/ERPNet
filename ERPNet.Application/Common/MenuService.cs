@@ -1,7 +1,7 @@
+using ERPNet.Application.Common.DTOs;
 using ERPNet.Application.Common.DTOs.Mappings;
+using ERPNet.Application.Common.Enums;
 using ERPNet.Application.Common.Interfaces;
-using ERPNet.Contracts;
-using ERPNet.Contracts.DTOs;
 using ERPNet.Domain.Enums;
 using ERPNet.Domain.Repositories;
 
@@ -29,9 +29,9 @@ public class MenuService(
         return Result<MenuResponse>.Success(menu.ToResponse());
     }
 
-    public async Task<Result<MenuResponse>> CreateAsync(CreateMenuRequest request, Plataforma plataforma)
+    public async Task<Result<MenuResponse>> CreateAsync(CreateMenuRequest request)
     {
-        var menu = request.ToEntity(plataforma);
+        var menu = request.ToEntity();
 
         await menuRepository.CreateAsync(menu);
         await unitOfWork.SaveChangesAsync();

@@ -1,8 +1,8 @@
 using ERPNet.Api.Controllers;
 using ERPNet.Application.Common;
-using ERPNet.Contracts;
+using ERPNet.Application.Common.Enums;
 using ERPNet.Application.FileStorage;
-using ERPNet.Contracts.FileStorage;
+using ERPNet.Application.FileStorage.DTOs;
 using ERPNet.Domain.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

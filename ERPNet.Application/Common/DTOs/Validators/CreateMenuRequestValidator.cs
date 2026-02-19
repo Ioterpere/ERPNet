@@ -1,4 +1,3 @@
-using ERPNet.Contracts.DTOs;
 using FluentValidation;
 
 namespace ERPNet.Application.Common.DTOs.Validators;
@@ -13,5 +12,8 @@ public class CreateMenuRequestValidator : AbstractValidator<CreateMenuRequest>
 
         RuleFor(x => x.Orden)
             .GreaterThan(0).WithMessage("El orden debe ser mayor que 0.");
+
+        RuleFor(x => x.Plataforma)
+            .IsInEnum().WithMessage("La plataforma no es válida.");
     }
 }

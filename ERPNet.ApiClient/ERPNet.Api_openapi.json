@@ -1136,15 +1136,6 @@
         "tags": [
           "Menus"
         ],
-        "parameters": [
-          {
-            "name": "plataforma",
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/Plataforma"
-            }
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -2229,6 +2220,9 @@
               "string"
             ],
             "format": "int32"
+          },
+          "plataforma": {
+            "$ref": "#/components/schemas/Plataforma"
           },
           "menuPadreId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",

@@ -1,7 +1,7 @@
 using ERPNet.Application;
 using ERPNet.Application.Auth;
 using ERPNet.Application.Auth.Interfaces;
-using ERPNet.Contracts;
+using ERPNet.Application.Common.Enums;
 using ERPNet.Domain.Entities;
 using ERPNet.Domain.Repositories;
 using ERPNet.Infrastructure.FileStorage;
