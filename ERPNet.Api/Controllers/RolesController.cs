@@ -1,6 +1,6 @@
 using ERPNet.Api.Attributes;
 using ERPNet.Api.Controllers.Common;
-using ERPNet.Application.Common.DTOs;
+using ERPNet.Contracts.DTOs;
 using ERPNet.Application.Common.Interfaces;
 using ERPNet.Domain.Enums;
 using ERPNet.Domain.Filters;

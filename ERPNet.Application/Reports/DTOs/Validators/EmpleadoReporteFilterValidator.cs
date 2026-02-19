@@ -1,3 +1,4 @@
+using ERPNet.Contracts.Reports;
 using FluentValidation;
 
 namespace ERPNet.Application.Reports.DTOs.Validators;

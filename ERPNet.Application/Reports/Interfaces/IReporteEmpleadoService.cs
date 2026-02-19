@@ -1,5 +1,5 @@
-using ERPNet.Application.Common;
-using ERPNet.Application.Reports.DTOs;
+using ERPNet.Contracts;
+using ERPNet.Contracts.Reports;
 
 namespace ERPNet.Application.Reports.Interfaces;
 

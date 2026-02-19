@@ -1,8 +1,8 @@
 using ERPNet.Api.Controllers;
 using ERPNet.Application.Auth;
 using ERPNet.Application.Common;
-using ERPNet.Application.Common.DTOs;
-using ERPNet.Application.Common.Enums;
+using ERPNet.Contracts;
+using ERPNet.Contracts.DTOs;
 using ERPNet.Application.Common.Interfaces;
 using ERPNet.Domain.Enums;
 using Microsoft.AspNetCore.Http;
@@ -41,9 +41,9 @@ public class MenusControllerTests
         _service.GetMenusVisiblesAsync(Arg.Any<Plataforma>(), Arg.Any<List<int>>())
             .Returns(Result<List<MenuResponse>>.Success([]));
 
-        await _sut.GetMenus(Plataforma.Web);
+        await _sut.GetMenus(Plataforma.WebBlazor);
 
-        await _service.Received(1).GetMenusVisiblesAsync(Plataforma.Web, Arg.Is<List<int>>(r => r.Contains(3) && r.Contains(5)));
+        await _service.Received(1).GetMenusVisiblesAsync(Plataforma.WebBlazor, Arg.Is<List<int>>(r => r.Contains(3) && r.Contains(5)));
     }
 
     [Fact(DisplayName = "GetMenus: exitoso devuelve 200")]
@@ -57,7 +57,7 @@ public class MenusControllerTests
         _service.GetMenusVisiblesAsync(Arg.Any<Plataforma>(), Arg.Any<List<int>>())
             .Returns(Result<List<MenuResponse>>.Success(menus));
 
-        var result = await _sut.GetMenus(Plataforma.Web);
+        var result = await _sut.GetMenus(Plataforma.WebBlazor);
 
         var okResult = Assert.IsType<OkObjectResult>(result);
         var value = Assert.IsType<List<MenuResponse>>(okResult.Value);
@@ -99,12 +99,12 @@ public class MenusControllerTests
     public async Task Create_Exitoso_Devuelve201()
     {
         var response = new MenuResponse { Id = 1, Nombre = "Nuevo", Orden = 1 };
-        _service.CreateAsync(Arg.Any<CreateMenuRequest>())
+        _service.CreateAsync(Arg.Any<CreateMenuRequest>(), Arg.Any<Plataforma>())
             .Returns(Result<MenuResponse>.Success(response));
 
-        var result = await _sut.Create(new CreateMenuRequest
+        var result = await _sut.Create(Plataforma.WebBlazor, new CreateMenuRequest
         {
-            Nombre = "Nuevo", Orden = 1, Plataforma = Plataforma.Web, RolIds = [1]
+            Nombre = "Nuevo", Orden = 1, RolIds = [1]
         });
 
         var objectResult = Assert.IsType<ObjectResult>(result);

@@ -1,4 +1,5 @@
-using ERPNet.Application.Common.DTOs;
+using ERPNet.Contracts;
+using ERPNet.Contracts.DTOs;
 using ERPNet.Domain.Filters;
 
 namespace ERPNet.Application.Common.Interfaces;

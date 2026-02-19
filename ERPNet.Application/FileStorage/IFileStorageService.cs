@@ -1,5 +1,5 @@
-using ERPNet.Application.Common;
-using ERPNet.Application.FileStorage.DTOs;
+using ERPNet.Contracts;
+using ERPNet.Contracts.FileStorage;
 
 namespace ERPNet.Application.FileStorage;
 

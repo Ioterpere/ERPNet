@@ -2,5 +2,5 @@ namespace ERPNet.Domain.Enums;
 
 public enum Plataforma
 {
-    Web,
+    WebBlazor = 1,
 }

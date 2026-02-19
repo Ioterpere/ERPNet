@@ -1,4 +1,4 @@
-using ERPNet.Application.Common.DTOs;
+using ERPNet.Contracts.Auth;
 
 namespace ERPNet.Application.Auth.DTOs.Mappings;
 

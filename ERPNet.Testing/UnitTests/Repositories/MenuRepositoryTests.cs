@@ -25,7 +25,7 @@ public class MenuRepositoryTests : RepositoryTestBase
         Context.ChangeTracker.Clear();
     }
 
-    private static Menu CrearMenu(int id, string nombre, Plataforma plataforma = Plataforma.Web, int? padreId = null) => new()
+    private static Menu CrearMenu(int id, string nombre, Plataforma plataforma = Plataforma.WebBlazor, int? padreId = null) => new()
     {
         Id = id,
         Nombre = nombre,
@@ -40,11 +40,11 @@ public class MenuRepositoryTests : RepositoryTestBase
     public async Task GetMenusVisibles_FiltraPorPlataforma()
     {
         Context.Menus.AddRange(
-            CrearMenu(1, "MenuA", Plataforma.Web),
-            CrearMenu(2, "MenuB", Plataforma.Web));
+            CrearMenu(1, "MenuA", Plataforma.WebBlazor),
+            CrearMenu(2, "MenuB", Plataforma.WebBlazor));
         await SaveAndClearAsync();
 
-        var result = await _sut.GetMenusVisiblesAsync(Plataforma.Web, [1]);
+        var result = await _sut.GetMenusVisiblesAsync(Plataforma.WebBlazor, [1]);
 
         Assert.Equal(2, result.Count);
     }
@@ -55,7 +55,7 @@ public class MenuRepositoryTests : RepositoryTestBase
         Context.Menus.Add(CrearMenu(1, "Publico"));
         await SaveAndClearAsync();
 
-        var result = await _sut.GetMenusVisiblesAsync(Plataforma.Web, [99]);
+        var result = await _sut.GetMenusVisiblesAsync(Plataforma.WebBlazor, [99]);
 
         Assert.Single(result);
     }
@@ -69,7 +69,7 @@ public class MenuRepositoryTests : RepositoryTestBase
             new MenuRol { MenuId = 2, RolId = 2 });
         await SaveAndClearAsync();
 
-        var result = await _sut.GetMenusVisiblesAsync(Plataforma.Web, [1]);
+        var result = await _sut.GetMenusVisiblesAsync(Plataforma.WebBlazor, [1]);
 
         Assert.Single(result);
         Assert.Equal("AdminMenu", result[0].Nombre);
@@ -83,7 +83,7 @@ public class MenuRepositoryTests : RepositoryTestBase
             CrearMenu(2, "Hijo", padreId: 1));
         await SaveAndClearAsync();
 
-        var result = await _sut.GetMenusVisiblesAsync(Plataforma.Web, [1]);
+        var result = await _sut.GetMenusVisiblesAsync(Plataforma.WebBlazor, [1]);
 
         Assert.Single(result);
         Assert.Equal("Padre", result[0].Nombre);
@@ -98,7 +98,7 @@ public class MenuRepositoryTests : RepositoryTestBase
             CrearMenu(2, "HijoA", padreId: 1));
         await SaveAndClearAsync();
 
-        var result = await _sut.GetMenusVisiblesAsync(Plataforma.Web, [1]);
+        var result = await _sut.GetMenusVisiblesAsync(Plataforma.WebBlazor, [1]);
 
         Assert.Single(result);
         Assert.Equal(2, result[0].SubMenus.Count);

@@ -1,9 +1,9 @@
 using ERPNet.Application.Auth;
-using ERPNet.Application.Auth.DTOs;
+using ERPNet.Contracts.Auth;
 using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Domain.Common.Values;
 using ERPNet.Domain.Repositories;
-using ERPNet.Application.Common.Enums;
+using ERPNet.Contracts;
 using ERPNet.Domain.Entities;
 using Microsoft.Extensions.Options;
 using NSubstitute;

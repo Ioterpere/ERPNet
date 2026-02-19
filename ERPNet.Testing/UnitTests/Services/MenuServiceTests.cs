@@ -1,6 +1,6 @@
 using ERPNet.Application.Common;
-using ERPNet.Application.Common.DTOs;
-using ERPNet.Application.Common.Enums;
+using ERPNet.Contracts;
+using ERPNet.Contracts.DTOs;
 using ERPNet.Application.Common.Interfaces;
 using ERPNet.Domain.Entities;
 using ERPNet.Domain.Enums;
@@ -27,7 +27,7 @@ public class MenuServiceTests
         Id = id,
         Nombre = $"Menu{id}",
         Orden = id,
-        Plataforma = Plataforma.Web,
+        Plataforma = Plataforma.WebBlazor,
         SubMenus = []
     };
 
@@ -37,9 +37,9 @@ public class MenuServiceTests
     public async Task GetMenusVisibles_DevuelveMenusMapeados()
     {
         var menus = new List<Menu> { CrearMenu(1), CrearMenu(2) };
-        _repo.GetMenusVisiblesAsync(Plataforma.Web, Arg.Any<List<int>>()).Returns(menus);
+        _repo.GetMenusVisiblesAsync(Plataforma.WebBlazor, Arg.Any<List<int>>()).Returns(menus);
 
-        var result = await _sut.GetMenusVisiblesAsync(Plataforma.Web, [1, 2]);
+        var result = await _sut.GetMenusVisiblesAsync(Plataforma.WebBlazor, [1, 2]);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value!.Count);
@@ -83,10 +83,9 @@ public class MenuServiceTests
         {
             Nombre = "Dashboard",
             Orden = 1,
-            Plataforma = Plataforma.Web
         };
 
-        var result = await _sut.CreateAsync(request);
+        var result = await _sut.CreateAsync(request, Plataforma.WebBlazor);
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Dashboard", result.Value!.Nombre);
@@ -172,9 +171,9 @@ public class MenuServiceTests
     [Fact(DisplayName = "Create: no invalida cache")]
     public async Task Create_NoInvalidaCache()
     {
-        var request = new CreateMenuRequest { Nombre = "Nuevo", Plataforma = Plataforma.Web };
+        var request = new CreateMenuRequest { Nombre = "Nuevo" };
 
-        await _sut.CreateAsync(request);
+        await _sut.CreateAsync(request, Plataforma.WebBlazor);
 
         _cache.DidNotReceive().Remove(Arg.Any<string>());
     }

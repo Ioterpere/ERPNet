@@ -1,8 +1,8 @@
 using ERPNet.Application.Auth;
 using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Application.Common;
-using ERPNet.Application.Common.DTOs;
-using ERPNet.Application.Common.Enums;
+using ERPNet.Contracts.DTOs;
+using ERPNet.Contracts;
 using ERPNet.Domain.Common.Values;
 using ERPNet.Domain.Entities;
 using ERPNet.Domain.Enums;

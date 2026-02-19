@@ -1,7 +1,7 @@
-using ERPNet.Application.Common.DTOs;
 using ERPNet.Application.Common.DTOs.Mappings;
-using ERPNet.Application.Common.Enums;
 using ERPNet.Application.Common.Interfaces;
+using ERPNet.Contracts;
+using ERPNet.Contracts.DTOs;
 using ERPNet.Domain.Filters;
 using ERPNet.Domain.Repositories;
 
@@ -17,7 +17,7 @@ public class RolService(
         var (roles, total) = await rolRepository.GetPaginatedAsync(filtro);
         var response = roles.Select(r => r.ToResponse()).ToList();
         return Result<ListaPaginada<RolResponse>>.Success(
-            ListaPaginada<RolResponse>.Crear(response, total, filtro));
+            ListaPaginada<RolResponse>.Crear(response, total, filtro.Pagina, filtro.PorPagina));
     }
 
     public async Task<Result<RolResponse>> GetByIdAsync(int id)

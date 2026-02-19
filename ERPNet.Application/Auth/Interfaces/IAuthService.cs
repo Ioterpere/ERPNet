@@ -1,5 +1,5 @@
-using ERPNet.Application.Auth.DTOs;
-using ERPNet.Application.Common;
+using ERPNet.Contracts;
+using ERPNet.Contracts.Auth;
 
 namespace ERPNet.Application.Auth.Interfaces;
 

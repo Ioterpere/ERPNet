@@ -1,6 +1,6 @@
 using ERPNet.Api.Attributes;
-using ERPNet.Application.Common.DTOs;
 using ERPNet.Application.Common.Interfaces;
+using ERPNet.Contracts.DTOs;
 using ERPNet.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 using ERPNet.Api.Controllers.Common;
@@ -20,8 +20,13 @@ public class MenusController(IMenuService menuService) : BaseController
         => FromResult(await menuService.GetByIdAsync(id));
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateMenuRequest request)
-        => CreatedFromResult(await menuService.CreateAsync(request));
+    public async Task<IActionResult> Create([FromQuery] Plataforma plataforma, [FromBody] CreateMenuRequest request)
+    {
+        if (!Enum.IsDefined(plataforma))
+            return BadRequest(new { error = "Plataforma no válida." });
+
+        return CreatedFromResult(await menuService.CreateAsync(request, plataforma));
+    }
 
     [HttpGet("{id}/roles")]
     public async Task<IActionResult> GetRoles(int id)

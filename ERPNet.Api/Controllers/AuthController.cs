@@ -1,6 +1,6 @@
 using ERPNet.Api.Attributes;
 using ERPNet.Api.Controllers.Common;
-using ERPNet.Application.Auth.DTOs;
+using ERPNet.Contracts.Auth;
 using ERPNet.Application.Auth.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

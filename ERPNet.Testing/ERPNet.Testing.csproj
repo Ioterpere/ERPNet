@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\ERPNet.Contracts\ERPNet.Contracts.csproj" />
     <ProjectReference Include="..\ERPNet.Api\ERPNet.Api.csproj" />
     <ProjectReference Include="..\ERPNet.Infrastructure\ERPNet.Infrastructure.csproj" />
     <ProjectReference Include="..\ERPNet.Application\ERPNet.Application.csproj" />

@@ -1,9 +1,9 @@
 using System.Net;
 using ERPNet.Api.Controllers;
-using ERPNet.Application.Auth.DTOs;
+using ERPNet.Contracts.Auth;
 using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Application.Common;
-using ERPNet.Application.Common.Enums;
+using ERPNet.Contracts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;

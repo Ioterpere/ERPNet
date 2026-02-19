@@ -1,3 +1,4 @@
+using ERPNet.Contracts.DTOs;
 using ERPNet.Domain.Entities;
 
 namespace ERPNet.Application.Common.DTOs.Mappings;

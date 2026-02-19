@@ -1,8 +1,8 @@
-using ERPNet.Application.Common;
-using ERPNet.Application.Common.DTOs;
-using ERPNet.Application.Common.Interfaces;
 using ERPNet.Application.Auth.DTOs.Mappings;
-using ERPNet.Application.Auth.DTOs;
+using ERPNet.Application.Common.Interfaces;
+using ERPNet.Contracts;
+using ERPNet.Contracts.Auth;
+using ERPNet.Contracts.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using ERPNet.Api.Attributes;
 using ERPNet.Domain.Enums;

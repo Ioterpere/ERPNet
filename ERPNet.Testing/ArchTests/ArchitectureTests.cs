@@ -2,6 +2,7 @@ using System.Reflection;
 using ERPNet.Api.Attributes;
 using ERPNet.Api.Controllers.Common;
 using ERPNet.Application.Common;
+using ERPNet.Contracts;
 using ERPNet.Domain.Common;
 using ERPNet.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -12,12 +13,25 @@ namespace ERPNet.Testing.ArchTests;
 public class ArchitectureTests
 {
     private static readonly Assembly DomainAssembly = typeof(BaseEntity).Assembly;
-    private static readonly Assembly ApplicationAssembly = typeof(Result).Assembly;
+    private static readonly Assembly ContractsAssembly = typeof(Result).Assembly;
+    private static readonly Assembly ApplicationAssembly = typeof(UsuarioService).Assembly;
     private static readonly Assembly InfrastructureAssembly = typeof(DependencyInjection).Assembly;
     private static readonly Assembly ApiAssembly = typeof(BaseController).Assembly;
     private static readonly Assembly TestingAssembly = typeof(ArchitectureTests).Assembly;
 
     #region Dependencias entre capas
+
+    [Fact(DisplayName = "Arch: Contracts no tiene dependencias externas")]
+    public void Contracts_NoDependenciasExternas()
+    {
+        var referencias = ContractsAssembly.GetReferencedAssemblies()
+            .Select(a => a.Name!)
+            .Where(n => !n.StartsWith("System") && n != "mscorlib" && n != "netstandard")
+            .ToList();
+
+        Assert.True(referencias.Count == 0,
+            $"Contracts tiene dependencias externas: {string.Join(", ", referencias)}");
+    }
 
     [Fact(DisplayName = "Arch: Domain no referencia capas superiores")]
     public void Domain_NoReferenciaCapasSuperiores()
