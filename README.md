@@ -54,7 +54,6 @@ El proyecto sigue **Clean Architecture** con dependencias estrictamente unidirec
 │   EF Core · Repositories · RabbitMQ · MinIO · SMTP           │
 └─────────────────────────────────────────────────────────────┘
 
-ERPNet.Contracts  ←  sin dependencias externas (DTOs compartidos)
 ERPNet.ApiClient  ←  cliente HTTP generado por NSwag desde OpenAPI
 ERPNet.Testing    ←  xUnit + NSubstitute + DbSeeder
 ```
@@ -79,7 +78,7 @@ Esto levanta:
 
 | Servicio | URL |
 |---|---|
-| SQL Server | `localhost,1433` |
+| SQL Server | `localhost,1434` |
 | MinIO (consola) | http://localhost:9001 |
 | RabbitMQ (UI) | http://localhost:15672 |
 | MailHog (bandeja dev) | http://localhost:8025 |
@@ -119,10 +118,6 @@ Credenciales del administrador generadas en el paso 3 (ver salida del seeder).
 
 ```
 ERPNet/
-├── ERPNet.Contracts/          # DTOs y tipos compartidos sin dependencias
-│   ├── Result.cs              # Result<T> / Result para manejo de errores
-│   ├── ListaPaginada.cs       # Respuesta paginada genérica
-│   └── DTOs/                  # Requests y Responses de la API
 │
 ├── ERPNet.Domain/
 │   ├── Entities/              # 20 entidades (Usuario, Empleado, Rol, Maquinaria…)
@@ -185,7 +180,7 @@ ERPNet/
 | Patrón | Dónde buscarlo |
 |---|---|
 | Clean Architecture | Estructura de proyectos y referencias |
-| Result<T> (Railway-oriented) | `ERPNet.Contracts/Result.cs` → `BaseController.FromResult()` |
+| Result<T> (Railway-oriented) | `ERPNet.Application/Common/Result.cs` → `BaseController.FromResult()` |
 | Repository + Unit of Work | `Domain/Repositories/` + `Infrastructure/Database/` |
 | Soft delete global (EF) | `ErpNetDbContext.cs` → `ConfigureConventions` + query filters |
 | Value Objects (EF converters) | `Domain/Common/Values/` + `Infrastructure/Database/Converters/` |
@@ -207,35 +202,10 @@ ERPNet/
 
 | Patrón | Dónde buscarlo |
 |---|---|
-| BFF sin YARP | `ERPNet.Web.Blazor/Bff/BffApiClient.cs` |
-| Auth con cookie HttpOnly | `LoginLogoutEndpointRouteBuilderExtensions.cs` |
-| InteractiveAuto (Server+WASM) | `App.razor` (server) + `Routes.razor` (client) |
-| Master-detail con panel flex | `Roles.razor` + `Roles.razor.css` |
-| Modal puro Blazor (sin JS) | `Components/Common/Modal.razor` |
-| ItemSelector con búsqueda async | `Components/Common/ItemSelector.razor` |
-| Toolbar sticky (siempre visible) | `.detail-toolbar` en `Roles.razor.css` |
-| Menús dinámicos desde API | `Components/Common/NavMenu.razor` |
+| BFF | `ERPNet.Web.Blazor/Bff/BffApiClient.cs` |
+| Menús dinámicos desde API | `ERPNet.Web.Blazor.Client/Components/Common/NavMenu.razor` |
 
 ---
-
-## Flujo de autenticación
-
-```
-Browser → POST /authentication/login (BFF)
-            ↓
-        ERPNet.Api /api/auth/login
-            ↓
-        JWT (30 min) + RefreshToken (7 días, hash SHA-256)
-            ↓
-        BFF cachea tokens en IDistributedMemoryCache
-        BFF crea cookie HttpOnly con session_key
-            ↓
-Browser tiene cookie (nunca el JWT)
-            ↓
-Cada petición Blazor → BffApiClient recupera JWT del cache
-                     → lo inyecta como Bearer en ERPNet.Api
-                     → refresca proactivamente si expira en <2 min
-```
 
 ---
 
@@ -260,7 +230,6 @@ dotnet test ERPNet.Testing
 ```
 
 Los architecture tests verifican que:
-- `ERPNet.Contracts` no tiene dependencias externas
 - `ERPNet.Domain` no referencia Infrastructure ni Application
 - Los servicios no referencian directamente EF Core
 
@@ -272,8 +241,6 @@ Los architecture tests verifican que:
 - [ ] Gestión de Vacaciones (flujo Pendiente → Aprobado/Rechazado)
 - [ ] Turnos y Marcajes con detección de incidencias
 - [ ] Módulo de Maquinaria y Órdenes de Mantenimiento
-- [ ] Implementar patrón `Consulta(alcance)` en repositorios (Propio/Sección/Global)
-- [ ] App móvil (Blazor Hybrid o MAUI) para marcajes y reporte de averías
 - [ ] Dashboard con métricas en tiempo real
 
 ---
