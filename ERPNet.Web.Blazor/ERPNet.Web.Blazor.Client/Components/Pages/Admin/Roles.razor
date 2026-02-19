@@ -1,0 +1,921 @@
+@page "/roles"
+@attribute [Authorize]
+@using ERPNet.ApiClient
+
+@inject IRolesClient RolesClient
+@inject IUsuariosClient UsuariosClient
+@inject NavigationManager Nav
+@inject ToastService Toast
+
+<PageTitle>Roles — ERPNet</PageTitle>
+
+<div class="row g-0 panel-container">
+
+    <!-- ── Panel izquierdo: Lista ─────────────────────────────── -->
+    <div class="col-12 col-lg-3 border-end panel-lista @((!_esNuevo && !Id.HasValue) ? "d-flex" : "d-none d-lg-flex")">
+
+        <!-- Header -->
+        <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom flex-shrink-0">
+            <h5 class="mb-0 fw-semibold">Roles</h5>
+            <button class="btn btn-sm btn-primary" @onclick="NuevoRol">
+                <i class="bi bi-plus-lg me-1"></i>Nuevo
+            </button>
+        </div>
+
+        <!-- Buscador -->
+        <div class="px-3 py-2 border-bottom flex-shrink-0">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-transparent border-end-0">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+                <input type="search" class="form-control border-start-0 ps-0"
+                       placeholder="Buscar por nombre..."
+                       @bind-value="_busqueda" @bind-value:event="oninput" />
+            </div>
+        </div>
+
+        <!-- Items -->
+        <div class="flex-grow-1 overflow-y-auto">
+            @if (_cargandoLista)
+            {
+                @for (var i = 0; i < 5; i++)
+                {
+                    <div class="rol-row placeholder-glow">
+                        <span class="placeholder col-6 d-block mb-1" style="height:13px"></span>
+                        <span class="placeholder col-4" style="height:11px"></span>
+                    </div>
+                }
+            }
+            else if (_rolesFiltrados.Count == 0)
+            {
+                <div class="text-center text-muted py-5 small">
+                    <i class="bi bi-shield-x fs-3 d-block mb-2"></i>
+                    Sin resultados
+                </div>
+            }
+            else
+            {
+                @foreach (var r in _rolesFiltrados)
+                {
+                    <button type="button"
+                            class="rol-row w-100 text-start @(Id == r.Id ? "active" : "")"
+                            @onclick="() => SeleccionarRol(r.Id)">
+                        <div class="fw-semibold text-truncate small">@r.Nombre</div>
+                        @if (!string.IsNullOrWhiteSpace(r.Descripcion))
+                        {
+                            <div class="text-muted text-truncate" style="font-size:.75rem">@r.Descripcion</div>
+                        }
+                    </button>
+                }
+            }
+        </div>
+
+        <!-- Paginación -->
+        @if (_paginado is not null && !_cargandoLista)
+        {
+            <div class="px-3 py-2 border-top d-flex align-items-center justify-content-between flex-shrink-0 small text-muted">
+                <span>@PaginacionTexto</span>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary" @onclick="PaginaAnterior"
+                            disabled="@(_pagina <= 1)">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary" @onclick="PaginaSiguiente"
+                            disabled="@(_pagina >= _paginado.TotalPaginas)">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- ── Panel derecho: Detalle ─────────────────────────────── -->
+    <div class="col-12 col-lg-9 panel-detalle">
+
+        @if (!_esNuevo && !Id.HasValue)
+        {
+            <!-- Estado vacío -->
+            <div class="panel-placeholder">
+                <i class="bi bi-shield-lock text-muted" style="font-size:3rem"></i>
+                <p class="text-muted mt-3 mb-1">Selecciona un rol de la lista</p>
+                <p class="text-muted small mb-0">o crea uno nuevo con el botón "+ Nuevo"</p>
+            </div>
+        }
+        else if (_esNuevo)
+        {
+            <!-- Formulario de creación -->
+            <div class="detail-content">
+            <div class="px-4 py-4">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <button class="btn btn-sm btn-light d-lg-none" @onclick="VolverALista">
+                        <i class="bi bi-arrow-left"></i>
+                    </button>
+                    <h5 class="mb-0 fw-semibold">Nuevo rol</h5>
+                </div>
+
+                @if (_errorCrear is not null)
+                {
+                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+                        <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                        <span>@_errorCrear</span>
+                    </div>
+                }
+
+                <div class="card mb-3">
+                    <div class="card-header d-flex align-items-center gap-2">
+                        <i class="bi bi-shield-plus text-primary"></i>
+                        <span class="fw-semibold">Datos del rol</span>
+                    </div>
+                    <div class="card-body py-4">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" @bind="_nuevoNombre"
+                                       placeholder="Nombre del rol" autocomplete="off" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Descripción</label>
+                                <input type="text" class="form-control" @bind="_nuevoDescripcion"
+                                       placeholder="Descripción opcional" autocomplete="off" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <button class="btn btn-outline-secondary btn-sm" @onclick="VolverALista">Cancelar</button>
+                    <button class="btn btn-primary" @onclick="CrearRolAsync" disabled="@_creando">
+                        @if (_creando)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-shield-check me-1"></i>
+                        }
+                        Crear rol
+                    </button>
+                </div>
+            </div>
+            </div>
+        }
+        else if (Id.HasValue)
+        {
+            <!-- Formulario de edición -->
+            <div class="detail-content">
+            <div class="px-4 py-4">
+
+                <!-- Header de detalle -->
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <button class="btn btn-sm btn-light d-lg-none" @onclick="VolverALista">
+                        <i class="bi bi-arrow-left"></i>
+                    </button>
+
+                    @if (_cargandoDetalle)
+                    {
+                        <div class="d-flex align-items-center gap-3 placeholder-glow flex-grow-1">
+                            <div>
+                                <span class="placeholder d-block mb-1" style="height:14px;width:160px"></span>
+                                <span class="placeholder" style="height:11px;width:100px"></span>
+                            </div>
+                        </div>
+                    }
+                    else if (_rolDetalle is not null)
+                    {
+                        <div class="flex-grow-1 overflow-hidden">
+                                <h5 class="mb-0 fw-semibold text-truncate">@_rolDetalle.Nombre</h5>
+                                @if (!string.IsNullOrWhiteSpace(_rolDetalle.Descripcion))
+                                {
+                                    <p class="text-muted small mb-0 text-truncate">@_rolDetalle.Descripcion</p>
+                                }
+                        </div>
+                        <button class="btn btn-sm btn-primary flex-shrink-0"
+                            @onclick='() => { _errorDatos = null; _mostrarModalEditar = true; }'>
+                            <i class="bi bi-pencil"></i>
+                        </button> 
+                    }
+                </div>
+
+                @if (_errorDetalle is not null)
+                {
+                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+                        <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                        <span>@_errorDetalle</span>
+                    </div>
+                }
+
+                @if (!_cargandoDetalle && _rolDetalle is not null)
+                {
+                    <!-- Nav tabs -->
+                    <ul class="nav nav-tabs mb-3">
+                        <li class="nav-item">
+                            <button class="nav-link @(_tabActiva == "usuarios" ? "active" : "")"
+                                    @onclick='() => _tabActiva = "usuarios"'>
+                                <i class="bi bi-people me-1"></i>Usuarios
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link @(_tabActiva == "permisos" ? "active" : "")"
+                                    @onclick='() => _tabActiva = "permisos"'>
+                                <i class="bi bi-shield me-1"></i>Permisos
+                            </button>
+                        </li>
+                    </ul>
+                    <!-- ── Tab: Usuarios ───────────────────────────── -->
+                    @if (_tabActiva == "usuarios")
+                    {
+                        <div class="card mb-4">
+                            <div class="card-header d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-people text-primary"></i>
+                                    <span class="fw-semibold">Usuarios del rol</span>
+                                </div>
+                                @if (_usuariosEdit.Count > 0)
+                                {
+                                    <span class="badge bg-primary-subtle text-primary-emphasis">@_usuariosEdit.Count</span>
+                                }
+                            </div>
+                            <div class="card-body">
+
+                                <!-- Añadir usuario -->
+                                <div class="d-flex gap-2 mb-3">
+                                    <div class="flex-grow-1" style="max-width:400px">
+                                        <ItemSelector TItem="UsuarioResponse"
+                                                      @key="_selectorKey"
+                                                      SearchAsync="BuscarUsuariosAsync"
+                                                      GetId="u => u.Id"
+                                                      GetLabel="u => u.Email"
+                                                      GetSubLabel='u => u.Activo ? "Activo" : "Inactivo"'
+                                                      Value="_usuarioParaAnadirId"
+                                                      ValueChanged="id => _usuarioParaAnadirId = id"
+                                                      Placeholder="Buscar usuario por email..." />
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-primary" @onclick="AñadirUsuario"
+                                            disabled="@(_usuarioParaAnadirId is null)">
+                                        <i class="bi bi-plus-lg me-1"></i>Añadir
+                                    </button>
+                                </div>
+
+                                <!-- Lista de usuarios -->
+                                @if (_usuariosEdit.Count == 0)
+                                {
+                                    <div class="text-center text-muted py-4 small">
+                                        <i class="bi bi-person-x fs-4 d-block mb-1"></i>
+                                        Sin usuarios asignados
+                                    </div>
+                                }
+                                else
+                                {
+                                    @foreach (var u in _usuariosEdit)
+                                    {
+                                        <div class="d-flex align-items-center gap-3 py-2 border-bottom">
+                                            <div class="user-avatar flex-shrink-0">
+                                                @(u.Email.Length > 0 ? char.ToUpper(u.Email[0]).ToString() : "?")
+                                            </div>
+                                            <div class="flex-grow-1 overflow-hidden">
+                                                <div class="small fw-semibold text-truncate">@u.Email</div>
+                                            </div>
+                                            <a href="/usuarios?id=@u.Id" class="btn btn-sm btn-outline-secondary flex-shrink-0">
+                                                <i class="bi bi-arrow-up-right-square"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-danger flex-shrink-0"
+                                                    @onclick="() => QuitarUsuario(u)">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    }
+                    
+                    <!-- ── Tab: Permisos ───────────────────────────── -->
+                    else if (_tabActiva == "permisos")
+                    {
+                        <div class="card mb-4">
+                            <div class="card-header d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-shield-check text-primary"></i>
+                                    <span class="fw-semibold">Permisos del rol</span>
+                                </div>
+                                @if (_permisosEdit.Count > 0)
+                                {
+                                    <span class="badge bg-primary-subtle text-primary-emphasis">@_permisosEdit.Count</span>
+                                }
+                            </div>
+                            <div class="card-body">
+
+                                <!-- Añadir permiso -->
+                                <div class="d-flex gap-2 mb-3">
+                                    <select class="form-select form-select-sm" style="max-width:280px"
+                                            @bind="_recursoSeleccionadoId">
+                                        <option value="0">— Seleccionar recurso —</option>
+                                        @foreach (var rec in _recursosDisponibles)
+                                        {
+                                            <option value="@rec.Id">@rec.Codigo</option>
+                                        }
+                                    </select>
+                                    <button class="btn btn-sm btn-outline-primary" @onclick="AñadirPermiso"
+                                            disabled="@(_recursoSeleccionadoId == 0)">
+                                        <i class="bi bi-plus-lg me-1"></i>Añadir
+                                    </button>
+                                </div>
+
+                                <!-- Tabla de permisos -->
+                                <div class="table-responsive">
+                                    <table class="table table-sm align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Recurso</th>
+                                                <th class="text-center" style="width:70px">Crear</th>
+                                                <th class="text-center" style="width:70px">Editar</th>
+                                                <th class="text-center" style="width:80px">Eliminar</th>
+                                                <th style="width:140px">Alcance</th>
+                                                <th style="width:50px"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @if (_permisosEdit.Count == 0)
+                                            {
+                                                <tr>
+                                                    <td colspan="6" class="text-center text-muted py-4 small">
+                                                        <i class="bi bi-shield-slash d-block fs-4 mb-1"></i>
+                                                        Sin permisos configurados
+                                                    </td>
+                                                </tr>
+                                            }
+                                            else
+                                            {
+                                                @foreach (var permiso in _permisosEdit)
+                                                {
+                                                    <tr>
+                                                        <td class="fw-semibold small">@permiso.Codigo</td>
+                                                        <td class="text-center">
+                                                            <input type="checkbox" class="form-check-input"
+                                                                   @bind="permiso.CanCreate" />
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <input type="checkbox" class="form-check-input"
+                                                                   @bind="permiso.CanEdit" />
+                                                        </td>
+                                                        <td class="text-center">
+                                                            <input type="checkbox" class="form-check-input"
+                                                                   @bind="permiso.CanDelete" />
+                                                        </td>
+                                                        <td>
+                                                            <select class="form-select form-select-sm"
+                                                                    @bind="permiso.Alcance">
+                                                                <option value="0">Propio</option>
+                                                                <option value="1">Sección</option>
+                                                                <option value="2">Global</option>
+                                                            </select>
+                                                        </td>
+                                                        <td>
+                                                            <button type="button"
+                                                                    class="btn btn-sm btn-outline-danger"
+                                                                    @onclick="() => QuitarPermiso(permiso)">
+                                                                <i class="bi bi-x-lg"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                }
+            </div>
+            </div>
+
+            <!-- ── Toolbar de acciones ─────────────────────────── -->
+            @if (!_cargandoDetalle && _rolDetalle is not null)
+            {
+                <div class="detail-toolbar">
+                    <button class="btn btn-outline-danger me-auto"
+                            @onclick='() => _mostrarModalEliminar = true'>
+                        <i class="bi bi-trash3 me-1"></i>Eliminar rol
+                    </button>
+                    @if (_tabActiva == "usuarios")
+                    {
+                        @if (_errorUsuarios is not null)
+                        {
+                            <span class="text-danger small me-auto d-flex align-items-center gap-1">
+                                <i class="bi bi-x-circle-fill"></i>@_errorUsuarios
+                            </span>
+                        }
+                        <button class="btn btn-primary" @onclick="GuardarUsuariosAsync"
+                                disabled="@_guardandoUsuarios">
+                            @if (_guardandoUsuarios)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                            }
+                            Guardar usuarios
+                        </button>
+                    }
+                    else if (_tabActiva == "permisos")
+                    {
+                        @if (_errorPermisos is not null)
+                        {
+                            <span class="text-danger small me-auto d-flex align-items-center gap-1">
+                                <i class="bi bi-x-circle-fill"></i>@_errorPermisos
+                            </span>
+                        }
+                        <button class="btn btn-primary" @onclick="GuardarPermisosAsync"
+                                disabled="@_guardandoPermisos">
+                            @if (_guardandoPermisos)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                            }
+                            Guardar permisos
+                        </button>
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<!-- Modal: editar nombre y descripción del rol -->
+<Modal Title="Editar rol" @bind-IsVisible="_mostrarModalEditar" CloseOnBackdrop="false">
+    <ChildContent>
+        @if (_errorDatos is not null)
+        {
+            <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-3">
+                <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                <span>@_errorDatos</span>
+            </div>
+        }
+        <div class="row g-3">
+            <div class="col-12">
+                <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" @bind="_editNombre" autocomplete="off" />
+            </div>
+            <div class="col-12">
+                <label class="form-label">Descripción</label>
+                <input type="text" class="form-control" @bind="_editDescripcion"
+                       placeholder="Descripción opcional" autocomplete="off" />
+            </div>
+        </div>
+    </ChildContent>
+    <Footer>
+        <button class="btn btn-outline-secondary"
+                @onclick='() => _mostrarModalEditar = false'>Cancelar</button>
+        <button class="btn btn-primary" @onclick="GuardarDatosAsync" disabled="@_guardandoDatos">
+            @if (_guardandoDatos)
+            {
+                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+            }
+            Guardar cambios
+        </button>
+    </Footer>
+</Modal>
+
+<!-- Modal: confirmar eliminación del rol -->
+<Modal Title="Eliminar rol" @bind-IsVisible="_mostrarModalEliminar">
+    <ChildContent>
+        <p class="mb-1">¿Seguro que quieres eliminar el rol <strong>@_rolDetalle?.Nombre</strong>?</p>
+        <p class="text-muted small mb-0">Esta acción no se puede deshacer.</p>
+        @if (_errorEliminar is not null)
+        {
+            <div class="alert alert-danger d-flex align-items-center gap-2 mt-3 py-2 mb-0">
+                <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                <span>@_errorEliminar</span>
+            </div>
+        }
+    </ChildContent>
+    <Footer>
+        <button class="btn btn-outline-secondary"
+                @onclick='() => _mostrarModalEliminar = false'>Cancelar</button>
+        <button class="btn btn-danger" @onclick="EliminarRolAsync" disabled="@_eliminando">
+            @if (_eliminando)
+            {
+                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+            }
+            Eliminar
+        </button>
+    </Footer>
+</Modal>
+
+@code {
+    [SupplyParameterFromQuery(Name = "id")]
+    public int? Id { get; set; }
+
+    // ── Lista ─────────────────────────────────────────────────
+    private ListaPaginadaOfRolResponse? _paginado;
+    private List<RolResponse> _roles = [];
+    private bool _cargandoLista = true;
+    private string _busqueda = string.Empty;
+    private int _pagina = 1;
+    private const int PorPagina = 15;
+
+    // ── Estado ─────────────────────────────────────────────────
+    private bool _esNuevo;
+    private int? _idActual;
+    private string _tabActiva = "usuarios";
+    private bool _mostrarModalEditar;
+    private bool _mostrarModalEliminar;
+    private bool _eliminando;
+    private string? _errorEliminar;
+
+    // ── Recursos (cargados una vez) ─────────────────────────────
+    private List<RecursoResponse> _todosRecursos = [];
+
+    // ── Detalle ────────────────────────────────────────────────
+    private RolResponse? _rolDetalle;
+    private bool _cargandoDetalle;
+    private string? _errorDetalle;
+
+    // ── Tab Datos ──────────────────────────────────────────────
+    private string _editNombre = string.Empty;
+    private string _editDescripcion = string.Empty;
+    private bool _guardandoDatos;
+    private string? _errorDatos;
+
+    // ── Tab Permisos ────────────────────────────────────────────
+    private List<PermisoEditModel> _permisosEdit = [];
+    private int _recursoSeleccionadoId;
+    private bool _guardandoPermisos;
+    private string? _errorPermisos;
+
+    private IEnumerable<RecursoResponse> _recursosDisponibles =>
+        _todosRecursos.Where(r => !_permisosEdit.Any(p => p.RecursoId == r.Id));
+
+    // ── Tab Usuarios ────────────────────────────────────────────
+    private List<UsuarioResponse> _usuariosEdit = [];
+    private int? _usuarioParaAnadirId;
+    private Dictionary<int, UsuarioResponse> _cacheBusquedaUsuarios = [];
+    private int _selectorKey;
+    private bool _guardandoUsuarios;
+    private string? _errorUsuarios;
+
+    // ── Formulario creación ────────────────────────────────────
+    private string _nuevoNombre = string.Empty;
+    private string _nuevoDescripcion = string.Empty;
+    private bool _creando;
+    private string? _errorCrear;
+
+    // ── Computed ───────────────────────────────────────────────
+    private List<RolResponse> _rolesFiltrados =>
+        string.IsNullOrWhiteSpace(_busqueda)
+            ? _roles
+            : _roles.Where(r => r.Nombre.Contains(_busqueda, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    private string PaginacionTexto
+    {
+        get
+        {
+            if (_paginado is null) return string.Empty;
+            var desde = (_pagina - 1) * PorPagina + 1;
+            var hasta = Math.Min(_pagina * PorPagina, _paginado.TotalRegistros);
+            return $"{desde}–{hasta} de {_paginado.TotalRegistros}";
+        }
+    }
+
+    // ── Ciclo de vida ──────────────────────────────────────────
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(CargarListaAsync(), CargarTodosRecursosAsync());
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id == _idActual) return;
+
+        _idActual = Id;
+
+        if (Id.HasValue)
+        {
+            _esNuevo = false;
+            await CargarDetalleAsync(Id.Value);
+        }
+        else
+        {
+            LimpiarDetalle();
+        }
+    }
+
+    // ── Carga de datos ─────────────────────────────────────────
+    private async Task CargarListaAsync()
+    {
+        _cargandoLista = true;
+        try
+        {
+            _paginado = await RolesClient.RolesGETAsync(_pagina, PorPagina);
+            _roles = _paginado.Items.ToList();
+        }
+        catch { /* lista queda vacía */ }
+        finally
+        {
+            _cargandoLista = false;
+        }
+    }
+
+    private async Task CargarTodosRecursosAsync()
+    {
+        try
+        {
+            var recursos = await RolesClient.RecursosAsync();
+            _todosRecursos = recursos.ToList();
+        }
+        catch { /* sin recursos */ }
+    }
+
+    private async Task CargarDetalleAsync(int id)
+    {
+        _cargandoDetalle = true;
+        _errorDetalle = null;
+        LimpiarFeedbackDetalle();
+
+        try
+        {
+            var rolTask = RolesClient.RolesGET2Async(id);
+            var permisosTask = RolesClient.PermisosAllAsync(id);
+            var usuariosTask = RolesClient.UsuariosAllAsync(id);
+            await Task.WhenAll(rolTask, permisosTask, usuariosTask);
+
+            _rolDetalle = await rolTask;
+
+            _permisosEdit = (await permisosTask).Select(p => new PermisoEditModel
+            {
+                RecursoId = p.RecursoId,
+                Codigo = p.RecursoCodigo,
+                CanCreate = p.CanCreate,
+                CanEdit = p.CanEdit,
+                CanDelete = p.CanDelete,
+                Alcance = p.Alcance
+            }).ToList();
+
+            _usuariosEdit = (await usuariosTask).ToList();
+
+            _editNombre = _rolDetalle.Nombre;
+            _editDescripcion = _rolDetalle.Descripcion ?? string.Empty;
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _errorDetalle = "Rol no encontrado.";
+        }
+        catch
+        {
+            _errorDetalle = "No se pudo cargar la información del rol.";
+        }
+        finally
+        {
+            _cargandoDetalle = false;
+        }
+    }
+
+    private async Task<IEnumerable<UsuarioResponse>> BuscarUsuariosAsync(string query, CancellationToken ct)
+    {
+        var resultado = await UsuariosClient.UsuariosGETAsync(1, 100, ct);
+        var filtrados = resultado.Items
+            .Where(u => TextHelper.ContieneBusqueda(u.Email, query))
+            .Where(u => !_usuariosEdit.Any(ue => ue.Id == u.Id))
+            .ToList();
+        _cacheBusquedaUsuarios = filtrados.ToDictionary(u => u.Id);
+        return filtrados;
+    }
+
+    // ── Helpers ────────────────────────────────────────────────
+    private void LimpiarDetalle()
+    {
+        _rolDetalle = null;
+        _permisosEdit.Clear();
+        _usuariosEdit.Clear();
+        LimpiarFeedbackDetalle();
+    }
+
+    private void LimpiarFeedbackDetalle()
+    {
+        _errorDatos = null;
+        _errorPermisos = null;
+        _errorUsuarios = null;
+    }
+
+    private void NuevoRol()
+    {
+        _esNuevo = true;
+        _nuevoNombre = string.Empty;
+        _nuevoDescripcion = string.Empty;
+        _errorCrear = null;
+        Nav.NavigateTo("/roles");
+    }
+
+    private void SeleccionarRol(int id)
+    {
+        _esNuevo = false;
+        Nav.NavigateTo($"/roles?id={id}");
+    }
+
+    private void VolverALista()
+    {
+        _esNuevo = false;
+        Nav.NavigateTo("/roles");
+    }
+
+    private async Task PaginaAnterior()
+    {
+        if (_pagina <= 1) return;
+        _pagina--;
+        await CargarListaAsync();
+    }
+
+    private async Task PaginaSiguiente()
+    {
+        if (_paginado is null || _pagina >= _paginado.TotalPaginas) return;
+        _pagina++;
+        await CargarListaAsync();
+    }
+
+    private void AñadirPermiso()
+    {
+        if (_recursoSeleccionadoId == 0) return;
+        var recurso = _todosRecursos.FirstOrDefault(r => r.Id == _recursoSeleccionadoId);
+        if (recurso is null || _permisosEdit.Any(p => p.RecursoId == recurso.Id)) return;
+
+        _permisosEdit.Add(new PermisoEditModel { RecursoId = recurso.Id, Codigo = recurso.Codigo });
+        _recursoSeleccionadoId = 0;
+    }
+
+    private void QuitarPermiso(PermisoEditModel permiso) => _permisosEdit.Remove(permiso);
+
+    private void AñadirUsuario()
+    {
+        if (_usuarioParaAnadirId is null) return;
+        if (_cacheBusquedaUsuarios.TryGetValue(_usuarioParaAnadirId.Value, out var usuario)
+            && !_usuariosEdit.Any(u => u.Id == usuario.Id))
+        {
+            _usuariosEdit.Add(usuario);
+        }
+        _usuarioParaAnadirId = null;
+        _selectorKey++;
+    }
+
+    private void QuitarUsuario(UsuarioResponse usuario) => _usuariosEdit.Remove(usuario);
+
+    // ── Acciones ───────────────────────────────────────────────
+    private async Task GuardarDatosAsync()
+    {
+        if (_rolDetalle is null || !Id.HasValue) return;
+
+        _errorDatos = null;
+        _guardandoDatos = true;
+        try
+        {
+            await RolesClient.RolesPUTAsync(Id.Value, new UpdateRolRequest
+            {
+                Nombre = _editNombre,
+                Descripcion = string.IsNullOrWhiteSpace(_editDescripcion) ? null : _editDescripcion
+            });
+
+            Toast.Exito("Datos guardados correctamente.");
+            _mostrarModalEditar = false;
+            _rolDetalle = await RolesClient.RolesGET2Async(Id.Value);
+            var idx = _roles.FindIndex(r => r.Id == Id.Value);
+            if (idx >= 0) _roles[idx] = _rolDetalle;
+        }
+        catch (ApiException ex) when (ex.StatusCode == 409)
+        {
+            _errorDatos = "Ya existe un rol con ese nombre.";
+        }
+        catch
+        {
+            _errorDatos = "No se pudieron guardar los cambios.";
+        }
+        finally
+        {
+            _guardandoDatos = false;
+        }
+    }
+
+    private async Task GuardarPermisosAsync()
+    {
+        if (!Id.HasValue) return;
+
+        _errorPermisos = null;
+        _guardandoPermisos = true;
+        try
+        {
+            await RolesClient.PermisosAsync(Id.Value, new SetPermisosRolRequest
+            {
+                Permisos = _permisosEdit.Select(p => new PermisoRolRecursoDto
+                {
+                    RecursoId = p.RecursoId,
+                    CanCreate = p.CanCreate,
+                    CanEdit = p.CanEdit,
+                    CanDelete = p.CanDelete,
+                    Alcance = p.Alcance
+                }).ToList()
+            });
+
+            Toast.Exito("Permisos guardados correctamente.");
+        }
+        catch
+        {
+            _errorPermisos = "No se pudieron guardar los permisos.";
+        }
+        finally
+        {
+            _guardandoPermisos = false;
+        }
+    }
+
+    private async Task GuardarUsuariosAsync()
+    {
+        if (!Id.HasValue) return;
+
+        _errorUsuarios = null;
+        _guardandoUsuarios = true;
+        try
+        {
+            await RolesClient.UsuariosAsync(Id.Value, new AsignarUsuariosRequest
+            {
+                UsuarioIds = _usuariosEdit.Select(u => u.Id).ToList()
+            });
+            Toast.Exito("Usuarios actualizados correctamente.");
+        }
+        catch
+        {
+            _errorUsuarios = "No se pudieron actualizar los usuarios.";
+        }
+        finally
+        {
+            _guardandoUsuarios = false;
+        }
+    }
+
+    private async Task EliminarRolAsync()
+    {
+        if (!Id.HasValue) return;
+
+        _errorEliminar = null;
+        _eliminando = true;
+        try
+        {
+            await RolesClient.RolesDELETEAsync(Id.Value);
+            _mostrarModalEliminar = false;
+            await CargarListaAsync();
+            Toast.Exito("Rol eliminado correctamente.");
+            Nav.NavigateTo("/roles");
+        }
+        catch
+        {
+            _errorEliminar = "No se pudo eliminar el rol.";
+        }
+        finally
+        {
+            _eliminando = false;
+        }
+    }
+
+    private async Task CrearRolAsync()
+    {
+        _errorCrear = null;
+
+        if (string.IsNullOrWhiteSpace(_nuevoNombre))
+        {
+            _errorCrear = "El nombre es obligatorio.";
+            return;
+        }
+
+        _creando = true;
+        try
+        {
+            var creado = await RolesClient.RolesPOSTAsync(new CreateRolRequest
+            {
+                Nombre = _nuevoNombre,
+                Descripcion = string.IsNullOrWhiteSpace(_nuevoDescripcion) ? null : _nuevoDescripcion
+            });
+
+            await CargarListaAsync();
+            Toast.Exito("Rol creado correctamente.");
+            Nav.NavigateTo($"/roles?id={creado.Id}");
+        }
+        catch (ApiException ex) when (ex.StatusCode == 409)
+        {
+            _errorCrear = "Ya existe un rol con ese nombre.";
+        }
+        catch
+        {
+            _errorCrear = "No se pudo crear el rol.";
+        }
+        finally
+        {
+            _creando = false;
+        }
+    }
+
+    // ── Modelo local para edición de permisos ──────────────────
+    private class PermisoEditModel
+    {
+        public int RecursoId { get; set; }
+        public string Codigo { get; set; } = string.Empty;
+        public bool CanCreate { get; set; }
+        public bool CanEdit { get; set; }
+        public bool CanDelete { get; set; }
+        public int Alcance { get; set; }
+    }
+}

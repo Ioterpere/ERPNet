@@ -33,6 +33,7 @@ public class UsuariosController(IUsuarioService usuarioService) : BaseController
         => FromResult(await usuarioService.UpdateAsync(id, request));
 
     [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Delete(int id)
         => FromResult(await usuarioService.DeleteAsync(id));
 

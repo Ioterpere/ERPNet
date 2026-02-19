@@ -1,0 +1,49 @@
+@if (IsVisible)
+{
+    <div class="modal show d-block" tabindex="-1" @onclick="OnBackdropClick">
+        <div class="modal-dialog @SizeClass" @onclick:stopPropagation="true">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-semibold">@Title</h5>
+                    <button type="button" class="btn-close" @onclick="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    @ChildContent
+                </div>
+                @if (Footer is not null)
+                {
+                    <div class="modal-footer">
+                        @Footer
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public bool IsVisible { get; set; }
+    [Parameter, EditorRequired] public EventCallback<bool> IsVisibleChanged { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? Footer { get; set; }
+
+    /// <summary>"sm" | "lg" | "xl" — vacío para tamaño normal.</summary>
+    [Parameter] public string Size { get; set; } = string.Empty;
+
+    /// <summary>Cierra el modal al hacer clic en el backdrop. Por defecto true.</summary>
+    [Parameter] public bool CloseOnBackdrop { get; set; } = true;
+
+    private string SizeClass => Size switch
+    {
+        "sm" => "modal-sm",
+        "lg" => "modal-lg",
+        "xl" => "modal-xl",
+        _ => string.Empty
+    };
+
+    private Task Cerrar() => IsVisibleChanged.InvokeAsync(false);
+
+    private Task OnBackdropClick() => CloseOnBackdrop ? Cerrar() : Task.CompletedTask;
+}

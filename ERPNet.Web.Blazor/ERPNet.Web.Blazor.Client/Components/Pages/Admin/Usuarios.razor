@@ -369,7 +369,7 @@
                     </div>
 
                     <!-- Card seguridad / reset contraseña -->
-                    <div class="card mb-4">
+                    <div class="card mb-3">
                         <div class="card-header d-flex align-items-center gap-2">
                             <i class="bi bi-shield-lock-fill text-primary"></i>
                             <span class="fw-semibold">Seguridad</span>
@@ -385,22 +385,35 @@
                             <p class="text-muted small mb-3">
                                 Genera una contraseña temporal aleatoria y la envía por email al usuario. El usuario deberá cambiarla en su próximo acceso.
                             </p>
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <button class="btn btn-warning btn-sm px-3" @onclick="ResetearContrasenaAsync"
-                                            disabled="@_reseteandoContrasena">
-                                        @if (_reseteandoContrasena)
-                                        {
-                                            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
-                                        }
-                                        else
-                                        {
-                                            <i class="bi bi-key me-2"></i>
-                                        }
-                                        Resetear contraseña
-                                    </button>
-                                </div>
-                            </div>
+                            <button class="btn btn-warning btn-sm px-3" @onclick="ResetearContrasenaAsync"
+                                    disabled="@_reseteandoContrasena">
+                                @if (_reseteandoContrasena)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                                }
+                                else
+                                {
+                                    <i class="bi bi-key me-2"></i>
+                                }
+                                Resetear contraseña
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Card eliminar usuario -->
+                    <div class="card mb-4 border-danger-subtle">
+                        <div class="card-header d-flex align-items-center gap-2">
+                            <i class="bi bi-person-x-fill text-danger"></i>
+                            <span class="fw-semibold text-danger">Eliminar usuario</span>
+                        </div>
+                        <div class="card-body py-4">
+                            <p class="text-muted small mb-3">
+                                Elimina permanentemente este usuario del sistema. Los datos asociados al empleado no se verán afectados.
+                            </p>
+                            <button class="btn btn-danger btn-sm px-3"
+                                    @onclick='() => _mostrarModalEliminar = true'>
+                                <i class="bi bi-trash3 me-2"></i>Eliminar usuario
+                            </button>
                         </div>
                     </div>
                 }
@@ -408,6 +421,32 @@
         }
     </div>
 </div>
+
+<!-- Modal: confirmar eliminación de usuario -->
+<Modal Title="Eliminar usuario" @bind-IsVisible="_mostrarModalEliminar">
+    <ChildContent>
+        <p class="mb-1">¿Seguro que quieres eliminar el usuario <strong>@_usuarioDetalle?.Email</strong>?</p>
+        <p class="text-muted small mb-0">Esta acción no se puede deshacer.</p>
+        @if (_errorEliminar is not null)
+        {
+            <div class="alert alert-danger d-flex align-items-center gap-2 mt-3 py-2 mb-0">
+                <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                <span>@_errorEliminar</span>
+            </div>
+        }
+    </ChildContent>
+    <Footer>
+        <button class="btn btn-outline-secondary"
+                @onclick='() => _mostrarModalEliminar = false'>Cancelar</button>
+        <button class="btn btn-danger" @onclick="EliminarUsuarioAsync" disabled="@_eliminando">
+            @if (_eliminando)
+            {
+                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+            }
+            Eliminar
+        </button>
+    </Footer>
+</Modal>
 
 @code {
     [SupplyParameterFromQuery(Name = "id")]
@@ -450,6 +489,11 @@
     // ── Reset contraseña ───────────────────────────────────────
     private bool _reseteandoContrasena;
     private string? _errorReset;
+
+    // ── Eliminar usuario ───────────────────────────────────────
+    private bool _mostrarModalEliminar;
+    private bool _eliminando;
+    private string? _errorEliminar;
 
     // ── Formulario creación ────────────────────────────────────
     private string _nuevoEmail = string.Empty;
@@ -717,6 +761,30 @@
         finally
         {
             _reseteandoContrasena = false;
+        }
+    }
+
+    private async Task EliminarUsuarioAsync()
+    {
+        if (!Id.HasValue) return;
+
+        _errorEliminar = null;
+        _eliminando = true;
+        try
+        {
+            await UsuariosClient.UsuariosDELETEAsync(Id.Value);
+            _mostrarModalEliminar = false;
+            await CargarListaAsync();
+            Toast.Exito("Usuario eliminado correctamente.");
+            Nav.NavigateTo("/usuarios");
+        }
+        catch
+        {
+            _errorEliminar = "No se pudo eliminar el usuario.";
+        }
+        finally
+        {
+            _eliminando = false;
         }
     }
 
