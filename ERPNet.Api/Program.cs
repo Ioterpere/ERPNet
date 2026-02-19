@@ -124,7 +124,7 @@ builder.Services.AddControllers(options =>
 });
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
-builder.Services.AddOpenApi(options =>
+builder.Services.AddOpenApi("openapi", options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>
     {

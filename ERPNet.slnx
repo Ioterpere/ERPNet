@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="ERPNet.Api/ERPNet.Api.csproj" />
+  <Project Path="ERPNet.ApiClient/ERPNet.ApiClient.csproj" />
   <Project Path="ERPNet.Application/ERPNet.Application.csproj" />
   <Project Path="ERPNet.Contracts/ERPNet.Contracts.csproj" />
   <Project Path="ERPNet.Infrastructure/ERPNet.Infrastructure.csproj" />

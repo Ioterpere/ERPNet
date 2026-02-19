@@ -15,14 +15,17 @@ namespace ERPNet.Api.Controllers;
 public class UsuariosController(IUsuarioService usuarioService) : BaseController
 {
     [HttpGet]
+    [ProducesResponseType<ListaPaginada<UsuarioResponse>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] PaginacionFilter filtro)
         => FromResult(await usuarioService.GetAllAsync(filtro));
 
     [HttpGet("{id}")]
+    [ProducesResponseType<UsuarioResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetById(int id)
         => FromResult(await usuarioService.GetByIdAsync(id));
 
     [HttpPost]
+    [ProducesResponseType<UsuarioResponse>(StatusCodes.Status201Created)]
     public async Task<IActionResult> Create([FromBody] CreateUsuarioRequest request)
         => CreatedFromResult(await usuarioService.CreateAsync(request));
 
@@ -37,6 +40,7 @@ public class UsuariosController(IUsuarioService usuarioService) : BaseController
     [SinPermiso]
     [PermitirContrasenaCaducada]
     [HttpGet("account")]
+    [ProducesResponseType<AccountResponse>(StatusCodes.Status200OK)]
     public IActionResult GetMe()
         => FromResult(Result<AccountResponse>.Success(UsuarioActual.ToResponse()));
 
@@ -51,6 +55,7 @@ public class UsuariosController(IUsuarioService usuarioService) : BaseController
         => FromResult(await usuarioService.ResetearContrasenaAsync(id, request));
 
     [HttpGet("{id}/roles")]
+    [ProducesResponseType<List<int>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRoles(int id)
         => FromResult(await usuarioService.GetRolesAsync(id));
 

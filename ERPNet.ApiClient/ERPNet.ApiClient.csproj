@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Herramienta NSwag para MSBuild — no se propaga como dependencia -->
+    <PackageReference Include="NSwag.MSBuild" Version="14.*" PrivateAssets="All" />
+    <!-- AddHttpClient + IHttpClientFactory para DependencyInjection.cs -->
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Build dependency sin reference real: garantiza que Api compile
+         (y genere openapi.json) antes de que NSwag lo lea -->
+    <ProjectReference Include="..\ERPNet.Api\ERPNet.Api.csproj"
+                      ReferenceOutputAssembly="false"
+                      SkipGetTargetFrameworkProperties="true" />
+  </ItemGroup>
+
+  <!-- NSwag corre ANTES de compilar para que el .g.cs esté disponible -->
+  <Target Name="NSwagGenerate" BeforeTargets="CoreCompile"
+          Inputs="ERPNet.Api_openapi.json" Outputs="Generated/ErpNetApiClient.g.cs">
+    <Message Importance="High" Text="→ Generando cliente desde openapi.json..." />
+    <MakeDir Directories="Generated" />
+    <Exec WorkingDirectory="$(ProjectDir)"
+          Command="$(NSwagExe_Net80) openapi2csclient /input:ERPNet.Api_openapi.json /namespace:ERPNet.ApiClient /output:Generated/ErpNetApiClient.g.cs /generateClientInterfaces:true /generateDtoTypes:true /injectHttpClient:true /operationGenerationMode:MultipleClientsFromFirstTagAndOperationId /jsonLibrary:SystemTextJson /useBaseUrl:false" />
+  </Target>
+
+</Project>

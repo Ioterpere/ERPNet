@@ -1,7 +1,8 @@
-using ERPNet.Web.Blazor;
+using ERPNet.ApiClient;
 using ERPNet.Web.Blazor.Bff;
 using ERPNet.Web.Blazor.Components;
 using Microsoft.AspNetCore.Authentication.Cookies;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,8 +29,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddDistributedMemoryCache();
 
 builder.Services.AddAuthorization();
+builder.Services.AddControllers();
 
-// Cliente HTTP apuntando a ERPNet.Api
+// Cliente HTTP genérico usado por BffApiClient para inyectar el Bearer token manualmente
 builder.Services.AddHttpClient("ErpNetApi", client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["ErpNetApi:BaseUrl"]!);
@@ -37,8 +39,19 @@ builder.Services.AddHttpClient("ErpNetApi", client =>
 
 builder.Services.AddHttpContextAccessor();
 
-// BffApiClient inyecta automáticamente el Bearer token en cada llamada a ERPNet.Api
-builder.Services.AddScoped<BffApiClient>();
+// BffTokenService: gestiona tokens JWT en caché del servidor (get, refresh, invalidate)
+builder.Services.AddScoped<BffTokenService>();
+
+// BffAuthService: flujo login/logout usando IAuthClient (sin hardcoding de rutas)
+builder.Services.AddScoped<BffAuthService>();
+
+// BffAuthHandler: DelegatingHandler que inyecta el Bearer token en los clientes tipados
+builder.Services.AddTransient<BffAuthHandler>();
+
+// Clientes tipados generados por NSwag — con Bearer token inyectado via BffAuthHandler
+builder.Services.AddApiClients(
+    builder.Configuration["ErpNetApi:BaseUrl"]!,
+    b => b.AddHttpMessageHandler<BffAuthHandler>());
 
 var app = builder.Build();
 
@@ -67,6 +80,10 @@ app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(ERPNet.Web.Blazor.Client.Components._Imports).Assembly);
 
-app.MapGroup("/authentication").MapLoginAndLogout();
+app.MapControllers();
+
+// Proxy genérico BFF → API: captura cualquier /api/** del WASM (cookie auth),
+// añade Bearer token y reenvía a ERPNet.Api. Sin boilerplate por endpoint.
+app.MapBffProxy();
 
 app.Run();

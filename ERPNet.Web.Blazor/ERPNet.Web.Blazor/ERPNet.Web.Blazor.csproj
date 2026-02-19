@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ERPNet.Web.Blazor.Client\ERPNet.Web.Blazor.Client.csproj" />
+    <ProjectReference Include="..\..\ERPNet.ApiClient\ERPNet.ApiClient.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.2" />
   </ItemGroup>
 

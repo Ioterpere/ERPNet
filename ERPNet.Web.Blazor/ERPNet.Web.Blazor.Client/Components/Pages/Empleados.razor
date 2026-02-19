@@ -1,0 +1,107 @@
+@page "/empleados"
+
+@attribute [Authorize]
+
+@inject IEmpleadosClient EmpleadosClient
+
+<h3>Lista de empleados</h3>
+
+@if (error is not null)
+{
+    <div class="alert alert-danger">@error</div>
+}
+else if (resultado is null)
+{
+    <div class="d-flex align-items-center gap-2 text-muted">
+        <div class="spinner-border spinner-border-sm" role="status"></div>
+        <span>Cargando...</span>
+    </div>
+}
+else
+{
+    <table class="table table-hover table-sm align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Apellidos</th>
+                <th>DNI</th>
+                <th>Sección</th>
+                <th>Activo</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var e in resultado.Items)
+            {
+                <tr>
+                    <td class="text-muted">@e.Id</td>
+                    <td>@e.Nombre</td>
+                    <td>@e.Apellidos</td>
+                    <td class="font-monospace">@e.Dni</td>
+                    <td>@e.SeccionId</td>
+                    <td>
+                        @if (e.Activo)
+                        {
+                            <span class="badge text-bg-success">Activo</span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-secondary">Inactivo</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="d-flex align-items-center justify-content-between">
+        <small class="text-muted">
+            @((pagina - 1) * porPagina + 1)–@Math.Min(pagina * porPagina, resultado.TotalRegistros)
+            de @resultado.TotalRegistros empleados
+        </small>
+        <div class="btn-group btn-group-sm">
+            <button class="btn btn-outline-secondary"
+                    disabled="@(pagina <= 1)"
+                    @onclick="PaginaAnterior">← Anterior</button>
+            <button class="btn btn-outline-secondary"
+                    disabled="@(pagina * porPagina >= resultado.TotalRegistros)"
+                    @onclick="PaginaSiguiente">Siguiente →</button>
+        </div>
+    </div>
+}
+
+@code {
+    private ListaPaginadaOfEmpleadoResponse? resultado;
+    private string? error;
+    private int pagina = 1;
+    private int porPagina = 10;
+
+    protected override async Task OnInitializedAsync()
+        => await CargarAsync();
+
+    private async Task CargarAsync()
+    {
+        error = null;
+        resultado = null;
+        try
+        {
+            resultado = await EmpleadosClient.EmpleadosGETAsync(pagina, porPagina);
+        }
+        catch (ApiException ex)
+        {
+            error = $"Error {ex.StatusCode}: no se pudo cargar la lista de empleados.";
+        }
+    }
+
+    private async Task PaginaAnterior()
+    {
+        pagina--;
+        await CargarAsync();
+    }
+
+    private async Task PaginaSiguiente()
+    {
+        pagina++;
+        await CargarAsync();
+    }
+}

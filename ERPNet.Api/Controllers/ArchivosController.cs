@@ -1,6 +1,7 @@
 using ERPNet.Api.Attributes;
 using ERPNet.Api.Controllers.Common;
 using ERPNet.Application.FileStorage;
+using ERPNet.Contracts.FileStorage;
 using ERPNet.Domain.Enums;
 using ERPNet.Domain.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,7 @@ public class ArchivosController(
     IUnitOfWork unitOfWork) : BaseController
 {
     [HttpPost]
+    [ProducesResponseType<ArchivoResponse>(StatusCodes.Status201Created)]
     public async Task<IActionResult> Subir(IFormFile archivo, CancellationToken ct)
     {
         if (archivo.Length == 0)

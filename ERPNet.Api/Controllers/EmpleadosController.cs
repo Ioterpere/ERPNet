@@ -2,6 +2,7 @@ using ERPNet.Api.Attributes;
 using ERPNet.Api.Controllers.Common;
 using ERPNet.Application.Common.Interfaces;
 using ERPNet.Application.FileStorage;
+using ERPNet.Contracts;
 using ERPNet.Contracts.DTOs;
 using ERPNet.Contracts.Reports;
 using ERPNet.Application.Reports.Interfaces;
@@ -23,19 +24,23 @@ public class EmpleadosController(
     : ArchivoBaseController<Empleado, CampoArchivoEmpleado>(fileStorage, repo, unitOfWork)
 {
     [HttpGet]
+    [ProducesResponseType<ListaPaginada<EmpleadoResponse>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] PaginacionFilter filtro)
         => FromResult(await empleadoService.GetAllAsync(filtro));
 
     [HttpGet("{id}")]
+    [ProducesResponseType<EmpleadoResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetById(int id)
         => FromResult(await empleadoService.GetByIdAsync(id));
 
     [SinPermiso]
     [HttpGet("me")]
+    [ProducesResponseType<EmpleadoResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMe()
         => FromResult(await empleadoService.GetMeAsync());
 
     [HttpPost]
+    [ProducesResponseType<EmpleadoResponse>(StatusCodes.Status201Created)]
     public async Task<IActionResult> Create([FromBody] CreateEmpleadoRequest request)
         => CreatedFromResult(await empleadoService.CreateAsync(request));
 

@@ -1,5 +1,6 @@
 using ERPNet.Api.Attributes;
 using ERPNet.Api.Controllers.Common;
+using ERPNet.Contracts;
 using ERPNet.Contracts.DTOs;
 using ERPNet.Application.Common.Interfaces;
 using ERPNet.Application.FileStorage;
@@ -20,14 +21,17 @@ public class MaquinasController(
     : ArchivoBaseController<Maquinaria, CampoArchivoMaquinaria>(fileStorage, repo, unitOfWork)
 {
     [HttpGet]
+    [ProducesResponseType<ListaPaginada<MaquinariaResponse>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] PaginacionFilter filtro)
         => FromResult(await maquinariaService.GetAllAsync(filtro));
 
     [HttpGet("{id}")]
+    [ProducesResponseType<MaquinariaResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetById(int id)
         => FromResult(await maquinariaService.GetByIdAsync(id));
 
     [HttpPost]
+    [ProducesResponseType<MaquinariaResponse>(StatusCodes.Status201Created)]
     public async Task<IActionResult> Create([FromBody] CreateMaquinariaRequest request)
         => CreatedFromResult(await maquinariaService.CreateAsync(request));
 

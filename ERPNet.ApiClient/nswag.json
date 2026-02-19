@@ -1,0 +1,24 @@
+{
+  "runtime": "Net80",
+  "documentGenerator": {
+    "fromDocument": {
+      "url": "ERPNet.Api_openapi.json",
+      "output": null
+    }
+  },
+  "codeGenerators": {
+    "openApiToCSharpClient": {
+      "generateClientInterfaces": true,
+      "generateDtoTypes": true,
+      "injectHttpClient": true,
+      "namespace": "ERPNet.ApiClient",
+      "jsonLibrary": "SystemTextJson",
+      "generateOptionalPropertiesAsNullable": true,
+      "nullableReferenceTypes": true,
+      "generateDefaultValues": true,
+      "useBaseUrl": false,
+      "output": "Generated/ErpNetApiClient.g.cs",
+      "newLineBehavior": "Auto"
+    }
+  }
+}

@@ -13,6 +13,7 @@ public class AuthController(IAuthService authService) : BaseController
     [AllowAnonymous]
     [HttpPost("login")]
     [EnableRateLimiting("login")]
+    [ProducesResponseType<AuthResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var ip = GetIpAddress();
@@ -22,6 +23,7 @@ public class AuthController(IAuthService authService) : BaseController
 
     [AllowAnonymous]
     [HttpPost("refresh")]
+    [ProducesResponseType<AuthResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
     {
         var ip = GetIpAddress();

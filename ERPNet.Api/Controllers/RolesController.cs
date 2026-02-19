@@ -1,5 +1,6 @@
 using ERPNet.Api.Attributes;
 using ERPNet.Api.Controllers.Common;
+using ERPNet.Contracts;
 using ERPNet.Contracts.DTOs;
 using ERPNet.Application.Common.Interfaces;
 using ERPNet.Domain.Enums;
@@ -12,14 +13,17 @@ namespace ERPNet.Api.Controllers;
 public class RolesController(IRolService rolService) : BaseController
 {
     [HttpGet]
+    [ProducesResponseType<ListaPaginada<RolResponse>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] PaginacionFilter filtro)
         => FromResult(await rolService.GetAllAsync(filtro));
 
     [HttpGet("{id}")]
+    [ProducesResponseType<RolResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetById(int id)
         => FromResult(await rolService.GetByIdAsync(id));
 
     [HttpPost]
+    [ProducesResponseType<RolResponse>(StatusCodes.Status201Created)]
     public async Task<IActionResult> Create([FromBody] CreateRolRequest request)
         => CreatedFromResult(await rolService.CreateAsync(request));
 

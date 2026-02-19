@@ -12,14 +12,17 @@ public class MenusController(IMenuService menuService) : BaseController
 {
     [HttpGet]
     [SinPermiso]
+    [ProducesResponseType<List<MenuResponse>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMenus([FromQuery] Plataforma plataforma)
         => FromResult(await menuService.GetMenusVisiblesAsync(plataforma, UsuarioActual.RolIds));
 
     [HttpGet("{id}")]
+    [ProducesResponseType<MenuResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetById(int id)
         => FromResult(await menuService.GetByIdAsync(id));
 
     [HttpPost]
+    [ProducesResponseType<MenuResponse>(StatusCodes.Status201Created)]
     public async Task<IActionResult> Create([FromQuery] Plataforma plataforma, [FromBody] CreateMenuRequest request)
     {
         if (!Enum.IsDefined(plataforma))
@@ -29,6 +32,7 @@ public class MenusController(IMenuService menuService) : BaseController
     }
 
     [HttpGet("{id}/roles")]
+    [ProducesResponseType<List<int>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetRoles(int id)
         => FromResult(await menuService.GetRolesAsync(id));
 
