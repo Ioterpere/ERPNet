@@ -110,8 +110,10 @@
                                     </div>
                                     <div class="d-flex justify-content-between text-muted small py-1">
                                         <span>Sección</span>
-                                        <strong class="text-body">@(_empleado?.SeccionNombre ??
+                                        <Tooltip Title="@($"#{_usuario?.SeccionId}")">
+                                            <strong class="text-body">@(_empleado?.SeccionNombre ??
                                                                                 $"#{_usuario?.SeccionId}")</strong>
+                                        </Tooltip>
                                         </div>
                                     </div>
                                 }
@@ -142,10 +144,12 @@
                                         <div class="d-flex flex-wrap gap-2">
                                             @foreach (var rol in _usuario?.Roles ?? [])
                                             {
-                                                <span class="badge bg-primary-subtle text-primary-emphasis rounded-pill px-3 py-2"
-                                                      style="font-size:.82rem" title="@rol.Descripcion">
-                                                    @rol.Nombre
-                                                </span>
+                                                <Tooltip Title="@($"#{rol.Id}")">
+                                                    <span class="badge bg-primary-subtle text-primary-emphasis rounded-pill px-3 py-2"
+                                                          style="font-size:.82rem" title="@rol.Descripcion">
+                                                        @rol.Nombre
+                                                    </span>
+                                                </Tooltip>
                                             }
                                         </div>
                                     }
@@ -247,7 +251,9 @@
                                             </div>
                                             <div class="col-sm-6 col-lg-4 data-item">
                                                 <div class="data-label">Sección</div>
-                                                <div class="data-value">@_empleado?.SeccionNombre</div>
+                                                <div class="data-value">
+                                                    <Tooltip Title="@($"#{_usuario?.SeccionId}")">@_empleado?.SeccionNombre</Tooltip>
+                                                </div>
                                             </div>
                                             <div class="col-sm-6 col-lg-4 data-item">
                                                 <div class="data-label">Estado laboral</div>

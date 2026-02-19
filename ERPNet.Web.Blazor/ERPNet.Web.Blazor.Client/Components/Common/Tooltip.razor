@@ -1,0 +1,24 @@
+<span class="id-tooltip-wrapper">
+    @ChildContent
+    @if (Body is not null)
+    {
+        <div class="id-tooltip-badge id-tooltip-badge--html">
+            @Body
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(Title))
+    {
+        <div class="id-tooltip-badge">@Title</div>
+    }
+</span>
+
+@code {
+    [Parameter]
+    public string? Title { get; set; }
+
+    [Parameter]
+    public RenderFragment? Body { get; set; }
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

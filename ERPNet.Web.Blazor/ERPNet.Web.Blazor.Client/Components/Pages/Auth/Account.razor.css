@@ -64,3 +64,20 @@
     background-color: transparent;
     padding: .875rem 1rem;
 }
+
+/* ── Tooltip key-value lines ────────────────────── */
+.tt-kv {
+    display: flex;
+    justify-content: space-between;
+    gap: .75rem;
+    font-size: .68rem;
+    line-height: 1.8;
+}
+
+.tt-key {
+    opacity: .65;
+}
+
+.tt-val {
+    font-weight: 600;
+}

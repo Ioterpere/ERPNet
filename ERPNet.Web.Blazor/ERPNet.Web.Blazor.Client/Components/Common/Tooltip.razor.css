@@ -1,0 +1,33 @@
+.id-tooltip-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.id-tooltip-badge {
+    position: absolute;
+    bottom: calc(100% + 5px);
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(33, 37, 41, .85);
+    color: #fff;
+    font-size: .7rem;
+    font-family: var(--bs-font-monospace);
+    padding: .15rem .5rem;
+    border-radius: .25rem;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .15s ease;
+    z-index: 9999;
+}
+
+.id-tooltip-wrapper:hover .id-tooltip-badge {
+    opacity: 1;
+}
+
+.id-tooltip-badge--html {
+    white-space: normal;
+    min-width: 180px;
+    text-align: left;
+}
