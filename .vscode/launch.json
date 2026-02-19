@@ -14,6 +14,8 @@
       "projectPath": "${workspaceFolder}/ERPNet.Web.Blazor/ERPNet.Web.Blazor/ERPNet.Web.Blazor.csproj",
       "serverReadyAction": {
         "action": "debugWithChrome",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
+        "uriFormat": "%s"
       }
     },
   ],
@@ -23,7 +25,8 @@
       "configurations": [
         "Api",
         "Blazor"
-      ]
+      ],
+      "stopAll": true
     }
   ]
 }

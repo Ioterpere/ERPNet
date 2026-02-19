@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ERPNet.Web.Blazor.Controllers;
 
-[Route("authentication")]
+[Route("bff")]
 public class AuthenticationController(BffAuthService authService) : Controller
 {
     [HttpPost("login")]

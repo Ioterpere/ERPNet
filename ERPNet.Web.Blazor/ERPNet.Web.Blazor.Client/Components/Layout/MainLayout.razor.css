@@ -50,7 +50,7 @@ main .content {
     }
 
     .sidebar {
-        width: 250px;
+        width: 320px;
         height: 100vh;
         position: sticky;
         top: 0;

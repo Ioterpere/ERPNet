@@ -65,11 +65,11 @@ public class DbSeeder(ITestOutputHelper output)
 
         // ── Menus padres ───────────────────────────────────────────────────
 
-        var menuAdmin = new Menu { Nombre = "Administracion", Orden = 1, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
-        var menuRRHH = new Menu { Nombre = "Recursos Humanos", Orden = 2, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
-        var menuMantenimiento = new Menu { Nombre = "Mantenimiento", Orden = 3, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
-        var menuProduccion = new Menu { Nombre = "Produccion y Calidad", Orden = 4, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
-        var menuComercial = new Menu { Nombre = "Gestion Comercial", Orden = 5, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuAdmin = new Menu { Nombre = "Administracion", Orden = 1, Icon = "bi-gear-fill", Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuRRHH = new Menu { Nombre = "Recursos Humanos", Orden = 2, Icon = "bi-people-fill", Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuMantenimiento = new Menu { Nombre = "Mantenimiento", Orden = 3, Icon = "bi-tools", Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuProduccion = new Menu { Nombre = "Produccion y Calidad", Orden = 4, Icon = "bi-graph-up-arrow", Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuComercial = new Menu { Nombre = "Gestion Comercial", Orden = 5, Icon = "bi-briefcase-fill", Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
 
         context.Menus.AddRange(menuAdmin, menuRRHH, menuMantenimiento, menuProduccion, menuComercial);
         await context.SaveChangesAsync();
@@ -77,29 +77,29 @@ public class DbSeeder(ITestOutputHelper output)
         // ── Menus hijos ────────────────────────────────────────────────────
 
         // 1. Administracion
-        var menuUsuarios = new Menu { Nombre = "Usuarios", Path = "/usuarios", Orden = 1, MenuPadreId = menuAdmin.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
-        var menuRoles = new Menu { Nombre = "Roles", Path = "/roles", Orden = 2, MenuPadreId = menuAdmin.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
-        var menuMenus = new Menu { Nombre = "Menu", Path = "/menus", Orden = 3, MenuPadreId = menuAdmin.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuUsuarios = new Menu { Nombre = "Usuarios", Path = "/usuarios", Icon = "bi-person-lines-fill", Orden = 1, MenuPadreId = menuAdmin.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuRoles = new Menu { Nombre = "Roles", Path = "/roles", Icon = "bi-shield-fill", Orden = 2, MenuPadreId = menuAdmin.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuMenus = new Menu { Nombre = "Menu", Path = "/menus", Icon = "bi-list-ul", Orden = 3, MenuPadreId = menuAdmin.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
 
         // 2. Recursos Humanos
-        var menuEmpleados = new Menu { Nombre = "Empleados", Path = "/empleados", Orden = 1, MenuPadreId = menuRRHH.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
-        var menuJornadas = new Menu { Nombre = "Gestion de Jornadas", Path = "/jornadas", Orden = 2, MenuPadreId = menuRRHH.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
-        var menuIncidencias = new Menu { Nombre = "Incidencias de Marcaje", Path = "/incidencias-marcaje", Orden = 3, MenuPadreId = menuRRHH.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
-        var menuValidar = new Menu { Nombre = "Validar Gestiones", Path = "/validar-gestiones", Orden = 4, MenuPadreId = menuRRHH.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuEmpleados = new Menu { Nombre = "Empleados", Path = "/empleados", Icon = "bi-person-badge-fill", Orden = 1, MenuPadreId = menuRRHH.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuJornadas = new Menu { Nombre = "Gestion de Jornadas", Path = "/jornadas", Icon = "bi-calendar-week-fill", Orden = 2, MenuPadreId = menuRRHH.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuIncidencias = new Menu { Nombre = "Incidencias de Marcaje", Path = "/incidencias-marcaje", Icon = "bi-clock-history", Orden = 3, MenuPadreId = menuRRHH.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuValidar = new Menu { Nombre = "Validar Gestiones", Path = "/validar-gestiones", Icon = "bi-check2-all", Orden = 4, MenuPadreId = menuRRHH.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
 
         // 3. Mantenimiento
-        var menuMaquinaria = new Menu { Nombre = "Maquinaria", Path = "/maquinaria", Orden = 1, MenuPadreId = menuMantenimiento.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
-        var menuOrdenesMant = new Menu { Nombre = "Ordenes de Mantenimiento", Path = "/ordenes-mantenimiento", Orden = 2, MenuPadreId = menuMantenimiento.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
-        var menuTareasMant = new Menu { Nombre = "Tareas de Mantenimiento", Path = "/tareas-mantenimiento", Orden = 3, MenuPadreId = menuMantenimiento.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
-        var menuReportarAveria = new Menu { Nombre = "Reportar Averia", Path = "/reportar-averia", Orden = 4, MenuPadreId = menuMantenimiento.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuMaquinaria = new Menu { Nombre = "Maquinaria", Path = "/maquinaria", Icon = "bi-cpu-fill", Orden = 1, MenuPadreId = menuMantenimiento.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuOrdenesMant = new Menu { Nombre = "Ordenes de Mantenimiento", Path = "/ordenes-mantenimiento", Icon = "bi-clipboard2-check-fill", Orden = 2, MenuPadreId = menuMantenimiento.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuTareasMant = new Menu { Nombre = "Tareas de Mantenimiento", Path = "/tareas-mantenimiento", Icon = "bi-tools", Orden = 3, MenuPadreId = menuMantenimiento.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuReportarAveria = new Menu { Nombre = "Reportar Averia", Path = "/reportar-averia", Icon = "bi-exclamation-triangle-fill", Orden = 4, MenuPadreId = menuMantenimiento.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
 
         // 4. Produccion y Calidad
-        var menuOrdenesFab = new Menu { Nombre = "Ordenes de Fabricacion", Path = "/ordenes-fabricacion", Orden = 1, MenuPadreId = menuProduccion.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
-        var menuControlCalidad = new Menu { Nombre = "Control de Calidad", Path = "/control-calidad", Orden = 2, MenuPadreId = menuProduccion.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuOrdenesFab = new Menu { Nombre = "Ordenes de Fabricacion", Path = "/ordenes-fabricacion", Icon = "bi-diagram-3-fill", Orden = 1, MenuPadreId = menuProduccion.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuControlCalidad = new Menu { Nombre = "Control de Calidad", Path = "/control-calidad", Icon = "bi-patch-check-fill", Orden = 2, MenuPadreId = menuProduccion.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
 
         // 5. Gestion Comercial
-        var menuClientes = new Menu { Nombre = "Clientes", Path = "/clientes", Orden = 1, MenuPadreId = menuComercial.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
-        var menuFacturas = new Menu { Nombre = "Facturas", Path = "/facturas", Orden = 2, MenuPadreId = menuComercial.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuClientes = new Menu { Nombre = "Clientes", Path = "/clientes", Icon = "bi-person-circle", Orden = 1, MenuPadreId = menuComercial.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuFacturas = new Menu { Nombre = "Facturas", Path = "/facturas", Icon = "bi-receipt", Orden = 2, MenuPadreId = menuComercial.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
 
         context.Menus.AddRange(
             menuUsuarios, menuRoles, menuMenus,

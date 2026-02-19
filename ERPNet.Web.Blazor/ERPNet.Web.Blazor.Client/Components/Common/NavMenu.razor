@@ -1,4 +1,7 @@
-﻿<div class="nav-menu">
+@inject IMenusClient MenusClient
+@inject NavigationManager Nav
+
+<div class="nav-menu">
     <div class="top-row ps-3 navbar navbar-dark d-none d-md-flex">
         <div class="container-fluid">
             <a class="navbar-brand" href="">
@@ -9,19 +12,105 @@
 
     <nav class="nav flex-column">
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <i class="bi bi-house-door-fill" aria-hidden="true"></i> Home
+            <NavLink class="nav-link w-100 text-start d-flex align-items-center gap-2 border-0" href=""
+                     Match="NavLinkMatch.All">
+                <i class="bi bi-house-door-fill me-2"></i>
+                <span class="flex-grow-1">Inicio</span>
             </NavLink>
         </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="empleados">
-                <span class="bi-list-nested" aria-hidden="true"></span> Empleados
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="user-claims">
-                <span class="bi-list-nested" aria-hidden="true"></span> User Claims
-            </NavLink>
-        </div>
+
+        @if (_menus is null)
+        {
+            <div class="px-3 pt-2 opacity-50">
+                <div class="placeholder-glow d-flex flex-column gap-2">
+                    <span class="placeholder col-8 rounded"></span>
+                    <span class="placeholder col-7 rounded"></span>
+                    <span class="placeholder col-9 rounded"></span>
+                </div>
+            </div>
+        }
+        else
+        {
+            @foreach (var menu in _menus)
+            {
+                @if (menu.SubMenus?.Count > 0)
+                {
+                    <div class="nav-item px-3">
+                        <button class="nav-link w-100 text-start d-flex align-items-center gap-2 border-0 bg-transparent"
+                                @onclick="() => Toggle(menu.Id)">
+                            @if (!string.IsNullOrEmpty(menu.IconClass))
+                            {
+                                <i class="bi @menu.IconClass"></i>
+                            }
+                            <span class="flex-grow-1">@menu.Nombre</span>
+                            <i class="bi @(_expanded.Contains(menu.Id) ? "bi-chevron-up" : "bi-chevron-down") small opacity-75"></i>
+                        </button>
+
+                        @if (_expanded.Contains(menu.Id))
+                        {
+                            <div class="ps-3 ms-1 border-start border-secondary border-opacity-25">
+                                @foreach (var sub in menu.SubMenus)
+                                {
+                                    <NavLink class="nav-link py-1" href="@sub.Path?.TrimStart('/')">
+                                        @if (!string.IsNullOrEmpty(sub.IconClass))
+                                        {
+                                            <i class="bi @sub.IconClass me-2 small"></i>
+                                        }
+                                        <span class="small">@sub.Nombre</span>
+                                    </NavLink>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                else if (!string.IsNullOrEmpty(menu.Path))
+                {
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="@menu.Path.TrimStart('/')">
+                            @if (!string.IsNullOrEmpty(menu.IconClass))
+                            {
+                                <i class="bi @menu.IconClass me-2"></i>
+                            }
+                            @menu.Nombre
+                        </NavLink>
+                    </div>
+                }
+            }
+        }
     </nav>
 </div>
+
+@code {
+    private ICollection<MenuResponse>? _menus;
+    private readonly HashSet<int> _expanded = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _menus = await MenusClient.MenusAllAsync(plataforma: 1);
+            AutoExpandActive();
+        }
+        catch
+        {
+            _menus = [];
+        }
+    }
+
+    private void AutoExpandActive()
+    {
+        if (_menus is null) return;
+        var currentPath = "/" + Nav.ToBaseRelativePath(Nav.Uri).Split('?')[0];
+        foreach (var menu in _menus.Where(m => m.SubMenus?.Count > 0))
+        {
+            if (menu.SubMenus!.Any(s => s.Path == currentPath))
+                _expanded.Add(menu.Id);
+        }
+    }
+
+    private void Toggle(int id)
+    {
+        if (!_expanded.Remove(id))
+            _expanded.Add(id);
+    }
+}
