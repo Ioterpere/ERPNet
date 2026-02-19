@@ -19,9 +19,13 @@
             </a>
 
             <div class="dropdown">
-                <button class="btn btn-link text-white text-decoration-none dropdown-toggle p-0" type="button"
+                <button class="btn btn-link text-white text-decoration-none dropdown-toggle p-0 d-flex align-items-center gap-2" type="button"
                         data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi bi-person-circle fs-5"></i>
+                    @if (_email is not null)
+                    {
+                        <span class="d-none d-sm-inline" style="font-size:.875rem">@_email</span>
+                    }
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><a class="dropdown-item" href="/account"><i class="bi bi-person me-2"></i>Mi perfil</a>
@@ -41,11 +45,26 @@
             </div>
         </div>
 
-        <article class="content px-4">
+        <article class="content px-4 py-4">
             @Body
         </article>
     </main>
 </div>
+
+<ToastContainer />
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
+
+    private string? _email;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthStateTask;
+        _email = state.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+    }
+}
 
 <div id="blazor-error-ui" data-nosnippet>
     Se produjo un error inesperado

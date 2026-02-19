@@ -1,0 +1,323 @@
+@page "/account"
+@attribute [Authorize]
+@layout EmptyLayout
+
+@inject IUsuariosClient UsuariosClient
+@inject IEmpleadosClient EmpleadosClient
+@inject NavigationManager Nav
+
+<PageTitle>Mi perfil — ERPNet</PageTitle>
+
+<div class="account-page">
+
+    <!-- ── Top bar ─────────────────────────────────────────────── -->
+    <header class="account-topbar">
+        <div class="container-xl d-flex align-items-center gap-3 h-100 px-4">
+            <a href="/" class="btn btn-sm btn-light">
+                <i class="bi bi-arrow-left me-1"></i>Volver
+            </a>
+            <div class="vr bg-white opacity-25 mx-1" style="height:20px"></div>
+            @if (_empleado is not null)
+            {
+                <div class="d-flex flex-column lh-1">
+                    <span class="text-white fw-semibold" style="font-size:.9rem">
+                        @_empleado.Nombre @_empleado.Apellidos
+                    </span>
+                    <span class="text-white opacity-75" style="font-size:.75rem">@_usuario?.Email</span>
+                </div>
+            }
+            else if (_loading)
+            {
+                <span class="placeholder-glow"><span class="placeholder col-4 rounded"
+                                                         style="width:140px;height:14px"></span></span>
+                }
+                <div class="ms-auto text-white fw-semibold">
+                    <i class="bi bi-box-seam-fill me-1"></i>ERP<span style="opacity:.8">Net</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- ── Contenido ───────────────────────────────────────────── -->
+        <div class="container-xl py-4 px-4">
+
+            @if (_error is not null)
+            {
+                <div class="alert alert-danger d-flex align-items-center gap-2">
+                    <i class="bi bi-exclamation-triangle-fill fs-5 flex-shrink-0"></i>
+                    <span>@_error</span>
+                </div>
+            }
+
+            <div class="row g-4">
+
+                <!-- ── Panel izquierdo: perfil ──────────────────────── -->
+                <div class="col-lg-3">
+                    <div class="d-flex flex-column gap-4 sticky-side">
+
+                        <div class="card profile-card text-center">
+                            <div class="card-body py-4 px-3">
+
+                                @if (_loading)
+                                {
+                                    <div class="placeholder-glow d-flex flex-column align-items-center gap-2">
+                                        <span class="placeholder rounded-circle" style="width:90px;height:90px"></span>
+                                        <span class="placeholder col-8 mt-2"></span>
+                                        <span class="placeholder col-6"></span>
+                                        <span class="placeholder col-4 rounded-pill"></span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="profile-avatar mx-auto mb-3">
+                                        @if (_fotoUrl is not null)
+                                        {
+                                            <img src="@_fotoUrl" alt="Foto de perfil" class="profile-photo" />
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-person-fill"></i>
+                                        }
+                                    </div>
+                                    <h6 class="mb-1 fw-bold">@_empleado?.Nombre @_empleado?.Apellidos</h6>
+                                    <p class="text-muted small mb-3">@_usuario?.Email</p>
+                                    <span
+                                        class="badge rounded-pill px-3 @(_empleado?.Activo == true ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")">
+                                        <i class="bi @(_empleado?.Activo == true ? "bi-check-circle-fill" : "bi-x-circle-fill") me-1"></i>
+                                        @(_empleado?.Activo == true ? "Activo" : "Inactivo")
+                                    </span>
+
+                                    @if (_usuario?.RequiereCambioContrasena == true)
+                                    {
+                                        <div class="alert alert-warning d-flex align-items-start gap-2 mt-3 mb-0 py-2 text-start"
+                                             style="font-size:.8rem">
+                                            <i class="bi bi-exclamation-circle-fill flex-shrink-0 mt-1"></i>
+                                            <span>Debes cambiar tu contraseña para mantener la seguridad de tu cuenta.</span>
+                                        </div>
+                                    }
+                                }
+                            </div>
+
+                            @if (!_loading)
+                            {
+                                <div class="card-footer bg-transparent border-top py-3 px-3">
+                                    <div class="d-flex justify-content-between text-muted small py-1">
+                                        <span>ID usuario</span>
+                                        <strong class="text-body font-monospace">#@_usuario?.Id</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between text-muted small py-1">
+                                        <span>ID empleado</span>
+                                        <strong class="text-body font-monospace">#@_usuario?.EmpleadoId</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between text-muted small py-1">
+                                        <span>Sección</span>
+                                        <strong class="text-body">@(_empleado?.SeccionNombre ??
+                                                                                $"#{_usuario?.SeccionId}")</strong>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- Roles asignados -->
+                            <div class="card">
+                                <div class="card-header d-flex align-items-center gap-2">
+                                    <i class="bi bi-shield-person text-primary"></i>
+                                    <span class="fw-semibold">Roles asignados</span>
+                                </div>
+                                <div class="card-body py-4">
+                                    @if (_loading)
+                                    {
+                                        <div class="placeholder-glow d-flex flex-wrap gap-2">
+                                            @for (var i = 0; i < 3; i++)
+                                            {
+                                                <span class="placeholder rounded-pill" style="width:80px;height:28px"></span>
+                                            }
+                                        </div>
+                                    }
+                                    else if ((_usuario?.Roles ?? []).Count == 0)
+                                    {
+                                        <p class="text-muted small mb-0">Sin roles asignados.</p>
+                                    }
+                                    else
+                                    {
+                                        <div class="d-flex flex-wrap gap-2">
+                                            @foreach (var rol in _usuario?.Roles ?? [])
+                                            {
+                                                <span class="badge bg-primary-subtle text-primary-emphasis rounded-pill px-3 py-2"
+                                                      style="font-size:.82rem" title="@rol.Descripcion">
+                                                    @rol.Nombre
+                                                </span>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                        </div>
+
+
+
+                    </div>
+
+                    <!-- ── Panel derecho: tarjetas ──────────────────────── -->
+                    <div class="col-lg-9">
+                        <div class="d-flex flex-column gap-4">
+
+                            <!-- Información de cuenta -->
+                            <div class="card">
+                                <div class="card-header d-flex align-items-center gap-2">
+                                    <i class="bi bi-person-circle text-primary"></i>
+                                    <span class="fw-semibold">Información de cuenta</span>
+                                </div>
+                                <div class="card-body py-4">
+                                    @if (_loading)
+                                    {
+                                        <div class="placeholder-glow row g-4">
+                                            @for (var i = 0; i < 4; i++)
+                                            {
+                                                <div class="col-sm-6">
+                                                    <span class="placeholder col-4 d-block mb-1" style="height:10px"></span>
+                                                    <span class="placeholder col-7" style="height:16px"></span>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="row g-4">
+                                            <div class="col-sm-6 data-item">
+                                                <div class="data-label">Correo electrónico</div>
+                                                <div class="data-value">@_usuario?.Email</div>
+                                            </div>
+                                            <div class="col-sm-6 data-item">
+                                                <div class="data-label">Último acceso</div>
+                                                <div class="data-value">
+                                                    @(_usuario?.UltimoAcceso?.ToLocalTime().ToString("dd/MM/yyyy · HH:mm") ?? "—")
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6 data-item">
+                                                <div class="data-label">Último cambio de contraseña</div>
+                                                <div class="data-value">
+                                                    @_usuario?.UltimoCambioContrasena.ToLocalTime().ToString("dd/MM/yyyy")
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-6 data-item">
+                                                <div class="data-label">Caducidad de contraseña</div>
+                                                <div class="data-value @(_usuario?.CaducidadContrasena < DateTime.UtcNow ? "text-danger" : "")">
+                                                    @(_usuario?.CaducidadContrasena?.ToLocalTime().ToString("dd/MM/yyyy") ?? "Sin                                   límite")
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Datos de empleado -->
+                            <div class="card">
+                                <div class="card-header d-flex align-items-center gap-2">
+                                    <i class="bi bi-person-badge-fill text-primary"></i>
+                                    <span class="fw-semibold">Datos de empleado</span>
+                                </div>
+                                <div class="card-body py-4">
+                                    @if (_loading)
+                                    {
+                                        <div class="placeholder-glow row g-4">
+                                            @for (var i = 0; i < 5; i++)
+                                            {
+                                                <div class="col-sm-6 col-lg-4">
+                                                    <span class="placeholder col-4 d-block mb-1" style="height:10px"></span>
+                                                    <span class="placeholder col-7" style="height:16px"></span>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="row g-4">
+                                            <div class="col-sm-6 col-lg-4 data-item">
+                                                <div class="data-label">Nombre</div>
+                                                <div class="data-value">@_empleado?.Nombre</div>
+                                            </div>
+                                            <div class="col-sm-6 col-lg-4 data-item">
+                                                <div class="data-label">Apellidos</div>
+                                                <div class="data-value">@_empleado?.Apellidos</div>
+                                            </div>
+                                            <div class="col-sm-6 col-lg-4 data-item">
+                                                <div class="data-label">DNI / NIF</div>
+                                                <div class="data-value font-monospace">@_empleado?.Dni</div>
+                                            </div>
+                                            <div class="col-sm-6 col-lg-4 data-item">
+                                                <div class="data-label">Sección</div>
+                                                <div class="data-value">@_empleado?.SeccionNombre</div>
+                                            </div>
+                                            <div class="col-sm-6 col-lg-4 data-item">
+                                                <div class="data-label">Estado laboral</div>
+                                                <div>
+                                                    <span
+                                                        class="badge rounded-pill @(_empleado?.Activo == true ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")">
+                                                        @(_empleado?.Activo == true ? "Activo" : "Baja")
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Seguridad / cambiar contraseña -->
+                            <div class="card">
+                                <div class="card-header d-flex align-items-center gap-2">
+                                    <i class="bi bi-shield-lock-fill text-primary"></i>
+                                    <span class="fw-semibold">Seguridad</span>
+                                </div>
+                                <div class="card-body py-4">
+                                    <p class="text-muted small mb-4">
+                                        Cambia tu contraseña periódicamente para mantener la seguridad de tu cuenta.
+                                        La nueva contraseña debe ser diferente a la actual.
+                                    </p>
+                                    <FormCambiarContrasena />
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+@code {
+    private UsuarioResponse? _usuario;
+    private EmpleadoResponse? _empleado;
+    private string? _fotoUrl;
+    private bool _loading = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var usuarioTask = UsuariosClient.AccountAsync();
+            var empleadoTask = EmpleadosClient.MeAsync();
+            await Task.WhenAll(usuarioTask, empleadoTask);
+            _usuario = await usuarioTask;
+            _empleado = await empleadoTask;
+
+            if (_empleado.FotoId is not null)
+                _fotoUrl = $"/api/archivos/{_empleado.FotoId}/thumbnail";
+        }
+        catch (BffAuthException)
+        {
+            // 401 → BffAuthRetryHandler redirige a login o recarga la página
+            // 403 → BffAuthRetryHandler ya mostró el toast de aviso
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            _error = "No se pudo cargar la información del perfil.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+}

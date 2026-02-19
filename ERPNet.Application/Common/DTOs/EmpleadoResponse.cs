@@ -8,6 +8,7 @@ public class EmpleadoResponse
     public string Dni { get; set; } = null!;
     public bool Activo { get; set; }
     public int SeccionId { get; set; }
+    public string SeccionNombre { get; set; } = null!;
     public int? EncargadoId { get; set; }
     public Guid? FotoId { get; set; }
 }

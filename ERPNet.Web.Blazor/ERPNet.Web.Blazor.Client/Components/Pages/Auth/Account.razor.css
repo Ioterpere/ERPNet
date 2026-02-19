@@ -1,0 +1,66 @@
+/* ── Page wrapper ───────────────────────────────── */
+.account-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bs-body-bg);
+}
+
+/* ── Top bar ────────────────────────────────────── */
+.account-topbar {
+    height: 56px;
+    background-color: var(--bs-primary);
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
+    display: flex;
+    align-items: center;
+}
+
+/* ── Profile avatar circle ──────────────────────── */
+.profile-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background-color: rgba(var(--bs-primary-rgb), .1);
+    border: 3px solid rgba(var(--bs-primary-rgb), .2);
+    color: var(--bs-primary);
+    font-size: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.profile-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* ── Left panel sticky ──────────────────────────── */
+.sticky-side {
+    position: sticky;
+    top: 72px; /* 56px topbar + 1rem gap */
+}
+
+/* ── Data item (label / value) ──────────────────── */
+.data-label {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--bs-secondary-color);
+    margin-bottom: .3rem;
+}
+
+.data-value {
+    font-weight: 600;
+    color: var(--bs-body-color);
+}
+
+/* ── Card header override ───────────────────────── */
+.card-header {
+    background-color: transparent;
+    padding: .875rem 1rem;
+}

@@ -2,7 +2,6 @@ using ERPNet.Api.Attributes;
 using ERPNet.Api.Controllers.Common;
 using ERPNet.Application.Common.Interfaces;
 using ERPNet.Application.FileStorage;
-using ERPNet.Application.Common;
 using ERPNet.Application.Common.DTOs;
 using ERPNet.Application.Reports.DTOs;
 using ERPNet.Application.Reports.Interfaces;
@@ -34,6 +33,7 @@ public class EmpleadosController(
         => FromResult(await empleadoService.GetByIdAsync(id));
 
     [SinPermiso]
+    [PermitirContrasenaCaducada]
     [HttpGet("me")]
     [ProducesResponseType<EmpleadoResponse>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMe()

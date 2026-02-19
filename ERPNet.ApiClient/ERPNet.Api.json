@@ -1788,17 +1788,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/AccountResponse"
+                  "$ref": "#/components/schemas/UsuarioResponse"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AccountResponse"
+                  "$ref": "#/components/schemas/UsuarioResponse"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AccountResponse"
+                  "$ref": "#/components/schemas/UsuarioResponse"
                 }
               }
             }
@@ -1832,8 +1832,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK"
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -1858,29 +1858,9 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResetearContrasenaRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResetearContrasenaRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/ResetearContrasenaRequest"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
-          "200": {
-            "description": "OK"
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -1992,8 +1972,8 @@
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "OK"
+          "204": {
+            "description": "No Content"
           }
         }
       }
@@ -2001,52 +1981,6 @@
   },
   "components": {
     "schemas": {
-      "AccountResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
-          "email": {
-            "type": "string"
-          },
-          "empleadoId": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
-          "seccionId": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
-          "roles": {
-            "type": "array",
-            "items": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int32"
-            }
-          },
-          "requiereCambioContrasena": {
-            "type": "boolean"
-          }
-        }
-      },
       "ArchivoResponse": {
         "type": "object",
         "properties": {
@@ -2266,9 +2200,6 @@
           "email": {
             "type": "string"
           },
-          "password": {
-            "type": "string"
-          },
           "empleadoId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
@@ -2309,6 +2240,9 @@
               "string"
             ],
             "format": "int32"
+          },
+          "seccionNombre": {
+            "type": "string"
           },
           "encargadoId": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -2666,17 +2600,6 @@
           }
         }
       },
-      "ResetearContrasenaRequest": {
-        "type": "object",
-        "properties": {
-          "nuevaContrasena": {
-            "type": "string"
-          },
-          "confirmarContrasena": {
-            "type": "string"
-          }
-        }
-      },
       "RolResponse": {
         "type": "object",
         "properties": {
@@ -2856,7 +2779,18 @@
             ],
             "format": "int32"
           },
+          "seccionId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
           "activo": {
+            "type": "boolean"
+          },
+          "requiereCambioContrasena": {
             "type": "boolean"
           },
           "ultimoAcceso": {
@@ -2876,6 +2810,12 @@
           "ultimoCambioContrasena": {
             "type": "string",
             "format": "date-time"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RolResponse"
+            }
           }
         }
       }

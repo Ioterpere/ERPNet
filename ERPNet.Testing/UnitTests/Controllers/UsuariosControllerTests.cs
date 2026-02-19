@@ -1,6 +1,5 @@
 using ERPNet.Api.Controllers;
 using ERPNet.Application.Auth;
-using ERPNet.Application.Auth.DTOs;
 using ERPNet.Application.Common;
 using ERPNet.Application.Common.DTOs;
 using ERPNet.Application.Common.Enums;
@@ -85,7 +84,7 @@ public class UsuariosControllerTests
 
         var result = await _sut.Create(new CreateUsuarioRequest
         {
-            Email = "new@test.com", Password = "Pass123!", EmpleadoId = 1
+            Email = "new@test.com", EmpleadoId = 1
         });
 
         var objectResult = Assert.IsType<ObjectResult>(result);
@@ -100,7 +99,7 @@ public class UsuariosControllerTests
 
         var result = await _sut.Create(new CreateUsuarioRequest
         {
-            Email = "dup@test.com", Password = "Pass123!", EmpleadoId = 1
+            Email = "dup@test.com", EmpleadoId = 1
         });
 
         var objectResult = Assert.IsType<ObjectResult>(result);
@@ -131,15 +130,18 @@ public class UsuariosControllerTests
 
     #region Account / Contrasena
 
-    [Fact(DisplayName = "GetMe: devuelve AccountResponse con datos del usuario")]
-    public async Task GetMe_DevuelveAccountResponse()
+    [Fact(DisplayName = "GetMe: devuelve UsuarioResponse con datos del usuario")]
+    public async Task GetMe_DevuelveUsuarioResponse()
     {
         SetupUsuarioContext(id: 5, rolIds: [1, 2]);
+        var response = new UsuarioResponse { Id = 5, Email = "test@test.com", Roles = [new(), new()] };
+        _service.GetMeAsync(Arg.Any<UsuarioContext>())
+            .Returns(Result<UsuarioResponse>.Success(response));
 
-        var result = _sut.GetMe();
+        var result = await _sut.GetMe();
 
         var okResult = Assert.IsType<OkObjectResult>(result);
-        var account = Assert.IsType<AccountResponse>(okResult.Value);
+        var account = Assert.IsType<UsuarioResponse>(okResult.Value);
         Assert.Equal(5, account.Id);
         Assert.Equal("test@test.com", account.Email);
         Assert.Equal(2, account.Roles.Count);
@@ -163,12 +165,9 @@ public class UsuariosControllerTests
     [Fact(DisplayName = "ResetearContrasena: exitoso devuelve 204")]
     public async Task ResetearContrasena_Exitoso_Devuelve204()
     {
-        _service.ResetearContrasenaAsync(1, Arg.Any<ResetearContrasenaRequest>()).Returns(Result.Success());
+        _service.ResetearContrasenaAsync(1).Returns(Result.Success());
 
-        var result = await _sut.ResetearContrasena(1, new ResetearContrasenaRequest
-        {
-            NuevaContrasena = "new", ConfirmarContrasena = "new"
-        });
+        var result = await _sut.ResetearContrasena(1);
 
         Assert.IsType<NoContentResult>(result);
     }

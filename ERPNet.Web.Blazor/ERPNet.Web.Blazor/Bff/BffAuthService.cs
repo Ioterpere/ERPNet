@@ -10,7 +10,7 @@ namespace ERPNet.Web.Blazor.Bff;
 /// <summary>
 /// Gestiona el flujo de autenticación del BFF:
 /// login (llama a ERPNet.Api via IAuthClient, guarda tokens en caché, crea cookie),
-/// y logout (limpia caché, cierra sesión).
+/// logout (limpia caché, cierra sesión) y sincronización de claims tras cambio de contraseña.
 /// Devuelve tipos simples — las redirecciones las decide el controller.
 /// </summary>
 public sealed class BffAuthService(
@@ -66,6 +66,61 @@ public sealed class BffAuthService(
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         await httpContextAccessor.HttpContext!.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(identity));
+
+        return true;
+    }
+
+    /// <summary>
+    /// Fuerza un refresh del access token y re-firma la cookie con los claims actualizados
+    /// (especialmente <c>requiere_cambio_contrasena</c>). Llamar tras cambio de contraseña exitoso.
+    /// </summary>
+    public async Task<bool> SincronizarSesionAsync()
+    {
+        var httpContext = httpContextAccessor.HttpContext!;
+        var sessionKey = httpContext.User.FindFirst("session_key")?.Value;
+        if (sessionKey is null) return false;
+
+        var tokenJson = await cache.GetStringAsync($"bff-token:{sessionKey}");
+        if (tokenJson is null) return false;
+
+        var tokenData = JsonSerializer.Deserialize<BffTokenData>(tokenJson);
+        if (tokenData is null) return false;
+
+        AuthResponse refreshResult;
+        try
+        {
+            refreshResult = await authClient.RefreshAsync(
+                new RefreshTokenRequest { RefreshToken = tokenData.RefreshToken });
+        }
+        catch { return false; }
+
+        await cache.SetStringAsync(
+            $"bff-token:{sessionKey}",
+            JsonSerializer.Serialize(new BffTokenData
+            {
+                AccessToken = refreshResult.AccessToken,
+                RefreshToken = refreshResult.RefreshToken,
+                Expiration = refreshResult.Expiration
+            }),
+            new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(8)
+            });
+
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty),
+            new(ClaimTypes.Name, httpContext.User.FindFirst(ClaimTypes.Name)?.Value ?? string.Empty),
+            new(ClaimTypes.Email, httpContext.User.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty),
+            new("session_key", sessionKey),
+            new("requiere_cambio_contrasena",
+                refreshResult.RequiereCambioContrasena.ToString().ToLower())
+        };
+
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        await httpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
             new ClaimsPrincipal(identity));
 

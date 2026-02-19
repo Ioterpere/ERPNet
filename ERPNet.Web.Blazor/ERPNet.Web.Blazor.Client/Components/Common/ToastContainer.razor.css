@@ -1,0 +1,60 @@
+/* ── Contenedor fijo ─────────────────────────────── */
+.toast-stack {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 1090;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    width: min(360px, calc(100vw - 3rem));
+    pointer-events: none;
+}
+
+/* ── Toast base ──────────────────────────────────── */
+.toast-item {
+    pointer-events: all;
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .75rem 1rem;
+    border-radius: 10px;
+    color: #fff;
+    font-size: .875rem;
+    line-height: 1.4;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, .18);
+    animation: toast-in .2s ease forwards;
+}
+
+/* ── Variantes ───────────────────────────────────── */
+.toast-exito { background-color: var(--bs-success); }
+.toast-error { background-color: var(--bs-danger);  }
+.toast-info  { background-color: var(--bs-primary); }
+
+.toast-aviso {
+    background-color: var(--bs-warning);
+    color: var(--bs-emphasis-color);
+}
+
+/* ── Botón cerrar ────────────────────────────────── */
+.toast-cerrar {
+    background: none;
+    border: none;
+    color: inherit;
+    opacity: .65;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    font-size: .8rem;
+    transition: opacity .1s;
+}
+
+.toast-cerrar:hover { opacity: 1; }
+
+/* ── Animación de entrada ────────────────────────── */
+@keyframes toast-in {
+    from { opacity: 0; transform: translateY(.5rem) scale(.97); }
+    to   { opacity: 1; transform: translateY(0)     scale(1);   }
+}

@@ -13,6 +13,7 @@ public class EmpleadoRepository(ERPNetDbContext context) : Repository<Empleado>(
     {
         return await Context.Empleados
             .Include(e => e.Foto)
+            .Include(e => e.Seccion)
             .FirstOrDefaultAsync(e => e.Id == id);
     }
 

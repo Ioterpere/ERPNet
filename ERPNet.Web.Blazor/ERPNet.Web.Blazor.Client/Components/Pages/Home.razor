@@ -1,8 +1,199 @@
-﻿@page "/"
+@page "/"
 @attribute [Authorize]
+@using System.Globalization
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Inicio — ERPNet</PageTitle>
 
-<h1>Hello, world!</h1>
+<!-- ── Saludo ────────────────────────────────────────── -->
+<div class="d-flex align-items-start justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+        <h4 class="fw-bold mb-1">@_saludo, @_nombre</h4>
+        <p class="text-muted mb-0 small">@_fecha</p>
+    </div>
+    <span class="badge bg-primary-subtle text-primary-emphasis rounded-pill px-3 py-2 align-self-center"
+          style="font-size:.8rem">
+        <i class="bi bi-circle-fill me-1" style="font-size:.45rem;vertical-align:middle"></i>
+        Sistema operativo
+    </span>
+</div>
 
-Welcome to your new app.
+<!-- ── KPIs ──────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="kpi-icon bg-primary-subtle text-primary">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div>
+                    <div class="kpi-value">—</div>
+                    <div class="kpi-label">Empleados activos</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="kpi-icon bg-success-subtle text-success">
+                    <i class="bi bi-gear-wide-connected"></i>
+                </div>
+                <div>
+                    <div class="kpi-value">—</div>
+                    <div class="kpi-label">Maquinaria registrada</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="kpi-icon bg-warning-subtle text-warning-emphasis">
+                    <i class="bi bi-wrench-adjustable-circle-fill"></i>
+                </div>
+                <div>
+                    <div class="kpi-value">—</div>
+                    <div class="kpi-label">Órdenes activas</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="kpi-card card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="kpi-icon bg-info-subtle text-info-emphasis">
+                    <i class="bi bi-calendar2-check-fill"></i>
+                </div>
+                <div>
+                    <div class="kpi-value">—</div>
+                    <div class="kpi-label">Vacaciones este mes</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ── Accesos rápidos ───────────────────────────────── -->
+<p class="section-title mb-3">Accesos rápidos</p>
+<div class="row g-3 mb-4">
+
+    <div class="col-sm-6 col-lg-4">
+        <a href="/empleados" class="quick-card card text-decoration-none h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="quick-icon bg-primary-subtle text-primary">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-semibold text-body">Empleados</div>
+                    <div class="text-muted small">Gestión de personal</div>
+                </div>
+                <i class="bi bi-arrow-right text-muted"></i>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <a href="/maquinaria" class="quick-card card text-decoration-none h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="quick-icon bg-success-subtle text-success">
+                    <i class="bi bi-gear-wide-connected"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-semibold text-body">Maquinaria</div>
+                    <div class="text-muted small">Inventario de equipos</div>
+                </div>
+                <i class="bi bi-arrow-right text-muted"></i>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <a href="/mantenimiento" class="quick-card card text-decoration-none h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="quick-icon bg-warning-subtle text-warning-emphasis">
+                    <i class="bi bi-wrench-adjustable-circle-fill"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-semibold text-body">Mantenimiento</div>
+                    <div class="text-muted small">Órdenes de trabajo</div>
+                </div>
+                <i class="bi bi-arrow-right text-muted"></i>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <a href="/vacaciones" class="quick-card card text-decoration-none h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="quick-icon bg-info-subtle text-info-emphasis">
+                    <i class="bi bi-calendar2-check-fill"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-semibold text-body">Vacaciones</div>
+                    <div class="text-muted small">Gestión de ausencias</div>
+                </div>
+                <i class="bi bi-arrow-right text-muted"></i>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <a href="/marcajes" class="quick-card card text-decoration-none h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="quick-icon bg-secondary-subtle text-secondary-emphasis">
+                    <i class="bi bi-clock-fill"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-semibold text-body">Marcajes</div>
+                    <div class="text-muted small">Control de presencia</div>
+                </div>
+                <i class="bi bi-arrow-right text-muted"></i>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+        <a href="/usuarios" class="quick-card card text-decoration-none h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="quick-icon" style="background:rgba(var(--bs-danger-rgb),.1);color:var(--bs-danger)">
+                    <i class="bi bi-person-badge-fill"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-semibold text-body">Usuarios</div>
+                    <div class="text-muted small">Cuentas y permisos</div>
+                </div>
+                <i class="bi bi-arrow-right text-muted"></i>
+            </div>
+        </a>
+    </div>
+
+</div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
+
+    private string _nombre = string.Empty;
+    private string _saludo = string.Empty;
+    private string _fecha = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthStateTask;
+        _nombre = state.User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "Usuario";
+
+        var hora = DateTime.Now.Hour;
+        _saludo = hora < 13 ? "Buenos días"
+                : hora < 20 ? "Buenas tardes"
+                :              "Buenas noches";
+
+        _fecha = DateTime.Today.ToString("dddd, d 'de' MMMM 'de' yyyy",
+            new CultureInfo("es-ES"));
+        _fecha = char.ToUpper(_fecha[0]) + _fecha[1..];
+    }
+}

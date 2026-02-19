@@ -7,9 +7,13 @@
 <style>
     h1 { color: #2c3e50; }
     .btn { display: inline-block; padding: 12px 24px; background: #3498db; color: #fff; text-decoration: none; border-radius: 4px; }
+    .contrasena-box { background: #f4f4f4; border: 1px solid #ddd; border-radius: 6px; padding: 14px 20px; font-family: monospace; font-size: 1.3em; letter-spacing: 2px; text-align: center; margin: 16px 0; color: #2c3e50; }
+    .aviso { font-size: .88em; color: #e74c3c; margin-top: 8px; }
 </style>
 }
 
-<h1>Te damos la bienvenida @Model.Nombre</h1>
-<p>Tu cuenta ha sido creada exitosamente. Ya puedes acceder al sistema.</p>
+<h1>Te damos la bienvenida, @Model.Nombre</h1>
+<p>Tu cuenta ha sido creada exitosamente. Usa la siguiente contraseña temporal para acceder:</p>
+<div class="contrasena-box">@Model.ContrasenaTemp</div>
+<p class="aviso">⚠ Esta contraseña es de un solo uso. El sistema te pedirá que la cambies en tu primer acceso.</p>
 <p><a class="btn" href="@Model.UrlAcceso">Acceder al sistema</a></p>

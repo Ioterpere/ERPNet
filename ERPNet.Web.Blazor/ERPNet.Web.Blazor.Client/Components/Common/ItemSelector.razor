@@ -1,0 +1,208 @@
+@typeparam TItem
+@implements IDisposable
+
+<div class="item-selector" @onfocusout="OnFocusOut">
+
+    @if (_itemSeleccionado is not null)
+    {
+        <!-- Modo seleccionado -->
+        <div class="input-group">
+            <span class="input-group-text bg-transparent border-end-0 text-success-emphasis">
+                <i class="bi bi-check-circle-fill"></i>
+            </span>
+            <span class="form-control border-start-0 item-selector-selected d-flex align-items-center gap-2 overflow-hidden">
+                <span class="flex-grow-1 text-truncate fw-medium">@GetLabel(_itemSeleccionado)</span>
+                @if (GetSubLabel?.Invoke(_itemSeleccionado) is { Length: > 0 } subSel)
+                {
+                    <span class="item-selector-item-sub text-truncate">@subSel</span>
+                }
+            </span>
+            @if (!Disabled)
+            {
+                <button type="button" class="btn btn-outline-secondary" @onclick="Limpiar" tabindex="-1">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            }
+        </div>
+    }
+    else
+    {
+        <!-- Modo búsqueda -->
+        <div class="input-group">
+            <span class="input-group-text bg-transparent border-end-0">
+                @if (_buscando)
+                {
+                    <span class="spinner-border spinner-border-sm text-muted" aria-hidden="true"></span>
+                }
+                else
+                {
+                    <i class="bi bi-search text-muted"></i>
+                }
+            </span>
+            <input type="search"
+                   class="form-control border-start-0 ps-0"
+                   placeholder="@Placeholder"
+                   value="@_query"
+                   @oninput="OnInput"
+                   @onfocus="OnFocus"
+                   disabled="@Disabled"
+                   autocomplete="off" />
+        </div>
+
+        @if (_abierto)
+        {
+            <div class="item-selector-dropdown" @onmousedown:preventDefault>
+                @if (_buscando)
+                {
+                    <div class="item-selector-mensaje text-muted">
+                        <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                        Buscando...
+                    </div>
+                }
+                else if (_sinResultados)
+                {
+                    <div class="item-selector-mensaje text-muted">
+                        <i class="bi bi-search me-1"></i>Sin resultados para "<em>@_query</em>"
+                    </div>
+                }
+                else
+                {
+                    @foreach (var item in _resultados)
+                    {
+                        <button type="button" class="item-selector-item" @onclick="() => Seleccionar(item)">
+                            <span class="item-selector-item-label">@GetLabel(item)</span>
+                            @if (GetSubLabel?.Invoke(item) is { Length: > 0 } subItem)
+                            {
+                                <span class="item-selector-item-sub">@subItem</span>
+                            }
+                        </button>
+                    }
+                }
+            </div>
+        }
+    }
+
+</div>
+
+@code {
+    /// <summary>Función que recibe la query actual y devuelve los items coincidentes.</summary>
+    [Parameter, EditorRequired]
+    public Func<string, CancellationToken, Task<IEnumerable<TItem>>> SearchAsync { get; set; } = null!;
+
+    /// <summary>Extrae el identificador (int) del item seleccionado.</summary>
+    [Parameter, EditorRequired]
+    public Func<TItem, int> GetId { get; set; } = null!;
+
+    /// <summary>Texto principal que se muestra en el dropdown y en el chip de selección.</summary>
+    [Parameter, EditorRequired]
+    public Func<TItem, string> GetLabel { get; set; } = null!;
+
+    /// <summary>Texto secundario opcional (p. ej. DNI, código).</summary>
+    [Parameter]
+    public Func<TItem, string?>? GetSubLabel { get; set; }
+
+    /// <summary>Valor actual (id del item seleccionado).</summary>
+    [Parameter]
+    public int? Value { get; set; }
+
+    [Parameter]
+    public EventCallback<int?> ValueChanged { get; set; }
+
+    [Parameter]
+    public string Placeholder { get; set; } = "Buscar...";
+
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    private TItem? _itemSeleccionado;
+    private List<TItem> _resultados = [];
+    private string _query = string.Empty;
+    private bool _abierto;
+    private bool _buscando;
+    private bool _sinResultados;
+    private CancellationTokenSource? _cts;
+
+    private async Task OnInput(ChangeEventArgs e)
+    {
+        _query = e.Value?.ToString() ?? string.Empty;
+
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = new CancellationTokenSource();
+        var token = _cts.Token;
+
+        if (string.IsNullOrWhiteSpace(_query))
+        {
+            _resultados.Clear();
+            _sinResultados = false;
+            _abierto = false;
+            return;
+        }
+
+        _buscando = true;
+        _abierto = true;
+        _sinResultados = false;
+        StateHasChanged();
+
+        try
+        {
+            await Task.Delay(280, token);
+            if (token.IsCancellationRequested) return;
+
+            var items = await SearchAsync(TextHelper.Normalizar(_query), token);
+            if (token.IsCancellationRequested) return;
+
+            _resultados = items.ToList();
+            _sinResultados = _resultados.Count == 0;
+        }
+        catch (OperationCanceledException) { }
+        catch
+        {
+            _resultados.Clear();
+            _sinResultados = false;
+            _abierto = false;
+        }
+        finally
+        {
+            _buscando = false;
+        }
+    }
+
+    private void OnFocus()
+    {
+        if (_resultados.Count > 0 || _sinResultados)
+            _abierto = true;
+    }
+
+    private void OnFocusOut(FocusEventArgs _)
+    {
+        if (_abierto)
+            _abierto = false;
+    }
+
+    private async Task Seleccionar(TItem item)
+    {
+        _itemSeleccionado = item;
+        _abierto = false;
+        _query = string.Empty;
+        _resultados.Clear();
+        _sinResultados = false;
+        await ValueChanged.InvokeAsync(GetId(item));
+    }
+
+    private async Task Limpiar()
+    {
+        _itemSeleccionado = default;
+        _query = string.Empty;
+        _resultados.Clear();
+        _abierto = false;
+        _sinResultados = false;
+        await ValueChanged.InvokeAsync(null);
+    }
+
+    public void Dispose()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+    }
+}

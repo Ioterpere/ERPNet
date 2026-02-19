@@ -1,0 +1,57 @@
+@implements IDisposable
+@inject ToastService Toast
+
+@if (_items.Count > 0)
+{
+    <div class="toast-stack" aria-live="polite" aria-atomic="false">
+        @foreach (var item in _items)
+        {
+            <div class="toast-item toast-@TipoCss(item.Tipo)" role="alert">
+                <i class="bi @IconPara(item.Tipo) flex-shrink-0 fs-5"></i>
+                <span class="flex-grow-1">@item.Mensaje</span>
+                <button type="button" class="toast-cerrar" @onclick="() => Cerrar(item.Id)" aria-label="Cerrar">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private readonly List<ToastItem> _items = [];
+
+    protected override void OnInitialized()
+        => Toast.OnToastAdded += HandleToast;
+
+    private async void HandleToast(ToastItem item)
+    {
+        await InvokeAsync(() => { _items.Add(item); StateHasChanged(); });
+        await Task.Delay(item.DuracionMs);
+        await InvokeAsync(() => Cerrar(item.Id));
+    }
+
+    private void Cerrar(Guid id)
+    {
+        _items.RemoveAll(t => t.Id == id);
+        StateHasChanged();
+    }
+
+    private static string TipoCss(ToastTipo tipo) => tipo switch
+    {
+        ToastTipo.Exito => "exito",
+        ToastTipo.Error => "error",
+        ToastTipo.Aviso => "aviso",
+        _               => "info"
+    };
+
+    private static string IconPara(ToastTipo tipo) => tipo switch
+    {
+        ToastTipo.Exito => "bi-check-circle-fill",
+        ToastTipo.Error => "bi-x-circle-fill",
+        ToastTipo.Aviso => "bi-exclamation-triangle-fill",
+        _               => "bi-info-circle-fill"
+    };
+
+    public void Dispose()
+        => Toast.OnToastAdded -= HandleToast;
+}

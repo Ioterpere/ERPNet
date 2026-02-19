@@ -1,0 +1,103 @@
+@inject IUsuariosClient UsuariosClient
+
+@if (_exito is not null)
+{
+    <div class="alert alert-success d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-check-circle-fill flex-shrink-0"></i>
+        <span>@_exito</span>
+    </div>
+}
+@if (_error is not null)
+{
+    <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+        <span>@_error</span>
+    </div>
+}
+
+<div class="row g-3">
+    <div class="col-12">
+        <label class="form-label">Contraseña actual</label>
+        <input type="password" class="form-control" @bind="_form.ContrasenaActual"
+               placeholder="••••••••" autocomplete="current-password" />
+    </div>
+    <div class="col-sm-6">
+        <label class="form-label">Nueva contraseña</label>
+        <input type="password" class="form-control" @bind="_form.NuevaContrasena"
+               placeholder="••••••••" autocomplete="new-password" />
+    </div>
+    <div class="col-sm-6">
+        <label class="form-label">Confirmar contraseña</label>
+        <input type="password" class="form-control" @bind="_form.ConfirmarContrasena"
+               placeholder="••••••••" autocomplete="new-password" />
+    </div>
+    <div class="col-12 pt-1">
+        <button class="btn btn-primary px-4" @onclick="CambiarAsync" disabled="@_loading">
+            @if (_loading)
+            {
+                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+            }
+            else
+            {
+                <i class="bi bi-shield-check me-2"></i>
+            }
+            Actualizar contraseña
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnCambiada { get; set; }
+
+    private CambiarContrasenaRequest _form = new()
+    {
+        ContrasenaActual = string.Empty,
+        NuevaContrasena = string.Empty,
+        ConfirmarContrasena = string.Empty
+    };
+    private bool _loading;
+    private string? _error;
+    private string? _exito;
+
+    private async Task CambiarAsync()
+    {
+        _error = null;
+        _exito = null;
+
+        if (string.IsNullOrWhiteSpace(_form.ContrasenaActual) ||
+            string.IsNullOrWhiteSpace(_form.NuevaContrasena) ||
+            string.IsNullOrWhiteSpace(_form.ConfirmarContrasena))
+        {
+            _error = "Todos los campos son obligatorios.";
+            return;
+        }
+
+        if (_form.NuevaContrasena != _form.ConfirmarContrasena)
+        {
+            _error = "La nueva contraseña y la confirmación no coinciden.";
+            return;
+        }
+
+        _loading = true;
+        try
+        {
+            await UsuariosClient.CambiarContrasenaAsync(_form);
+            _exito = "Contraseña actualizada correctamente.";
+            _form = new() { ContrasenaActual = string.Empty, NuevaContrasena = string.Empty, ConfirmarContrasena = string.Empty };
+            await OnCambiada.InvokeAsync();
+        }
+        catch (BffAuthException) { }
+        catch (ApiException ex) when (ex.StatusCode == 400)
+        {
+            _error = "La contraseña actual no es correcta o la nueva no cumple los requisitos.";
+        }
+        catch
+        {
+            _error = "No se pudo cambiar la contraseña. Inténtalo de nuevo.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

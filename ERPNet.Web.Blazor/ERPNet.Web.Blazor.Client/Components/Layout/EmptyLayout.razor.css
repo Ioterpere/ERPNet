@@ -1,0 +1,5 @@
+/* Fondo compartido por Login, NotFound y CambiarContrasena */
+.empty-layout {
+    min-height: 100vh;
+    background-image: linear-gradient(180deg, var(--bs-secondary) 0%, var(--bs-primary) 100%);
+}

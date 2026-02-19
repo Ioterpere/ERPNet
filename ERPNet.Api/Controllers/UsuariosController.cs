@@ -1,6 +1,4 @@
-using ERPNet.Application.Auth.DTOs.Mappings;
 using ERPNet.Application.Common.Interfaces;
-using ERPNet.Application.Auth.DTOs;
 using ERPNet.Application.Common;
 using ERPNet.Application.Common.DTOs;
 using Microsoft.AspNetCore.Mvc;
@@ -40,19 +38,21 @@ public class UsuariosController(IUsuarioService usuarioService) : BaseController
     [SinPermiso]
     [PermitirContrasenaCaducada]
     [HttpGet("account")]
-    [ProducesResponseType<AccountResponse>(StatusCodes.Status200OK)]
-    public IActionResult GetMe()
-        => FromResult(Result<AccountResponse>.Success(UsuarioActual.ToResponse()));
+    [ProducesResponseType<UsuarioResponse>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMe()
+        => FromResult(await usuarioService.GetMeAsync(UsuarioActual));
 
     [SinPermiso]
     [PermitirContrasenaCaducada]
     [HttpPut("cambiar-contrasena")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> CambiarContrasena([FromBody] CambiarContrasenaRequest request)
         => FromResult(await usuarioService.CambiarContrasenaAsync(UsuarioActual.Id, request));
 
     [HttpPut("{id}/resetear-contrasena")]
-    public async Task<IActionResult> ResetearContrasena(int id, [FromBody] ResetearContrasenaRequest request)
-        => FromResult(await usuarioService.ResetearContrasenaAsync(id, request));
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> ResetearContrasena(int id)
+        => FromResult(await usuarioService.ResetearContrasenaAsync(id));
 
     [HttpGet("{id}/roles")]
     [ProducesResponseType<List<int>>(StatusCodes.Status200OK)]
@@ -60,6 +60,7 @@ public class UsuariosController(IUsuarioService usuarioService) : BaseController
         => FromResult(await usuarioService.GetRolesAsync(id));
 
     [HttpPut("{id}/roles")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> AsignarRoles(int id, [FromBody] AsignarRolesRequest request)
         => FromResult(await usuarioService.AsignarRolesAsync(id, request));
 }

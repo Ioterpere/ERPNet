@@ -59,6 +59,12 @@ public class UsuarioRepository(ERPNetDbContext context) : Repository<Usuario>(co
             .ToListAsync();
     }
 
+    public async Task<List<Rol>> GetRolesConNombreAsync(int usuarioId)
+        => await Context.RolesUsuarios
+            .Where(ru => ru.UsuarioId == usuarioId)
+            .Select(ru => ru.Rol)
+            .ToListAsync();
+
     public async Task SincronizarRolesAsync(int usuarioId, List<int> rolIds)
     {
         var actuales = await Context.RolesUsuarios

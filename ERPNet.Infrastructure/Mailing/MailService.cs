@@ -27,9 +27,9 @@ public class MailService(
             ct);
     }
 
-    public async Task EnviarBienvenidaAsync(string para, string nombre, CancellationToken ct = default)
+    public async Task EnviarBienvenidaAsync(string para, string nombre, string contrasenaTemp, CancellationToken ct = default)
     {
-        var modelo = new BienvenidaEmailModel(nombre, _erpWebClient);
+        var modelo = new BienvenidaEmailModel(nombre, _erpWebClient, contrasenaTemp);
 
         await publisher.PublicarAsync(
             new EmailMensaje(

@@ -16,12 +16,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Clientes tipados generados por NSwag — apuntan al BFF (mismo origen, cookie automática) -->
     <ProjectReference Include="..\..\ERPNet.ApiClient\ERPNet.ApiClient.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Components\Common\" />
-  </ItemGroup>
+  </ItemGroup> 
 
 </Project>

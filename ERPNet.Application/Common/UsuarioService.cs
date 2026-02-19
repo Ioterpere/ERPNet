@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using ERPNet.Application.Auth;
 using ERPNet.Application.Common.DTOs;
 using ERPNet.Application.Common.DTOs.Mappings;
@@ -33,6 +34,17 @@ public class UsuarioService(
         return Result<UsuarioResponse>.Success(usuario.ToResponse());
     }
 
+    public async Task<Result<UsuarioResponse>> GetMeAsync(UsuarioContext ctx)
+    {
+        var usuario = await usuarioRepository.GetByIdAsync(ctx.Id);
+
+        if (usuario is null)
+            return Result<UsuarioResponse>.Failure("Usuario no encontrado.", ErrorType.NotFound);
+
+        var roles = await usuarioRepository.GetRolesConNombreAsync(ctx.Id);
+        return Result<UsuarioResponse>.Success(usuario.ToResponse(roles, ctx));
+    }
+
     public async Task<Result<UsuarioResponse>> CreateAsync(CreateUsuarioRequest request)
     {
         if (await usuarioRepository.ExisteEmailAsync(request.Email))
@@ -41,12 +53,14 @@ public class UsuarioService(
         if (await usuarioRepository.ExisteEmpleadoAsync(request.EmpleadoId))
             return Result<UsuarioResponse>.Failure("Ya existe un usuario asociado a ese empleado.", ErrorType.Conflict);
 
-        var usuario = request.ToEntity(BCrypt.Net.BCrypt.HashPassword(request.Password));
+        var contrasenaTemp = GenerarContrasenaAleatoria();
+        var usuario = request.ToEntity(BCrypt.Net.BCrypt.HashPassword(contrasenaTemp));
+        usuario.CaducidadContrasena = DateTime.UtcNow;  // fuerza cambio en el primer acceso
 
         await usuarioRepository.CreateAsync(usuario);
         await unitOfWork.SaveChangesAsync();
 
-        await mailService.EnviarBienvenidaAsync(usuario.Email, usuario.Email);
+        await mailService.EnviarBienvenidaAsync(usuario.Email, usuario.Email, contrasenaTemp);
 
         return Result<UsuarioResponse>.Success(usuario.ToResponse());
     }
@@ -104,20 +118,44 @@ public class UsuarioService(
         return Result.Success();
     }
 
-    public async Task<Result> ResetearContrasenaAsync(int usuarioId, ResetearContrasenaRequest request)
+    public async Task<Result> ResetearContrasenaAsync(int usuarioId)
     {
         var usuario = await usuarioRepository.GetByIdAsync(usuarioId);
 
         if (usuario is null)
             return Result.Failure("Usuario no encontrado.", ErrorType.NotFound);
 
-        usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NuevaContrasena);
+        var contrasenaTemp = GenerarContrasenaAleatoria();
+        usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(contrasenaTemp);
         usuario.UltimoCambioContrasena = DateTime.UtcNow;
-        usuario.CaducidadContrasena = DateTime.UtcNow.AddDays(ContrasenaSettings.DiasExpiracionPorDefecto);
+        usuario.CaducidadContrasena = DateTime.UtcNow;  // caducada: fuerza cambio en el próximo acceso
         await unitOfWork.SaveChangesAsync();
         cache.Remove($"usuario:{usuarioId}");
 
+        await mailService.EnviarAsync(
+            usuario.Email,
+            "Restablecimiento de contraseña",
+            $"Un administrador ha restablecido tu contraseña.\n\nContraseña temporal: {contrasenaTemp}\n\nDeberás cambiarla en tu próximo acceso.");
+
         return Result.Success();
+    }
+
+    private static string GenerarContrasenaAleatoria()
+    {
+        const string upper = "ABCDEFGHJKMNPQRSTUVWXYZ";
+        const string lower = "abcdefghjkmnpqrstuvwxyz";
+        const string digits = "23456789";
+        const string all = upper + lower + digits;
+
+        var chars = new char[12];
+        chars[0] = upper[RandomNumberGenerator.GetInt32(upper.Length)];
+        chars[1] = lower[RandomNumberGenerator.GetInt32(lower.Length)];
+        chars[2] = digits[RandomNumberGenerator.GetInt32(digits.Length)];
+        for (int i = 3; i < 12; i++)
+            chars[i] = all[RandomNumberGenerator.GetInt32(all.Length)];
+
+        RandomNumberGenerator.Shuffle(chars.AsSpan());
+        return new string(chars);
     }
 
     public async Task<Result<List<int>>> GetRolesAsync(int usuarioId)

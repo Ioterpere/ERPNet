@@ -17,6 +17,20 @@ public static class UsuarioMappings
         UltimoCambioContrasena = usuario.UltimoCambioContrasena
     };
 
+    public static UsuarioResponse ToResponse(this Usuario usuario, IEnumerable<Rol> roles, UsuarioContext ctx) => new()
+    {
+        Id = usuario.Id,
+        Email = usuario.Email.Value,
+        EmpleadoId = usuario.EmpleadoId,
+        SeccionId = ctx.SeccionId,
+        Activo = usuario.Activo,
+        RequiereCambioContrasena = ctx.RequiereCambioContrasena,
+        UltimoAcceso = usuario.UltimoAcceso,
+        CaducidadContrasena = usuario.CaducidadContrasena,
+        UltimoCambioContrasena = usuario.UltimoCambioContrasena,
+        Roles = roles.Select(r => r.ToResponse()).ToList()
+    };
+
     public static Usuario ToEntity(this CreateUsuarioRequest request, string passwordHash) => new()
     {
         Email = Email.From(request.Email),

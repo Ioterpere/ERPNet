@@ -1,0 +1,88 @@
+/* ── Panel container ─────────────────────────────── */
+/* Cancela el py-4 px-4 del article.content del layout */
+.panel-container {
+    margin: -1.5rem -1.5rem;
+}
+
+/* ── Paneles (desktop) ───────────────────────────── */
+@media (min-width: 992px) {
+    .panel-lista,
+    .panel-detalle {
+        height: calc(100vh - 3.5rem); /* viewport - top-row */
+        overflow-y: auto;
+    }
+}
+
+/* ── Panel lista: columna flex ───────────────────── */
+.panel-lista {
+    flex-direction: column;
+}
+
+/* ── Filas de usuario ────────────────────────────── */
+.user-row {
+    display: flex;
+    padding: .625rem 1rem;
+    border-bottom: 1px solid var(--bs-border-color);
+    border-left: 3px solid transparent;
+    border-top: none;
+    border-right: none;
+    background: none;
+    cursor: pointer;
+    transition: background-color .12s ease;
+    color: var(--bs-body-color);
+}
+
+.user-row:hover {
+    background-color: var(--bs-tertiary-bg);
+}
+
+.user-row.active {
+    background-color: rgba(var(--bs-primary-rgb), .08);
+    border-left-color: var(--bs-primary);
+    padding-left: calc(1rem - 3px);
+}
+
+/* ── Avatares ────────────────────────────────────── */
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: rgba(var(--bs-primary-rgb), .12);
+    color: var(--bs-primary);
+    font-size: .875rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-avatar-lg {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: rgba(var(--bs-primary-rgb), .12);
+    color: var(--bs-primary);
+    font-size: 1.25rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* ── Placeholder vacío ───────────────────────────── */
+.panel-placeholder {
+    height: 100%;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+/* ── Card header override ────────────────────────── */
+.card-header {
+    background-color: transparent;
+    padding: .875rem 1rem;
+}

@@ -88,14 +88,13 @@ public class UsuarioServiceTests
         var result = await _sut.CreateAsync(new CreateUsuarioRequest
         {
             Email = "nuevo@test.com",
-            Password = "Password1!",
             EmpleadoId = 5
         });
 
         Assert.True(result.IsSuccess);
         await _repo.Received(1).CreateAsync(Arg.Any<Usuario>());
         await _uow.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
-        await _mail.Received(1).EnviarBienvenidaAsync("nuevo@test.com", Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _mail.Received(1).EnviarBienvenidaAsync("nuevo@test.com", Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact(DisplayName = "Create: email duplicado devuelve Conflict")]
@@ -106,7 +105,6 @@ public class UsuarioServiceTests
         var result = await _sut.CreateAsync(new CreateUsuarioRequest
         {
             Email = "existe@test.com",
-            Password = "Password1!",
             EmpleadoId = 5
         });
 
@@ -123,7 +121,6 @@ public class UsuarioServiceTests
         var result = await _sut.CreateAsync(new CreateUsuarioRequest
         {
             Email = "nuevo@test.com",
-            Password = "Password1!",
             EmpleadoId = 5
         });
 
@@ -255,20 +252,18 @@ public class UsuarioServiceTests
 
     #region ResetearContrasenaAsync
 
-    [Fact(DisplayName = "ResetearContrasena: usuario existente resetea")]
+    [Fact(DisplayName = "ResetearContrasena: usuario existente genera contraseña aleatoria y la caduca")]
     public async Task ResetearContrasena_Existente_Resetea()
     {
         var usuario = CrearUsuario();
+        var hashOriginal = usuario.PasswordHash;
         _repo.GetByIdAsync(1).Returns(usuario);
 
-        var result = await _sut.ResetearContrasenaAsync(1, new ResetearContrasenaRequest
-        {
-            NuevaContrasena = "Reset123!",
-            ConfirmarContrasena = "Reset123!"
-        });
+        var result = await _sut.ResetearContrasenaAsync(1);
 
         Assert.True(result.IsSuccess);
-        Assert.True(BCrypt.Net.BCrypt.Verify("Reset123!", usuario.PasswordHash));
+        Assert.NotEqual(hashOriginal, usuario.PasswordHash);
+        Assert.True(usuario.CaducidadContrasena <= DateTime.UtcNow);
     }
 
     [Fact(DisplayName = "ResetearContrasena: inexistente devuelve NotFound")]
@@ -276,11 +271,7 @@ public class UsuarioServiceTests
     {
         _repo.GetByIdAsync(99).Returns((Usuario?)null);
 
-        var result = await _sut.ResetearContrasenaAsync(99, new ResetearContrasenaRequest
-        {
-            NuevaContrasena = "X",
-            ConfirmarContrasena = "X"
-        });
+        var result = await _sut.ResetearContrasenaAsync(99);
 
         Assert.False(result.IsSuccess);
         Assert.Equal(ErrorType.NotFound, result.ErrorType);
@@ -384,11 +375,7 @@ public class UsuarioServiceTests
     {
         _repo.GetByIdAsync(1).Returns(CrearUsuario());
 
-        await _sut.ResetearContrasenaAsync(1, new ResetearContrasenaRequest
-        {
-            NuevaContrasena = "Reset123!",
-            ConfirmarContrasena = "Reset123!"
-        });
+        await _sut.ResetearContrasenaAsync(1);
 
         _cache.Received(1).Remove("usuario:1");
     }
@@ -412,7 +399,6 @@ public class UsuarioServiceTests
         await _sut.CreateAsync(new CreateUsuarioRequest
         {
             Email = "nuevo@test.com",
-            Password = "Password1!",
             EmpleadoId = 5
         });
 

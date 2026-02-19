@@ -1,3 +1,7 @@
+@implements IDisposable
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthStateProvider
+
 <Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
     <Found Context="routeData">
         <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
@@ -8,3 +12,27 @@
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
 </Router>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        Nav.LocationChanged += OnLocationChanged;
+        await VerificarContrasenaAsync();
+    }
+
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+        => await VerificarContrasenaAsync();
+
+    private async Task VerificarContrasenaAsync()
+    {
+        var state = await AuthStateProvider.GetAuthenticationStateAsync();
+        if (state.User.Identity?.IsAuthenticated != true) return;
+        if (state.User.FindFirst("requiere_cambio_contrasena")?.Value != "true") return;
+
+        var ruta = Nav.ToBaseRelativePath(Nav.Uri).ToLowerInvariant().TrimStart('/');
+        if (!ruta.StartsWith("cambiar-contrasena") && !ruta.StartsWith("authentication/"))
+            Nav.NavigateTo("/cambiar-contrasena", forceLoad: false);
+    }
+
+    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
+}

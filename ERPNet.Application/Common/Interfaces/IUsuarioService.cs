@@ -1,3 +1,4 @@
+using ERPNet.Application.Auth;
 using ERPNet.Application.Common.DTOs;
 using ERPNet.Domain.Filters;
 
@@ -7,11 +8,12 @@ public interface IUsuarioService
 {
     Task<Result<ListaPaginada<UsuarioResponse>>> GetAllAsync(PaginacionFilter filtro);
     Task<Result<UsuarioResponse>> GetByIdAsync(int id);
+    Task<Result<UsuarioResponse>> GetMeAsync(UsuarioContext usuario);
     Task<Result<UsuarioResponse>> CreateAsync(CreateUsuarioRequest request);
     Task<Result> UpdateAsync(int id, UpdateUsuarioRequest request);
     Task<Result> DeleteAsync(int id);
     Task<Result> CambiarContrasenaAsync(int usuarioId, CambiarContrasenaRequest request);
-    Task<Result> ResetearContrasenaAsync(int usuarioId, ResetearContrasenaRequest request);
+    Task<Result> ResetearContrasenaAsync(int usuarioId);
     Task<Result<List<int>>> GetRolesAsync(int usuarioId);
     Task<Result> AsignarRolesAsync(int usuarioId, AsignarRolesRequest request);
 }

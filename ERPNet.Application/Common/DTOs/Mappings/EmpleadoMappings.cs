@@ -13,6 +13,7 @@ public static class EmpleadoMappings
         Dni = empleado.DNI.Value,
         Activo = empleado.Activo,
         SeccionId = empleado.SeccionId,
+        SeccionNombre = empleado.Seccion?.Nombre ?? string.Empty,
         EncargadoId = empleado.EncargadoId,
         FotoId = empleado.FotoId
     };
