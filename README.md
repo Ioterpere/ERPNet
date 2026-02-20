@@ -237,7 +237,6 @@ Los architecture tests verifican que:
 
 ## Roadmap de funcionalidades pendientes
 
-- [ ] Módulo de Empleados completo (CRUD + gestión de secciones)
 - [ ] Gestión de Vacaciones (flujo Pendiente → Aprobado/Rechazado)
 - [ ] Turnos y Marcajes con detección de incidencias
 - [ ] Módulo de Maquinaria y Órdenes de Mantenimiento
