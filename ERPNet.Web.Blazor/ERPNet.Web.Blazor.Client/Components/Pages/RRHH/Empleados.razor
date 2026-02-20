@@ -1,107 +1,942 @@
 @page "/empleados"
-
 @attribute [Authorize]
+@using ERPNet.ApiClient
 
 @inject IEmpleadosClient EmpleadosClient
+@inject ISeccionesClient SeccionesClient
+@inject NavigationManager Nav
+@inject ToastService Toast
 
-<h3>Lista de empleados</h3>
+<PageTitle>Empleados — ERPNet</PageTitle>
 
-@if (error is not null)
-{
-    <div class="alert alert-danger">@error</div>
-}
-else if (resultado is null)
-{
-    <div class="d-flex align-items-center gap-2 text-muted">
-        <div class="spinner-border spinner-border-sm" role="status"></div>
-        <span>Cargando...</span>
-    </div>
-}
-else
-{
-    <table class="table table-hover table-sm align-middle">
-        <thead class="table-light">
-            <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Apellidos</th>
-                <th>DNI</th>
-                <th>Sección</th>
-                <th>Activo</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var e in resultado.Items)
+<div class="row g-0 panel-container">
+
+    <!-- ── Panel izquierdo: Lista ─────────────────────────────── -->
+    <div class="col-12 col-lg-4 border-end panel-lista @((!_esNuevo && !Id.HasValue) ? "d-flex" : "d-none d-lg-flex")">
+
+        <!-- Header -->
+        <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom flex-shrink-0">
+            <h5 class="mb-0 fw-semibold">Empleados</h5>
+            <div class="d-flex gap-2">
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-download me-1"></i>Reporte
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="/api/empleados/reporte?formato=0" target="_blank">
+                                <i class="bi bi-file-earmark-pdf me-2 text-danger"></i>PDF
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/api/empleados/reporte?formato=1" target="_blank">
+                                <i class="bi bi-file-earmark-excel me-2 text-success"></i>Excel
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <button class="btn btn-sm btn-primary" @onclick="NuevoEmpleado">
+                    <i class="bi bi-plus-lg me-1"></i>Nuevo
+                </button>
+            </div>
+        </div>
+
+        <!-- Buscador -->
+        <div class="px-3 py-2 border-bottom flex-shrink-0">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-transparent border-end-0">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+                <input type="search" class="form-control border-start-0 ps-0"
+                       placeholder="Buscar por nombre o DNI..."
+                       @bind-value="_busqueda" @bind-value:event="oninput" />
+            </div>
+        </div>
+
+        <!-- Items -->
+        <div class="flex-grow-1 overflow-y-auto">
+            @if (_cargandoLista)
             {
-                <tr>
-                    <td class="text-muted">@e.Id</td>
-                    <td>@e.Nombre</td>
-                    <td>@e.Apellidos</td>
-                    <td class="font-monospace">@e.Dni</td>
-                    <td>@e.SeccionId</td>
-                    <td>
-                        @if (e.Activo)
+                @for (var i = 0; i < 6; i++)
+                {
+                    <div class="emp-row d-flex align-items-center gap-3 placeholder-glow">
+                        <span class="emp-avatar placeholder flex-shrink-0"></span>
+                        <div class="flex-grow-1">
+                            <span class="placeholder col-7 d-block mb-1" style="height:13px"></span>
+                            <span class="placeholder col-5" style="height:11px"></span>
+                        </div>
+                    </div>
+                }
+            }
+            else if (_empleadosFiltrados.Count == 0)
+            {
+                <div class="text-center text-muted py-5 small">
+                    <i class="bi bi-person-x fs-3 d-block mb-2"></i>
+                    Sin resultados
+                </div>
+            }
+            else
+            {
+                @foreach (var e in _empleadosFiltrados)
+                {
+                    <button type="button"
+                            class="emp-row w-100 d-flex align-items-center gap-3 @(Id == e.Id ? "active" : "")"
+                            @onclick="() => SeleccionarEmpleado(e.Id)">
+                        @if (e.FotoId != null)
                         {
-                            <span class="badge text-bg-success">Activo</span>
+                            <img src="/api/empleados/@e.Id/archivos/foto?thumbnail=true"
+                                 class="emp-avatar"
+                                 alt="Foto de @e.Nombre" />
                         }
                         else
                         {
-                            <span class="badge text-bg-secondary">Inactivo</span>
+                            <div class="emp-avatar">@e.Nombre[0]</div>
                         }
-                    </td>
-                </tr>
+                        <div class="flex-grow-1 text-start overflow-hidden">
+                            <div class="fw-semibold text-truncate small">@e.Nombre @e.Apellidos</div>
+                            <div class="d-flex align-items-center gap-2 mt-1">
+                                <span class="badge rounded-pill @(e.Activo ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")"
+                                      style="font-size:.7rem">
+                                    @(e.Activo ? "Activo" : "Inactivo")
+                                </span>
+                                <span class="text-muted text-truncate" style="font-size:.75rem">@e.SeccionNombre</span>
+                            </div>
+                        </div>
+                    </button>
+                }
             }
-        </tbody>
-    </table>
-
-    <div class="d-flex align-items-center justify-content-between">
-        <small class="text-muted">
-            @((pagina - 1) * porPagina + 1)–@Math.Min(pagina * porPagina, resultado.TotalRegistros)
-            de @resultado.TotalRegistros empleados
-        </small>
-        <div class="btn-group btn-group-sm">
-            <button class="btn btn-outline-secondary"
-                    disabled="@(pagina <= 1)"
-                    @onclick="PaginaAnterior">← Anterior</button>
-            <button class="btn btn-outline-secondary"
-                    disabled="@(pagina * porPagina >= resultado.TotalRegistros)"
-                    @onclick="PaginaSiguiente">Siguiente →</button>
         </div>
+
+        <!-- Paginación -->
+        @if (_paginado is not null && !_cargandoLista)
+        {
+            <div class="px-3 py-2 border-top d-flex align-items-center justify-content-between flex-shrink-0 small text-muted">
+                <span>@PaginacionTexto</span>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary" @onclick="PaginaAnterior"
+                            disabled="@(_pagina <= 1)">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <button class="btn btn-outline-secondary" @onclick="PaginaSiguiente"
+                            disabled="@(_pagina >= _paginado.TotalPaginas)">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        }
     </div>
-}
+
+    <!-- ── Panel derecho: Detalle / Formulario ────────────────── -->
+    <div class="col-12 col-lg-8 panel-detalle">
+
+        @if (!_esNuevo && !Id.HasValue)
+        {
+            <!-- Estado vacío -->
+            <div class="panel-placeholder">
+                <i class="bi bi-person-badge text-muted" style="font-size:3rem"></i>
+                <p class="text-muted mt-3 mb-1">Selecciona un empleado de la lista</p>
+                <p class="text-muted small mb-0">o crea uno nuevo con el botón "+ Nuevo"</p>
+            </div>
+        }
+        else if (_esNuevo)
+        {
+            <!-- Formulario de creación -->
+            <div class="px-4 py-4">
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <button class="btn btn-sm btn-light d-lg-none" @onclick="VolverALista">
+                        <i class="bi bi-arrow-left"></i>
+                    </button>
+                    <h5 class="mb-0 fw-semibold">Nuevo empleado</h5>
+                </div>
+
+                @if (_errorCrear is not null)
+                {
+                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+                        <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                        <span>@_errorCrear</span>
+                    </div>
+                }
+
+                <div class="card mb-3">
+                    <div class="card-header d-flex align-items-center gap-2">
+                        <i class="bi bi-person-vcard text-primary"></i>
+                        <span class="fw-semibold">Datos personales</span>
+                    </div>
+                    <div class="card-body py-4">
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" @bind="_nuevoNombre"
+                                       placeholder="Juan" autocomplete="off" />
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label">Apellidos <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" @bind="_nuevoApellidos"
+                                       placeholder="García López" autocomplete="off" />
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label">DNI <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control font-monospace" @bind="_nuevoDni"
+                                       placeholder="12345678Z" autocomplete="off" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header d-flex align-items-center gap-2">
+                        <i class="bi bi-diagram-3 text-primary"></i>
+                        <span class="fw-semibold">Organización</span>
+                    </div>
+                    <div class="card-body py-4">
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <label class="form-label">Sección <span class="text-danger">*</span></label>
+                                <select class="form-select" @bind="_nuevoSeccionId">
+                                    <option value="0">-- Selecciona una sección --</option>
+                                    @foreach (var s in _secciones)
+                                    {
+                                        <option value="@s.Id">@s.Nombre</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label">Encargado</label>
+                                <ItemSelector TItem="EmpleadoResponse"
+                                              SearchAsync="BuscarEmpleadosAsync"
+                                              GetId="e => e.Id"
+                                              GetLabel='e => $"{e.Nombre} {e.Apellidos}"'
+                                              GetSubLabel="e => e.Dni"
+                                              Value="_nuevoEncargadoId"
+                                              ValueChanged="id => _nuevoEncargadoId = id"
+                                              Placeholder="Buscar encargado..." />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary px-4" @onclick="CrearEmpleadoAsync" disabled="@_creando">
+                        @if (_creando)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-person-check me-2"></i>
+                        }
+                        Crear empleado
+                    </button>
+                    <button class="btn btn-outline-secondary" @onclick="VolverALista">Cancelar</button>
+                </div>
+            </div>
+        }
+        else if (Id.HasValue)
+        {
+            <!-- Formulario de edición -->
+            <div class="px-4 py-4">
+
+                <!-- Header de detalle -->
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <button class="btn btn-sm btn-light d-lg-none" @onclick="VolverALista">
+                        <i class="bi bi-arrow-left"></i>
+                    </button>
+
+                    @if (_cargandoDetalle)
+                    {
+                        <div class="d-flex align-items-center gap-3 placeholder-glow flex-grow-1">
+                            <span class="placeholder rounded-circle flex-shrink-0" style="width:48px;height:48px"></span>
+                            <div>
+                                <span class="placeholder d-block mb-1" style="height:14px;width:160px"></span>
+                                <span class="placeholder" style="height:11px;width:120px"></span>
+                            </div>
+                        </div>
+                    }
+                    else if (_empleadoDetalle is not null)
+                    {
+                        @if (_empleadoDetalle.FotoId != null)
+                        {
+                            <img src="/api/empleados/@Id/archivos/foto?thumbnail=true&v=@_fotoVersion"
+                                 class="emp-avatar-lg border"
+                                 alt="Foto de @_empleadoDetalle.Nombre" />
+                        }
+                        else
+                        {
+                            <div class="emp-avatar-lg">@_empleadoDetalle.Nombre[0]</div>
+                        }
+                        <div class="flex-grow-1 overflow-hidden">
+                            <h5 class="mb-0 fw-semibold text-truncate">
+                                @_empleadoDetalle.Nombre @_empleadoDetalle.Apellidos
+                            </h5>
+                            <p class="text-muted small mb-0 text-truncate">@_empleadoDetalle.SeccionNombre</p>
+                        </div>
+                        <span class="badge rounded-pill flex-shrink-0 @(_empleadoDetalle.Activo ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")">
+                            @(_empleadoDetalle.Activo ? "Activo" : "Inactivo")
+                        </span>
+                    }
+                </div>
+
+                @if (_errorDetalle is not null)
+                {
+                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+                        <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                        <span>@_errorDetalle</span>
+                    </div>
+                }
+
+                @if (!_cargandoDetalle && _empleadoDetalle is not null)
+                {
+                    <!-- Card datos personales -->
+                    <div class="card mb-3">
+                        <div class="card-header d-flex align-items-center gap-2">
+                            <i class="bi bi-person-vcard text-primary"></i>
+                            <span class="fw-semibold">Datos personales</span>
+                        </div>
+                        <div class="card-body py-4">
+                            @if (_errorDatos is not null)
+                            {
+                                <div class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2">
+                                    <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                                    <span>@_errorDatos</span>
+                                </div>
+                            }
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <label class="form-label">Nombre</label>
+                                    <input type="text" class="form-control" @bind="_editNombre" />
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label">Apellidos</label>
+                                    <input type="text" class="form-control" @bind="_editApellidos" />
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label">DNI</label>
+                                    <input type="text" class="form-control font-monospace" @bind="_editDni" />
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button class="btn btn-primary btn-sm px-3" @onclick="GuardarDatosAsync"
+                                        disabled="@_guardandoDatos">
+                                    @if (_guardandoDatos)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                                    }
+                                    Guardar cambios
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card organización -->
+                    <div class="card mb-3">
+                        <div class="card-header d-flex align-items-center gap-2">
+                            <i class="bi bi-diagram-3 text-primary"></i>
+                            <span class="fw-semibold">Organización</span>
+                        </div>
+                        <div class="card-body py-4">
+                            @if (_errorOrg is not null)
+                            {
+                                <div class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2">
+                                    <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                                    <span>@_errorOrg</span>
+                                </div>
+                            }
+                            <div class="row g-3">
+                                <div class="col-sm-6">
+                                    <label class="form-label">Sección</label>
+                                    <select class="form-select" @bind="_editSeccionId">
+                                        @foreach (var s in _secciones)
+                                        {
+                                            <option value="@s.Id">@s.Nombre</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label">Encargado</label>
+                                    <ItemSelector TItem="EmpleadoResponse"
+                                                  SearchAsync="BuscarEmpleadosAsync"
+                                                  GetId="e => e.Id"
+                                                  GetLabel='e => $"{e.Nombre} {e.Apellidos}"'
+                                                  GetSubLabel="e => e.Dni"
+                                                  Value="_editEncargadoId"
+                                                  ValueChanged="id => _editEncargadoId = id"
+                                                  Placeholder="Buscar encargado..." />
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="activo-switch" @bind="_editActivo" />
+                                        <label class="form-check-label" for="activo-switch">Empleado activo</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button class="btn btn-primary btn-sm px-3" @onclick="GuardarOrgAsync"
+                                        disabled="@_guardandoOrg">
+                                    @if (_guardandoOrg)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                                    }
+                                    Guardar cambios
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card foto de perfil -->
+                    <div class="card mb-3">
+                        <div class="card-header d-flex align-items-center gap-2">
+                            <i class="bi bi-camera-fill text-primary"></i>
+                            <span class="fw-semibold">Foto de perfil</span>
+                        </div>
+                        <div class="card-body py-4">
+                            @if (_errorFoto is not null)
+                            {
+                                <div class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2">
+                                    <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                                    <span>@_errorFoto</span>
+                                </div>
+                            }
+                            <div class="d-flex align-items-center gap-4">
+                                @if (_empleadoDetalle.FotoId != null)
+                                {
+                                    <img src="/api/empleados/@Id/archivos/foto?thumbnail=true&v=@_fotoVersion"
+                                         class="emp-avatar-xl border"
+                                         alt="Foto de @_empleadoDetalle.Nombre" />
+                                }
+                                else
+                                {
+                                    <div class="emp-avatar-xl">@_empleadoDetalle.Nombre[0]</div>
+                                }
+                                <div class="d-flex flex-column gap-2">
+                                    <InputFile id="@InputFotoId" class="d-none"
+                                               OnChange="SubirFotoAsync" accept="image/*" />
+                                    <label for="@InputFotoId" class="btn btn-sm btn-outline-primary"
+                                           style="cursor:pointer">
+                                        @if (_subiendoFoto)
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-upload me-1"></i>
+                                        }
+                                        @(_empleadoDetalle.FotoId != null ? "Cambiar foto" : "Subir foto")
+                                    </label>
+                                    @if (_empleadoDetalle.FotoId != null)
+                                    {
+                                        <button class="btn btn-sm btn-outline-danger"
+                                                @onclick='() => _mostrarModalEliminarFoto = true'
+                                                disabled="@_eliminandoFoto">
+                                            <i class="bi bi-trash3 me-1"></i>Eliminar foto
+                                        </button>
+                                    }
+                                    <p class="text-muted mb-0" style="font-size:.75rem">
+                                        Formatos: JPG, PNG, WEBP. Máx. 5 MB.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card eliminar empleado -->
+                    <div class="card mb-4 border-danger-subtle">
+                        <div class="card-header d-flex align-items-center gap-2">
+                            <i class="bi bi-person-x-fill text-danger"></i>
+                            <span class="fw-semibold text-danger">Eliminar empleado</span>
+                        </div>
+                        <div class="card-body py-4">
+                            <p class="text-muted small mb-3">
+                                Elimina permanentemente este empleado del sistema. Esta acción no se puede deshacer.
+                            </p>
+                            <button class="btn btn-danger btn-sm px-3"
+                                    @onclick='() => _mostrarModalEliminar = true'>
+                                <i class="bi bi-trash3 me-2"></i>Eliminar empleado
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal: confirmar eliminación de empleado -->
+<Modal Title="Eliminar empleado" @bind-IsVisible="_mostrarModalEliminar">
+    <ChildContent>
+        <p class="mb-1">
+            ¿Seguro que quieres eliminar a
+            <strong>@_empleadoDetalle?.Nombre @_empleadoDetalle?.Apellidos</strong>?
+        </p>
+        <p class="text-muted small mb-0">Esta acción no se puede deshacer.</p>
+        @if (_errorEliminar is not null)
+        {
+            <div class="alert alert-danger d-flex align-items-center gap-2 mt-3 py-2 mb-0">
+                <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                <span>@_errorEliminar</span>
+            </div>
+        }
+    </ChildContent>
+    <Footer>
+        <button class="btn btn-outline-secondary"
+                @onclick='() => _mostrarModalEliminar = false'>Cancelar</button>
+        <button class="btn btn-danger" @onclick="EliminarEmpleadoAsync" disabled="@_eliminando">
+            @if (_eliminando)
+            {
+                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+            }
+            Eliminar
+        </button>
+    </Footer>
+</Modal>
+
+<!-- Modal: confirmar eliminación de foto -->
+<Modal Title="Eliminar foto" @bind-IsVisible="_mostrarModalEliminarFoto" Size="sm">
+    <ChildContent>
+        <p class="mb-0">¿Eliminar la foto de perfil de <strong>@_empleadoDetalle?.Nombre</strong>?</p>
+    </ChildContent>
+    <Footer>
+        <button class="btn btn-outline-secondary"
+                @onclick='() => _mostrarModalEliminarFoto = false'>Cancelar</button>
+        <button class="btn btn-danger" @onclick="EliminarFotoAsync" disabled="@_eliminandoFoto">
+            @if (_eliminandoFoto)
+            {
+                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+            }
+            Eliminar
+        </button>
+    </Footer>
+</Modal>
 
 @code {
-    private ListaPaginadaOfEmpleadoResponse? resultado;
-    private string? error;
-    private int pagina = 1;
-    private int porPagina = 10;
+    [SupplyParameterFromQuery(Name = "id")]
+    public int? Id { get; set; }
 
-    protected override async Task OnInitializedAsync()
-        => await CargarAsync();
+    // ── Lista ──────────────────────────────────────────────────
+    private ListaPaginadaOfEmpleadoResponse? _paginado;
+    private List<EmpleadoResponse> _empleados = [];
+    private List<SeccionResponse> _secciones = [];
+    private bool _cargandoLista = true;
+    private string _busqueda = string.Empty;
+    private int _pagina = 1;
+    private const int PorPagina = 15;
 
-    private async Task CargarAsync()
+    // ── Estado de selección ────────────────────────────────────
+    private bool _esNuevo;
+    private int? _idActual;
+
+    // ── Detalle ────────────────────────────────────────────────
+    private EmpleadoResponse? _empleadoDetalle;
+    private bool _cargandoDetalle;
+    private string? _errorDetalle;
+
+    // ── Formulario edición: datos personales ───────────────────
+    private string _editNombre = string.Empty;
+    private string _editApellidos = string.Empty;
+    private string _editDni = string.Empty;
+    private bool _guardandoDatos;
+    private string? _errorDatos;
+
+    // ── Formulario edición: organización ───────────────────────
+    private int _editSeccionId;
+    private int? _editEncargadoId;
+    private bool _editActivo;
+    private bool _guardandoOrg;
+    private string? _errorOrg;
+
+    // ── Foto ───────────────────────────────────────────────────
+    private bool _subiendoFoto;
+    private bool _eliminandoFoto;
+    private bool _mostrarModalEliminarFoto;
+    private string? _errorFoto;
+    private int _fotoVersion; // cache-buster para <img>
+
+    // ── Eliminar empleado ──────────────────────────────────────
+    private bool _mostrarModalEliminar;
+    private bool _eliminando;
+    private string? _errorEliminar;
+
+    // ── Formulario creación ────────────────────────────────────
+    private string _nuevoNombre = string.Empty;
+    private string _nuevoApellidos = string.Empty;
+    private string _nuevoDni = string.Empty;
+    private int _nuevoSeccionId;
+    private int? _nuevoEncargadoId;
+    private bool _creando;
+    private string? _errorCrear;
+
+    // ── Computed ───────────────────────────────────────────────
+    private string InputFotoId => $"input-foto-{Id}";
+
+    private List<EmpleadoResponse> _empleadosFiltrados =>
+        string.IsNullOrWhiteSpace(_busqueda)
+            ? _empleados
+            : _empleados.Where(e =>
+                TextHelper.ContieneBusqueda($"{e.Nombre} {e.Apellidos}", _busqueda) ||
+                TextHelper.ContieneBusqueda(e.Dni, _busqueda)).ToList();
+
+    private string PaginacionTexto
     {
-        error = null;
-        resultado = null;
+        get
+        {
+            if (_paginado is null) return string.Empty;
+            var desde = (_pagina - 1) * PorPagina + 1;
+            var hasta = Math.Min(_pagina * PorPagina, _paginado.TotalRegistros);
+            return $"{desde}–{hasta} de {_paginado.TotalRegistros}";
+        }
+    }
+
+    // ── Ciclo de vida ──────────────────────────────────────────
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(CargarListaAsync(), CargarSeccionesAsync());
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id == _idActual) return;
+
+        _idActual = Id;
+
+        if (Id.HasValue)
+        {
+            _esNuevo = false;
+            await CargarDetalleAsync(Id.Value);
+        }
+        else
+        {
+            LimpiarDetalle();
+        }
+    }
+
+    // ── Carga de datos ─────────────────────────────────────────
+    private async Task CargarListaAsync()
+    {
+        _cargandoLista = true;
         try
         {
-            resultado = await EmpleadosClient.EmpleadosGETAsync(pagina, porPagina);
+            _paginado = await EmpleadosClient.EmpleadosGETAsync(_pagina, PorPagina);
+            _empleados = _paginado.Items.ToList();
         }
-        catch (ApiException ex)
+        catch { /* lista queda vacía */ }
+        finally
         {
-            error = $"Error {ex.StatusCode}: no se pudo cargar la lista de empleados.";
+            _cargandoLista = false;
         }
+    }
+
+    private async Task CargarSeccionesAsync()
+    {
+        try
+        {
+            var resultado = await SeccionesClient.SeccionesAsync();
+            _secciones = resultado.ToList();
+        }
+        catch { /* sin secciones disponibles */ }
+    }
+
+    private async Task CargarDetalleAsync(int id)
+    {
+        _cargandoDetalle = true;
+        _errorDetalle = null;
+        LimpiarFeedbackDetalle();
+
+        try
+        {
+            _empleadoDetalle = await EmpleadosClient.EmpleadosGET2Async(id);
+
+            _editNombre = _empleadoDetalle.Nombre;
+            _editApellidos = _empleadoDetalle.Apellidos;
+            _editDni = _empleadoDetalle.Dni;
+            _editSeccionId = _empleadoDetalle.SeccionId;
+            _editEncargadoId = _empleadoDetalle.EncargadoId;
+            _editActivo = _empleadoDetalle.Activo;
+        }
+        catch (ApiException ex) when (ex.StatusCode == 404)
+        {
+            _errorDetalle = "Empleado no encontrado.";
+        }
+        catch
+        {
+            _errorDetalle = "No se pudo cargar la información del empleado.";
+        }
+        finally
+        {
+            _cargandoDetalle = false;
+        }
+    }
+
+    private async Task<IEnumerable<EmpleadoResponse>> BuscarEmpleadosAsync(string query, CancellationToken ct)
+    {
+        var resultado = await EmpleadosClient.EmpleadosGETAsync(1, 100, ct);
+        return resultado.Items.Where(e =>
+            TextHelper.ContieneBusqueda($"{e.Nombre} {e.Apellidos}", query) ||
+            TextHelper.ContieneBusqueda(e.Dni, query));
+    }
+
+    // ── Helpers ────────────────────────────────────────────────
+    private void LimpiarDetalle()
+    {
+        _empleadoDetalle = null;
+        LimpiarFeedbackDetalle();
+    }
+
+    private void LimpiarFeedbackDetalle()
+    {
+        _errorDatos = null;
+        _errorOrg = null;
+        _errorFoto = null;
+        _errorEliminar = null;
+    }
+
+    private void NuevoEmpleado()
+    {
+        _esNuevo = true;
+        _nuevoNombre = string.Empty;
+        _nuevoApellidos = string.Empty;
+        _nuevoDni = string.Empty;
+        _nuevoSeccionId = _secciones.FirstOrDefault()?.Id ?? 0;
+        _nuevoEncargadoId = null;
+        _errorCrear = null;
+        Nav.NavigateTo("/empleados");
+    }
+
+    private void SeleccionarEmpleado(int id)
+    {
+        _esNuevo = false;
+        Nav.NavigateTo($"/empleados?id={id}");
+    }
+
+    private void VolverALista()
+    {
+        _esNuevo = false;
+        Nav.NavigateTo("/empleados");
     }
 
     private async Task PaginaAnterior()
     {
-        pagina--;
-        await CargarAsync();
+        if (_pagina <= 1) return;
+        _pagina--;
+        await CargarListaAsync();
     }
 
     private async Task PaginaSiguiente()
     {
-        pagina++;
-        await CargarAsync();
+        if (_paginado is null || _pagina >= _paginado.TotalPaginas) return;
+        _pagina++;
+        await CargarListaAsync();
+    }
+
+    // ── Acciones ───────────────────────────────────────────────
+    private async Task GuardarDatosAsync()
+    {
+        if (_empleadoDetalle is null || !Id.HasValue) return;
+
+        _errorDatos = null;
+        _guardandoDatos = true;
+        try
+        {
+            await EmpleadosClient.EmpleadosPUTAsync(Id.Value, new UpdateEmpleadoRequest
+            {
+                Nombre = _editNombre,
+                Apellidos = _editApellidos,
+                Dni = _editDni
+            });
+
+            Toast.Exito("Datos personales guardados.");
+            _empleadoDetalle = await EmpleadosClient.EmpleadosGET2Async(Id.Value);
+            ActualizarEnLista(_empleadoDetalle);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 409)
+        {
+            _errorDatos = "Ya existe un empleado con ese DNI.";
+        }
+        catch (ApiException ex) when (ex.StatusCode == 400)
+        {
+            _errorDatos = "Los datos no son válidos.";
+        }
+        catch
+        {
+            _errorDatos = "No se pudieron guardar los cambios.";
+        }
+        finally
+        {
+            _guardandoDatos = false;
+        }
+    }
+
+    private async Task GuardarOrgAsync()
+    {
+        if (_empleadoDetalle is null || !Id.HasValue) return;
+
+        _errorOrg = null;
+        _guardandoOrg = true;
+        try
+        {
+            await EmpleadosClient.EmpleadosPUTAsync(Id.Value, new UpdateEmpleadoRequest
+            {
+                SeccionId = _editSeccionId,
+                EncargadoId = _editEncargadoId,
+                Activo = _editActivo
+            });
+
+            Toast.Exito("Organización guardada.");
+            _empleadoDetalle = await EmpleadosClient.EmpleadosGET2Async(Id.Value);
+            ActualizarEnLista(_empleadoDetalle);
+        }
+        catch
+        {
+            _errorOrg = "No se pudieron guardar los cambios.";
+        }
+        finally
+        {
+            _guardandoOrg = false;
+        }
+    }
+
+    private async Task SubirFotoAsync(InputFileChangeEventArgs e)
+    {
+        if (!Id.HasValue) return;
+
+        _errorFoto = null;
+        _subiendoFoto = true;
+        try
+        {
+            var file = e.File;
+            using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+            await EmpleadosClient.ArchivosPUTAsync(Id.Value, "foto",
+                new FileParameter(stream, file.Name, file.ContentType));
+
+            _fotoVersion++;
+            Toast.Exito("Foto actualizada correctamente.");
+            _empleadoDetalle = await EmpleadosClient.EmpleadosGET2Async(Id.Value);
+            ActualizarEnLista(_empleadoDetalle);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 400)
+        {
+            _errorFoto = "Formato no permitido. Usa JPG, PNG o WEBP.";
+        }
+        catch (Exception ex) when (ex.Message.Contains("exceeds the maximum"))
+        {
+            _errorFoto = "El archivo supera el límite de 5 MB.";
+        }
+        catch
+        {
+            _errorFoto = "No se pudo subir la foto.";
+        }
+        finally
+        {
+            _subiendoFoto = false;
+        }
+    }
+
+    private async Task EliminarFotoAsync()
+    {
+        if (!Id.HasValue) return;
+
+        _eliminandoFoto = true;
+        try
+        {
+            await EmpleadosClient.ArchivosDELETEAsync(Id.Value, "foto");
+            _mostrarModalEliminarFoto = false;
+            _fotoVersion++;
+            Toast.Exito("Foto eliminada.");
+            _empleadoDetalle = await EmpleadosClient.EmpleadosGET2Async(Id.Value);
+            ActualizarEnLista(_empleadoDetalle);
+        }
+        catch
+        {
+            _errorFoto = "No se pudo eliminar la foto.";
+            _mostrarModalEliminarFoto = false;
+        }
+        finally
+        {
+            _eliminandoFoto = false;
+        }
+    }
+
+    private async Task EliminarEmpleadoAsync()
+    {
+        if (!Id.HasValue) return;
+
+        _errorEliminar = null;
+        _eliminando = true;
+        try
+        {
+            await EmpleadosClient.EmpleadosDELETEAsync(Id.Value);
+            _mostrarModalEliminar = false;
+            await CargarListaAsync();
+            Toast.Exito("Empleado eliminado correctamente.");
+            Nav.NavigateTo("/empleados");
+        }
+        catch
+        {
+            _errorEliminar = "No se pudo eliminar el empleado.";
+        }
+        finally
+        {
+            _eliminando = false;
+        }
+    }
+
+    private async Task CrearEmpleadoAsync()
+    {
+        _errorCrear = null;
+
+        if (string.IsNullOrWhiteSpace(_nuevoNombre))
+        {
+            _errorCrear = "El nombre es obligatorio."; return;
+        }
+        if (string.IsNullOrWhiteSpace(_nuevoApellidos))
+        {
+            _errorCrear = "Los apellidos son obligatorios."; return;
+        }
+        if (string.IsNullOrWhiteSpace(_nuevoDni))
+        {
+            _errorCrear = "El DNI es obligatorio."; return;
+        }
+        if (_nuevoSeccionId <= 0)
+        {
+            _errorCrear = "Selecciona una sección."; return;
+        }
+
+        _creando = true;
+        try
+        {
+            var creado = await EmpleadosClient.EmpleadosPOSTAsync(new CreateEmpleadoRequest
+            {
+                Nombre = _nuevoNombre,
+                Apellidos = _nuevoApellidos,
+                Dni = _nuevoDni,
+                SeccionId = _nuevoSeccionId,
+                EncargadoId = _nuevoEncargadoId
+            });
+
+            await CargarListaAsync();
+            Toast.Exito("Empleado creado correctamente.");
+            Nav.NavigateTo($"/empleados?id={creado.Id}");
+        }
+        catch (ApiException ex) when (ex.StatusCode == 409)
+        {
+            _errorCrear = "Ya existe un empleado con ese DNI.";
+        }
+        catch (ApiException ex) when (ex.StatusCode == 400)
+        {
+            _errorCrear = "Los datos no son válidos.";
+        }
+        catch
+        {
+            _errorCrear = "No se pudo crear el empleado.";
+        }
+        finally
+        {
+            _creando = false;
+        }
+    }
+
+    private void ActualizarEnLista(EmpleadoResponse empleado)
+    {
+        var idx = _empleados.FindIndex(e => e.Id == empleado.Id);
+        if (idx >= 0) _empleados[idx] = empleado;
     }
 }

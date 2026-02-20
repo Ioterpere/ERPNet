@@ -45,10 +45,12 @@ public class EmpleadosController(
         => CreatedFromResult(await empleadoService.CreateAsync(request));
 
     [HttpPut("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateEmpleadoRequest request)
         => FromResult(await empleadoService.UpdateAsync(id, request));
 
     [HttpDelete("{id}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Delete(int id)
         => FromResult(await empleadoService.DeleteAsync(id));
 
