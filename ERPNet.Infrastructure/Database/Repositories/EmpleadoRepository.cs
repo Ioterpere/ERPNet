@@ -29,7 +29,7 @@ public class EmpleadoRepository(ERPNetDbContext context) : Repository<Empleado>(
     {
         var query = alcance switch
         {
-            Alcance.Propio => Context.Empleados.Where(e => e.Id == empleadoId),
+            Alcance.Propio => Context.Empleados.Where(e => e.EncargadoId == empleadoId),
             Alcance.Seccion => Context.Empleados.Where(e => e.SeccionId == seccionId),
             _ => Context.Empleados.AsQueryable()
         };
