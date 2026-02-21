@@ -1,9 +1,10 @@
 @using ERPNet.Web.Blazor.Client.Components.Common
 @inherits LayoutComponentBase
+@inject IJSRuntime JS
 
 
 <div class="page">
-    <div class="sidebar offcanvas-md offcanvas-start" tabindex="-1" id="sidebar">
+    <div class="sidebar @(_sidebarCollapsed ? "sidebar-collapsed" : "") offcanvas-md offcanvas-start" tabindex="-1" id="sidebar">
         <NavMenu />
     </div>
 
@@ -11,6 +12,11 @@
         <div class="top-row px-4">
             <button class="btn btn-link text-white p-0 d-md-none" type="button" data-bs-toggle="offcanvas"
                     data-bs-target="#sidebar">
+                <i class="bi bi-list fs-4"></i>
+            </button>
+
+            <button class="btn btn-link text-white p-0 d-none d-md-flex align-items-center me-auto"
+                    @onclick="ToggleSidebar">
                 <i class="bi bi-list fs-4"></i>
             </button>
 
@@ -58,11 +64,45 @@
     private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
 
     private string? _email;
+    private bool _sidebarCollapsed;
+    private bool _cleanupPending;
 
     protected override async Task OnInitializedAsync()
     {
         var state = await AuthStateTask;
         _email = state.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var val = await JS.InvokeAsync<string?>("localStorage.getItem", "sidebar-collapsed");
+                _sidebarCollapsed = val == "true";
+            }
+            catch { /* localStorage no disponible (modo privado, storage desactivado) */ }
+
+            _cleanupPending = true;
+            StateHasChanged();
+        }
+        else if (_cleanupPending)
+        {
+            _cleanupPending = false;
+            // El atributo pre-render ya no es necesario: Blazor tiene el estado correcto
+            await JS.InvokeVoidAsync("sidebar.removeSidebarInit");
+        }
+    }
+
+    private async Task ToggleSidebar()
+    {
+        _sidebarCollapsed = !_sidebarCollapsed;
+        try
+        {
+            await JS.InvokeVoidAsync("localStorage.setItem", "sidebar-collapsed", _sidebarCollapsed ? "true" : "false");
+        }
+        catch { /* localStorage no disponible */ }
     }
 }
 

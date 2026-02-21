@@ -3,6 +3,15 @@ html, body {
     margin: 0;
 }
 
+/* Aplicado por el script inline antes del primer paint para evitar flash.
+   Solo en escritorio: en móvil el sidebar es offcanvas y usa transform, no width. */
+@media (min-width: 768px) {
+    html[data-sidebar-collapsed="true"] .sidebar {
+        width: 0 !important;
+        overflow: hidden !important;
+    }
+}
+
 h1:focus, h2:focus, h3:focus {
     outline: none;
 }

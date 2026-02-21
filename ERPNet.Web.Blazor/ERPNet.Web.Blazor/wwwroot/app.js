@@ -1,3 +1,9 @@
+window.sidebar = {
+    removeSidebarInit: function () {
+        document.documentElement.removeAttribute('data-sidebar-collapsed');
+    }
+};
+
 window.itemSelector = {
     /** Registra preventDefault para ArrowDown/ArrowUp/Escape en el input. */
     registerKeys: function (el) {
