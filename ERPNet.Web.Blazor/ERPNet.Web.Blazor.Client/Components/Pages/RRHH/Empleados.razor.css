@@ -5,10 +5,16 @@
 
 /* ── Paneles (desktop) ───────────────────────────── */
 @media (min-width: 992px) {
-    .panel-lista,
-    .panel-detalle {
+    .panel-lista {
         height: calc(100vh - 3.5rem);
         overflow-y: auto;
+    }
+
+    .panel-detalle {
+        height: calc(100vh - 3.5rem);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
     }
 }
 
@@ -21,6 +27,24 @@
 .panel-detalle {
     display: flex;
     flex-direction: column;
+}
+
+/* ── Área scrollable del detalle ─────────────────── */
+.detail-content {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* ── Toolbar inferior del detalle ────────────────── */
+.detail-toolbar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .75rem 1.5rem;
+    background-color: var(--bs-body-bg);
+    border-top: 1px solid var(--bs-border-color);
 }
 
 /* ── Filas de empleado ───────────────────────────── */

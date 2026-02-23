@@ -1,12 +1,5 @@
 @page "/usuarios"
-@attribute [Authorize]
-@using ERPNet.ApiClient
-
-@inject IUsuariosClient UsuariosClient
-@inject IEmpleadosClient EmpleadosClient
-@inject IRolesClient RolesClient
-@inject NavigationManager Nav
-@inject ToastService Toast
+@inherits ErpPage
 
 <PageTitle>Usuarios — ERPNet</PageTitle>
 
@@ -18,7 +11,7 @@
         <!-- Header -->
         <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom flex-shrink-0">
             <h5 class="mb-0 fw-semibold">Usuarios</h5>
-            <button class="btn btn-sm btn-primary" @onclick="NuevoUsuario">
+            <button class="btn btn-sm btn-primary" @onclick="OnNuevo">
                 <i class="bi bi-plus-lg me-1"></i>Nuevo
             </button>
         </div>
@@ -41,12 +34,9 @@
             {
                 @for (var i = 0; i < 5; i++)
                 {
-                    <div class="user-row d-flex align-items-center gap-3 placeholder-glow">
-                        <span class="user-avatar placeholder flex-shrink-0"></span>
-                        <div class="flex-grow-1">
-                            <span class="placeholder col-7 d-block mb-1" style="height:13px"></span>
-                            <span class="placeholder col-5" style="height:11px"></span>
-                        </div>
+                    <div class="user-row placeholder-glow">
+                        <span class="placeholder col-7 d-block mb-1" style="height:13px"></span>
+                        <span class="placeholder col-5" style="height:11px"></span>
                     </div>
                 }
             }
@@ -62,24 +52,19 @@
                 @foreach (var u in _usuariosFiltrados)
                 {
                     <button type="button"
-                            class="user-row w-100 d-flex align-items-center gap-3 @(Id == u.Id ? "active" : "")"
-                            @onclick="() => SeleccionarUsuario(u.Id)">
-                        <div class="user-avatar flex-shrink-0">
-                            @(u.Email.Length > 0 ? char.ToUpper(u.Email[0]).ToString() : "?")
+                            class="user-row  w-100 text-start @(Id == u.Id ? "active" : "")"
+                            @onclick="() => SeleccionarItem(u.Id)">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="fw-semibold text-truncate small flex-grow-1">@u.Email</div>
+                            <span class="badge rounded-pill flex-shrink-0 @(u.Activo ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")"
+                                  style="font-size:.7rem">
+                                @(u.Activo ? "Activo" : "Inactivo")
+                            </span>
                         </div>
-                        <div class="flex-grow-1 text-start overflow-hidden">
-                            <div class="fw-semibold text-truncate small">@u.Email</div>
-                            <div class="d-flex align-items-center gap-2 mt-1">
-                                <span class="badge rounded-pill @(u.Activo ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")"
-                                      style="font-size:.7rem">
-                                    @(u.Activo ? "Activo" : "Inactivo")
-                                </span>
-                                @if (_empleadosPorId.TryGetValue(u.EmpleadoId, out var emp))
-                                {
-                                    <span class="text-muted text-truncate" style="font-size:.75rem">@emp.Nombre @emp.Apellidos</span>
-                                }
-                            </div>
-                        </div>
+                        @if (_empleadosPorId.TryGetValue(u.EmpleadoId, out var emp))
+                        {
+                            <div class="text-muted text-truncate" style="font-size:.75rem">@emp.Nombre @emp.Apellidos</div>
+                        }
                     </button>
                 }
             }
@@ -113,7 +98,9 @@
             <div class="panel-placeholder">
                 <i class="bi bi-person-circle text-muted" style="font-size:3rem"></i>
                 <p class="text-muted mt-3 mb-1">Selecciona un usuario de la lista</p>
-                <p class="text-muted small mb-0">o crea uno nuevo con el botón "+ Nuevo"</p>
+                <button class="btn btn-primary mt-2" @onclick="OnNuevo">
+                    <i class="bi bi-plus-lg me-1"></i>Nuevo usuario
+                </button>
             </div>
         }
         else if (_esNuevo)
@@ -144,7 +131,7 @@
                         <div class="row g-3">
                             <div class="col-sm-6">
                                 <label class="form-label">Email <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control" @bind="_nuevoEmail"
+                                <input type="email" class="form-control" @ref="_refNuevoEmail" @bind="_nuevoEmail"
                                        placeholder="usuario@empresa.com" autocomplete="off" />
                             </div>
                             <div class="col-sm-6">
@@ -170,8 +157,8 @@
 
                 <div class="card mb-4">
                     <div class="card-header d-flex align-items-center gap-2">
-                        <i class="bi bi-shield-person text-primary"></i>
-                        <span class="fw-semibold">Roles iniciales</span>
+                        <i class="bi bi-shield text-primary"></i>
+                        <span class="fw-semibold">Roles</span>
                     </div>
                     <div class="card-body py-3">
                         @if (_todosRoles.Count == 0)
@@ -222,6 +209,7 @@
         else if (Id.HasValue)
         {
             <!-- Formulario de edición -->
+            <div class="detail-content">
             <div class="px-4 py-4">
 
                 <!-- Header de detalle -->
@@ -233,7 +221,6 @@
                     @if (_cargandoDetalle)
                     {
                         <div class="d-flex align-items-center gap-3 placeholder-glow flex-grow-1">
-                            <span class="placeholder rounded-circle flex-shrink-0" style="width:48px;height:48px"></span>
                             <div>
                                 <span class="placeholder d-block mb-1" style="height:14px;width:160px"></span>
                                 <span class="placeholder" style="height:11px;width:120px"></span>
@@ -242,9 +229,6 @@
                     }
                     else if (_usuarioDetalle is not null)
                     {
-                        <div class="user-avatar-lg flex-shrink-0">
-                            @(_usuarioDetalle.Email.Length > 0 ? char.ToUpper(_usuarioDetalle.Email[0]).ToString() : "?")
-                        </div>
                         <div class="flex-grow-1 overflow-hidden">
                             <h5 class="mb-0 fw-semibold text-truncate">
                                 @if (_empleadoDetalle is not null)
@@ -274,150 +258,168 @@
 
                 @if (!_cargandoDetalle && _usuarioDetalle is not null)
                 {
-                    <!-- Card datos de cuenta -->
-                    <div class="card mb-3">
-                        <div class="card-header d-flex align-items-center gap-2">
-                            <i class="bi bi-person-circle text-primary"></i>
-                            <span class="fw-semibold">Datos de cuenta</span>
-                        </div>
-                        <div class="card-body py-4">
-                            @if (_errorDatos is not null)
-                            {
-                                <div class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2">
-                                    <i class="bi bi-x-circle-fill flex-shrink-0"></i>
-                                    <span>@_errorDatos</span>
-                                </div>
-                            }
-                            <div class="row g-3">
-                                <div class="col-sm-6">
-                                    <label class="form-label">Email</label>
-                                    <input type="email" class="form-control" @bind="_editEmail" />
-                                </div>
-                                <div class="col-sm-6">
-                                    <label class="form-label">Caducidad de contraseña</label>
-                                    <input type="date" class="form-control" @bind="_editCaducidadDate" />
-                                </div>
-                                <div class="col-12">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="activo-switch" @bind="_editActivo" />
-                                        <label class="form-check-label" for="activo-switch">Usuario activo</label>
+                    <!-- Nav tabs -->
+                    <ul class="nav nav-tabs mb-3">
+                        <li class="nav-item">
+                            <button class="nav-link @(_tabActiva == "datos" ? "active" : "")"
+                                    @onclick='() => _tabActiva = "datos"'>
+                                <i class="bi bi-person-circle me-1"></i>Datos
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link @(_tabActiva == "roles" ? "active" : "")"
+                                    @onclick='() => _tabActiva = "roles"'>
+                                <i class="bi bi-shield me-1"></i>Roles
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- ── Tab: Datos ─────────────────────────────── -->
+                    @if (_tabActiva == "datos")
+                    {
+                        <div class="card mb-3">
+                            <div class="card-header d-flex align-items-center gap-2">
+                                <i class="bi bi-person-circle text-primary"></i>
+                                <span class="fw-semibold">Datos de cuenta</span>
+                            </div>
+                            <div class="card-body py-4">
+                                <div class="row g-3">
+                                    <div class="col-sm-6">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" class="form-control" @bind="_editEmail" />
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <label class="form-label">Caducidad de contraseña</label>
+                                        <input type="date" class="form-control" @bind="_editCaducidadDate" />
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="activo-usuario-switch" @bind="_editActivo" />
+                                            <label class="form-check-label" for="activo-usuario-switch">Usuario activo</label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            <div class="mt-3">
-                                <button class="btn btn-primary btn-sm px-3" @onclick="GuardarDatosAsync"
-                                        disabled="@_guardandoDatos">
-                                    @if (_guardandoDatos)
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header d-flex align-items-center gap-2">
+                                <i class="bi bi-shield-lock-fill text-primary"></i>
+                                <span class="fw-semibold">Seguridad</span>
+                            </div>
+                            <div class="card-body py-4">
+                                @if (_errorReset is not null)
+                                {
+                                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2">
+                                        <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                                        <span>@_errorReset</span>
+                                    </div>
+                                }
+                                <p class="text-muted small mb-3">
+                                    Genera una contraseña temporal aleatoria y la envía por email al usuario. El usuario deberá cambiarla en su próximo acceso.
+                                </p>
+                                <button class="btn btn-warning btn-sm px-3" @onclick="ResetearContrasenaAsync"
+                                        disabled="@_reseteandoContrasena">
+                                    @if (_reseteandoContrasena)
                                     {
                                         <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
                                     }
-                                    Guardar cambios
+                                    else
+                                    {
+                                        <i class="bi bi-key me-2"></i>
+                                    }
+                                    Resetear contraseña
                                 </button>
                             </div>
                         </div>
-                    </div>
+                    }
 
-                    <!-- Card roles -->
-                    <div class="card mb-3">
-                        <div class="card-header d-flex align-items-center gap-2">
-                            <i class="bi bi-shield-person text-primary"></i>
-                            <span class="fw-semibold">Roles asignados</span>
-                        </div>
-                        <div class="card-body py-3">
-                            @if (_errorRoles is not null)
-                            {
-                                <div class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2">
-                                    <i class="bi bi-x-circle-fill flex-shrink-0"></i>
-                                    <span>@_errorRoles</span>
-                                </div>
-                            }
-                            @if (_todosRoles.Count == 0)
-                            {
-                                <p class="text-muted small mb-0">No hay roles disponibles.</p>
-                            }
-                            else
-                            {
-                                <div class="row g-2 mb-3">
-                                    @foreach (var rol in _todosRoles)
-                                    {
-                                        <div class="col-sm-6 col-lg-4">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="rol-@rol.Id"
-                                                       checked="@_rolesUsuario.Contains(rol.Id)"
-                                                       @onchange="e => ToggleRol(rol.Id, (bool)e.Value!)" />
-                                                <label class="form-check-label" for="rol-@rol.Id">
-                                                    <span class="fw-semibold small">@rol.Nombre</span>
-                                                    @if (!string.IsNullOrWhiteSpace(rol.Descripcion))
-                                                    {
-                                                        <span class="d-block text-muted" style="font-size:.75rem">@rol.Descripcion</span>
-                                                    }
-                                                </label>
-                                            </div>
-                                        </div>
-                                    }
-                                </div>
-                                <button class="btn btn-primary btn-sm px-3" @onclick="GuardarRolesAsync"
-                                        disabled="@_guardandoRoles">
-                                    @if (_guardandoRoles)
-                                    {
-                                        <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
-                                    }
-                                    Guardar roles
-                                </button>
-                            }
-                        </div>
-                    </div>
-
-                    <!-- Card seguridad / reset contraseña -->
-                    <div class="card mb-3">
-                        <div class="card-header d-flex align-items-center gap-2">
-                            <i class="bi bi-shield-lock-fill text-primary"></i>
-                            <span class="fw-semibold">Seguridad</span>
-                        </div>
-                        <div class="card-body py-4">
-                            @if (_errorReset is not null)
-                            {
-                                <div class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2">
-                                    <i class="bi bi-x-circle-fill flex-shrink-0"></i>
-                                    <span>@_errorReset</span>
-                                </div>
-                            }
-                            <p class="text-muted small mb-3">
-                                Genera una contraseña temporal aleatoria y la envía por email al usuario. El usuario deberá cambiarla en su próximo acceso.
-                            </p>
-                            <button class="btn btn-warning btn-sm px-3" @onclick="ResetearContrasenaAsync"
-                                    disabled="@_reseteandoContrasena">
-                                @if (_reseteandoContrasena)
+                    <!-- ── Tab: Roles ──────────────────────────────── -->
+                    else if (_tabActiva == "roles")
+                    {
+                        <div class="card mb-3">
+                            <div class="card-header d-flex align-items-center gap-2">
+                                <i class="bi bi-shield-person text-primary"></i>
+                                <span class="fw-semibold">Roles asignados</span>
+                            </div>
+                            <div class="card-body py-3">
+                                @if (_todosRoles.Count == 0)
                                 {
-                                    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                                    <p class="text-muted small mb-0">No hay roles disponibles.</p>
                                 }
                                 else
                                 {
-                                    <i class="bi bi-key me-2"></i>
+                                    <div class="row g-2">
+                                        @foreach (var rol in _todosRoles)
+                                        {
+                                            <div class="col-sm-6 col-lg-4">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="rol-@rol.Id"
+                                                           checked="@_rolesUsuario.Contains(rol.Id)"
+                                                           @onchange="e => ToggleRol(rol.Id, (bool)e.Value!)" />
+                                                    <label class="form-check-label" for="rol-@rol.Id">
+                                                        <span class="fw-semibold small">@rol.Nombre</span>
+                                                        @if (!string.IsNullOrWhiteSpace(rol.Descripcion))
+                                                        {
+                                                            <span class="d-block text-muted" style="font-size:.75rem">@rol.Descripcion</span>
+                                                        }
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
                                 }
-                                Resetear contraseña
-                            </button>
+                            </div>
                         </div>
-                    </div>
-
-                    <!-- Card eliminar usuario -->
-                    <div class="card mb-4 border-danger-subtle">
-                        <div class="card-header d-flex align-items-center gap-2">
-                            <i class="bi bi-person-x-fill text-danger"></i>
-                            <span class="fw-semibold text-danger">Eliminar usuario</span>
-                        </div>
-                        <div class="card-body py-4">
-                            <p class="text-muted small mb-3">
-                                Elimina permanentemente este usuario del sistema. Los datos asociados al empleado no se verán afectados.
-                            </p>
-                            <button class="btn btn-danger btn-sm px-3"
-                                    @onclick='() => _mostrarModalEliminar = true'>
-                                <i class="bi bi-trash3 me-2"></i>Eliminar usuario
-                            </button>
-                        </div>
-                    </div>
+                    }
                 }
             </div>
+            </div>
+
+            <!-- ── Toolbar de acciones ─────────────────────────── -->
+            @if (!_cargandoDetalle && _usuarioDetalle is not null)
+            {
+                <div class="detail-toolbar">
+                    <button class="btn btn-outline-danger me-auto"
+                            @onclick="AbrirModalEliminar">
+                        <i class="bi bi-trash3 me-1"></i>Eliminar usuario
+                    </button>
+                    @if (_tabActiva == "datos")
+                    {
+                        @if (_errorDatos is not null)
+                        {
+                            <span class="text-danger small me-auto d-flex align-items-center gap-1">
+                                <i class="bi bi-x-circle-fill"></i>@_errorDatos
+                            </span>
+                        }
+                        <button class="btn btn-primary" @onclick="GuardarDatosAsync"
+                                disabled="@_guardandoDatos">
+                            @if (_guardandoDatos)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                            }
+                            Guardar datos
+                        </button>
+                    }
+                    else if (_tabActiva == "roles")
+                    {
+                        @if (_errorRoles is not null)
+                        {
+                            <span class="text-danger small me-auto d-flex align-items-center gap-1">
+                                <i class="bi bi-x-circle-fill"></i>@_errorRoles
+                            </span>
+                        }
+                        <button class="btn btn-primary" @onclick="GuardarRolesAsync"
+                                disabled="@_guardandoRoles">
+                            @if (_guardandoRoles)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                            }
+                            Guardar roles
+                        </button>
+                    }
+                </div>
+            }
         }
     </div>
 </div>
@@ -438,7 +440,7 @@
     <Footer>
         <button class="btn btn-outline-secondary"
                 @onclick='() => _mostrarModalEliminar = false'>Cancelar</button>
-        <button class="btn btn-danger" @onclick="EliminarUsuarioAsync" disabled="@_eliminando">
+        <button class="btn btn-danger" @ref="_refBtnEliminar" @onclick="EliminarUsuarioAsync" disabled="@_eliminando">
             @if (_eliminando)
             {
                 <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
@@ -447,396 +449,3 @@
         </button>
     </Footer>
 </Modal>
-
-@code {
-    [SupplyParameterFromQuery(Name = "id")]
-    public int? Id { get; set; }
-
-    // ── Lista ──────────────────────────────────────────────────
-    private ListaPaginadaOfUsuarioResponse? _paginado;
-    private List<UsuarioResponse> _usuarios = [];
-    private Dictionary<int, EmpleadoResponse> _empleadosPorId = [];
-    private bool _cargandoLista = true;
-    private string _busqueda = string.Empty;
-    private int _pagina = 1;
-    private const int PorPagina = 15;
-
-    // ── Roles (todos) ──────────────────────────────────────────
-    private List<RolResponse> _todosRoles = [];
-
-    // ── Estado de selección ────────────────────────────────────
-    private bool _esNuevo;
-    private int? _idActual; // para detectar cambios de Id en OnParametersSetAsync
-
-    // ── Detalle ────────────────────────────────────────────────
-    private UsuarioResponse? _usuarioDetalle;
-    private EmpleadoResponse? _empleadoDetalle;
-    private HashSet<int> _rolesUsuario = [];
-    private bool _cargandoDetalle;
-    private string? _errorDetalle;
-
-    // ── Formulario edición ─────────────────────────────────────
-    private string _editEmail = string.Empty;
-    private bool _editActivo;
-    private DateTime? _editCaducidadDate;
-    private bool _guardandoDatos;
-    private string? _errorDatos;
-
-    // ── Roles edición ──────────────────────────────────────────
-    private bool _guardandoRoles;
-    private string? _errorRoles;
-
-    // ── Reset contraseña ───────────────────────────────────────
-    private bool _reseteandoContrasena;
-    private string? _errorReset;
-
-    // ── Eliminar usuario ───────────────────────────────────────
-    private bool _mostrarModalEliminar;
-    private bool _eliminando;
-    private string? _errorEliminar;
-
-    // ── Formulario creación ────────────────────────────────────
-    private string _nuevoEmail = string.Empty;
-    private int? _nuevoEmpleadoId;
-    private HashSet<int> _rolesNuevo = [];
-    private bool _creando;
-    private string? _errorCrear;
-
-    // ── Computed ───────────────────────────────────────────────
-    private List<UsuarioResponse> _usuariosFiltrados =>
-        string.IsNullOrWhiteSpace(_busqueda)
-            ? _usuarios
-            : _usuarios.Where(u => u.Email.Contains(_busqueda, StringComparison.OrdinalIgnoreCase)).ToList();
-
-    private string PaginacionTexto
-    {
-        get
-        {
-            if (_paginado is null) return string.Empty;
-            var desde = (_pagina - 1) * PorPagina + 1;
-            var hasta = Math.Min(_pagina * PorPagina, _paginado.TotalRegistros);
-            return $"{desde}–{hasta} de {_paginado.TotalRegistros}";
-        }
-    }
-
-    // ── Ciclo de vida ──────────────────────────────────────────
-    protected override async Task OnInitializedAsync()
-    {
-        await Task.WhenAll(CargarListaAsync(), CargarTodosRolesAsync());
-    }
-
-    protected override async Task OnParametersSetAsync()
-    {
-        if (Id == _idActual) return;
-
-        _idActual = Id;
-
-        if (Id.HasValue)
-        {
-            _esNuevo = false;
-            await CargarDetalleAsync(Id.Value);
-        }
-        else
-        {
-            LimpiarDetalle();
-        }
-    }
-
-    // ── Carga de datos ─────────────────────────────────────────
-    private async Task CargarListaAsync()
-    {
-        _cargandoLista = true;
-        try
-        {
-            _paginado = await UsuariosClient.UsuariosGETAsync(_pagina, PorPagina);
-            _usuarios = _paginado.Items.ToList();
-
-            var ids = _usuarios.Select(u => u.EmpleadoId).Distinct().ToList();
-            var empleados = await Task.WhenAll(ids.Select(async id =>
-            {
-                try { return await EmpleadosClient.EmpleadosGET2Async(id); }
-                catch { return null; }
-            }));
-            _empleadosPorId = empleados.OfType<EmpleadoResponse>().ToDictionary(e => e.Id);
-        }
-        catch { /* lista queda vacía */ }
-        finally
-        {
-            _cargandoLista = false;
-        }
-    }
-
-    private async Task<IEnumerable<EmpleadoResponse>> BuscarEmpleadosAsync(string query, CancellationToken ct)
-    {
-        var resultado = await EmpleadosClient.EmpleadosGETAsync(1, 100, ct);
-        return resultado.Items.Where(e =>
-            TextHelper.ContieneBusqueda($"{e.Nombre} {e.Apellidos}", query) ||
-            TextHelper.ContieneBusqueda(e.Dni, query));
-    }
-
-    private async Task CargarTodosRolesAsync()
-    {
-        try
-        {
-            var resultado = await RolesClient.RolesGETAsync(1, 200);
-            _todosRoles = resultado.Items.ToList();
-        }
-        catch { /* sin roles disponibles */ }
-    }
-
-    private async Task CargarDetalleAsync(int id)
-    {
-        _cargandoDetalle = true;
-        _errorDetalle = null;
-        LimpiarFeedbackDetalle();
-
-        try
-        {
-            var usuarioTask = UsuariosClient.UsuariosGET2Async(id);
-            var rolesTask = UsuariosClient.RolesAll2Async(id);
-            await Task.WhenAll(usuarioTask, rolesTask);
-
-            _usuarioDetalle = await usuarioTask;
-            _rolesUsuario = (await rolesTask).ToHashSet();
-
-            _empleadoDetalle = await EmpleadosClient.EmpleadosGET2Async(_usuarioDetalle.EmpleadoId);
-
-            // Poblar formulario
-            _editEmail = _usuarioDetalle.Email;
-            _editActivo = _usuarioDetalle.Activo;
-            _editCaducidadDate = _usuarioDetalle.CaducidadContrasena?.LocalDateTime;
-        }
-        catch (ApiException ex) when (ex.StatusCode == 404)
-        {
-            _errorDetalle = "Usuario no encontrado.";
-        }
-        catch
-        {
-            _errorDetalle = "No se pudo cargar la información del usuario.";
-        }
-        finally
-        {
-            _cargandoDetalle = false;
-        }
-    }
-
-    // ── Helpers ────────────────────────────────────────────────
-    private void LimpiarDetalle()
-    {
-        _usuarioDetalle = null;
-        _empleadoDetalle = null;
-        _rolesUsuario.Clear();
-        LimpiarFeedbackDetalle();
-    }
-
-    private void LimpiarFeedbackDetalle()
-    {
-        _errorDatos = null;
-        _errorRoles = null;
-        _errorReset = null;
-    }
-
-    private void NuevoUsuario()
-    {
-        _esNuevo = true;
-        _nuevoEmail = string.Empty;
-        _nuevoEmpleadoId = null;
-        _rolesNuevo.Clear();
-        _errorCrear = null;
-        Nav.NavigateTo("/usuarios");
-    }
-
-    private void SeleccionarUsuario(int id)
-    {
-        _esNuevo = false;
-        Nav.NavigateTo($"/usuarios?id={id}");
-    }
-
-    private void VolverALista()
-    {
-        _esNuevo = false;
-        Nav.NavigateTo("/usuarios");
-    }
-
-    private async Task PaginaAnterior()
-    {
-        if (_pagina <= 1) return;
-        _pagina--;
-        await CargarListaAsync();
-    }
-
-    private async Task PaginaSiguiente()
-    {
-        if (_paginado is null || _pagina >= _paginado.TotalPaginas) return;
-        _pagina++;
-        await CargarListaAsync();
-    }
-
-    private void ToggleRol(int rolId, bool valor)
-    {
-        if (valor) _rolesUsuario.Add(rolId);
-        else _rolesUsuario.Remove(rolId);
-    }
-
-    private void ToggleRolNuevo(int rolId, bool valor)
-    {
-        if (valor) _rolesNuevo.Add(rolId);
-        else _rolesNuevo.Remove(rolId);
-    }
-
-    // ── Acciones ───────────────────────────────────────────────
-    private async Task GuardarDatosAsync()
-    {
-        if (_usuarioDetalle is null || !Id.HasValue) return;
-
-        _errorDatos = null;
-        _guardandoDatos = true;
-        try
-        {
-            await UsuariosClient.UsuariosPUTAsync(Id.Value, new UpdateUsuarioRequest
-            {
-                Email = _editEmail,
-                Activo = _editActivo,
-                CaducidadContrasena = _editCaducidadDate?.ToUniversalTime()
-            });
-            
-            Toast.Exito("Datos guardados correctamente.");
-            _usuarioDetalle = await UsuariosClient.UsuariosGET2Async(Id.Value);
-            var idx = _usuarios.FindIndex(u => u.Id == Id.Value);
-            if (idx >= 0) _usuarios[idx] = _usuarioDetalle;
-        }
-        catch (ApiException ex) when (ex.StatusCode == 400)
-        {
-            _errorDatos = "El email ya está en uso o los datos no son válidos.";
-        }
-        catch
-        {
-            _errorDatos = "No se pudieron guardar los cambios.";
-        }
-        finally
-        {
-            _guardandoDatos = false;
-        }
-    }
-
-    private async Task GuardarRolesAsync()
-    {
-        if (!Id.HasValue) return;
-
-        _errorRoles = null;
-        _guardandoRoles = true;
-        try
-        {
-            await UsuariosClient.Roles2Async(Id.Value, new AsignarRolesRequest
-            {
-                RolIds = _rolesUsuario.ToList()
-            });
-            Toast.Exito("Roles actualizados correctamente.");
-        }
-        catch
-        {
-            _errorRoles = "No se pudieron actualizar los roles.";
-        }
-        finally
-        {
-            _guardandoRoles = false;
-        }
-    }
-
-    private async Task ResetearContrasenaAsync()
-    {
-        if (!Id.HasValue) return;
-
-        _errorReset = null;
-        _reseteandoContrasena = true;
-        try
-        {
-            await UsuariosClient.ResetearContrasenaAsync(Id.Value);
-            Toast.Exito("Contraseña reseteada. Se ha enviado la contraseña temporal por email.");
-        }
-        catch
-        {
-            _errorReset = "No se pudo resetear la contraseña.";
-        }
-        finally
-        {
-            _reseteandoContrasena = false;
-        }
-    }
-
-    private async Task EliminarUsuarioAsync()
-    {
-        if (!Id.HasValue) return;
-
-        _errorEliminar = null;
-        _eliminando = true;
-        try
-        {
-            await UsuariosClient.UsuariosDELETEAsync(Id.Value);
-            _mostrarModalEliminar = false;
-            await CargarListaAsync();
-            Toast.Exito("Usuario eliminado correctamente.");
-            Nav.NavigateTo("/usuarios");
-        }
-        catch
-        {
-            _errorEliminar = "No se pudo eliminar el usuario.";
-        }
-        finally
-        {
-            _eliminando = false;
-        }
-    }
-
-    private async Task CrearUsuarioAsync()
-    {
-        _errorCrear = null;
-
-        if (string.IsNullOrWhiteSpace(_nuevoEmail))
-        {
-            _errorCrear = "El email es obligatorio."; return;
-        }
-        if (!_nuevoEmpleadoId.HasValue || _nuevoEmpleadoId <= 0)
-        {
-            _errorCrear = "Selecciona un empleado de la lista."; return;
-        }
-
-        _creando = true;
-        try
-        {
-            var creado = await UsuariosClient.UsuariosPOSTAsync(new CreateUsuarioRequest
-            {
-                Email = _nuevoEmail,
-                EmpleadoId = _nuevoEmpleadoId.Value
-            });
-
-            if (_rolesNuevo.Count > 0)
-            {
-                await UsuariosClient.Roles2Async(creado.Id, new AsignarRolesRequest
-                {
-                    RolIds = _rolesNuevo.ToList()
-                });
-            }
-
-            await CargarListaAsync();
-            Toast.Exito("Usuario creado correctamente.");
-            Nav.NavigateTo($"/usuarios?id={creado.Id}");
-        }
-        catch (ApiException ex) when (ex.StatusCode == 400)
-        {
-            _errorCrear = "El email ya está en uso o los datos no son válidos.";
-        }
-        catch (ApiException ex) when (ex.StatusCode == 404)
-        {
-            _errorCrear = "No existe un empleado con ese ID.";
-        }
-        catch
-        {
-            _errorCrear = "No se pudo crear el usuario.";
-        }
-        finally
-        {
-            _creando = false;
-        }
-    }
-}

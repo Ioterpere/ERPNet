@@ -1,11 +1,5 @@
 @page "/empleados"
-@attribute [Authorize]
-@using ERPNet.ApiClient
-
-@inject IEmpleadosClient EmpleadosClient
-@inject ISeccionesClient SeccionesClient
-@inject NavigationManager Nav
-@inject ToastService Toast
+@inherits ErpPage
 
 <PageTitle>Empleados — ERPNet</PageTitle>
 
@@ -36,7 +30,7 @@
                         </li>
                     </ul>
                 </div>
-                <button class="btn btn-sm btn-primary" @onclick="NuevoEmpleado">
+                <button class="btn btn-sm btn-primary" @onclick="OnNuevo">
                     <i class="bi bi-plus-lg me-1"></i>Nuevo
                 </button>
             </div>
@@ -82,7 +76,7 @@
                 {
                     <button type="button"
                             class="emp-row w-100 d-flex align-items-center gap-3 @(Id == e.Id ? "active" : "")"
-                            @onclick="() => SeleccionarEmpleado(e.Id)">
+                            @onclick="() => SeleccionarItem(e.Id)">
                         @if (e.FotoId != null)
                         {
                             <img src="/api/empleados/@e.Id/archivos/foto?thumbnail=true"
@@ -167,7 +161,7 @@
                         <div class="row g-3">
                             <div class="col-sm-6">
                                 <label class="form-label">Nombre <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" @bind="_nuevoNombre"
+                                <input type="text" class="form-control" @ref="_refNuevoNombre" @bind="_nuevoNombre"
                                        placeholder="Juan" autocomplete="off" />
                             </div>
                             <div class="col-sm-6">
@@ -235,6 +229,7 @@
         else if (Id.HasValue)
         {
             <!-- Formulario de edición -->
+            <div class="detail-content">
             <div class="px-4 py-4">
 
                 <!-- Header de detalle -->
@@ -294,13 +289,6 @@
                             <span class="fw-semibold">Datos personales</span>
                         </div>
                         <div class="card-body py-4">
-                            @if (_errorDatos is not null)
-                            {
-                                <div class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2">
-                                    <i class="bi bi-x-circle-fill flex-shrink-0"></i>
-                                    <span>@_errorDatos</span>
-                                </div>
-                            }
                             <div class="row g-3">
                                 <div class="col-sm-6">
                                     <label class="form-label">Nombre</label>
@@ -315,16 +303,6 @@
                                     <input type="text" class="form-control font-monospace" @bind="_editDni" />
                                 </div>
                             </div>
-                            <div class="mt-3">
-                                <button class="btn btn-primary btn-sm px-3" @onclick="GuardarDatosAsync"
-                                        disabled="@_guardandoDatos">
-                                    @if (_guardandoDatos)
-                                    {
-                                        <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
-                                    }
-                                    Guardar cambios
-                                </button>
-                            </div>
                         </div>
                     </div>
 
@@ -335,13 +313,6 @@
                             <span class="fw-semibold">Organización</span>
                         </div>
                         <div class="card-body py-4">
-                            @if (_errorOrg is not null)
-                            {
-                                <div class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2">
-                                    <i class="bi bi-x-circle-fill flex-shrink-0"></i>
-                                    <span>@_errorOrg</span>
-                                </div>
-                            }
                             <div class="row g-3">
                                 <div class="col-sm-6">
                                     <label class="form-label">Sección</label>
@@ -365,20 +336,10 @@
                                 </div>
                                 <div class="col-12">
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="activo-switch" @bind="_editActivo" />
-                                        <label class="form-check-label" for="activo-switch">Empleado activo</label>
+                                        <input class="form-check-input" type="checkbox" id="activo-empleado-switch" @bind="_editActivo" />
+                                        <label class="form-check-label" for="activo-empleado-switch">Empleado activo</label>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="mt-3">
-                                <button class="btn btn-primary btn-sm px-3" @onclick="GuardarOrgAsync"
-                                        disabled="@_guardandoOrg">
-                                    @if (_guardandoOrg)
-                                    {
-                                        <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
-                                    }
-                                    Guardar cambios
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -438,25 +399,34 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- Card eliminar empleado -->
-                    <div class="card mb-4 border-danger-subtle">
-                        <div class="card-header d-flex align-items-center gap-2">
-                            <i class="bi bi-person-x-fill text-danger"></i>
-                            <span class="fw-semibold text-danger">Eliminar empleado</span>
-                        </div>
-                        <div class="card-body py-4">
-                            <p class="text-muted small mb-3">
-                                Elimina permanentemente este empleado del sistema. Esta acción no se puede deshacer.
-                            </p>
-                            <button class="btn btn-danger btn-sm px-3"
-                                    @onclick='() => _mostrarModalEliminar = true'>
-                                <i class="bi bi-trash3 me-2"></i>Eliminar empleado
-                            </button>
-                        </div>
-                    </div>
                 }
             </div>
+            </div>
+
+            <!-- ── Toolbar de acciones ─────────────────────────── -->
+            @if (!_cargandoDetalle && _empleadoDetalle is not null)
+            {
+                <div class="detail-toolbar">
+                    <button class="btn btn-outline-danger me-auto"
+                            @onclick="AbrirModalEliminar">
+                        <i class="bi bi-trash3 me-1"></i>Eliminar empleado
+                    </button>
+                    @if (_errorGuardar is not null)
+                    {
+                        <span class="text-danger small me-auto d-flex align-items-center gap-1">
+                            <i class="bi bi-x-circle-fill"></i>@_errorGuardar
+                        </span>
+                    }
+                    <button class="btn btn-primary" @onclick="GuardarTodoAsync"
+                            disabled="@_guardando">
+                        @if (_guardando)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                        }
+                        Guardar cambios
+                    </button>
+                </div>
+            }
         }
     </div>
 </div>
@@ -480,7 +450,7 @@
     <Footer>
         <button class="btn btn-outline-secondary"
                 @onclick='() => _mostrarModalEliminar = false'>Cancelar</button>
-        <button class="btn btn-danger" @onclick="EliminarEmpleadoAsync" disabled="@_eliminando">
+        <button class="btn btn-danger" @ref="_refBtnEliminar" @onclick="EliminarEmpleadoAsync" disabled="@_eliminando">
             @if (_eliminando)
             {
                 <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
@@ -508,435 +478,3 @@
     </Footer>
 </Modal>
 
-@code {
-    [SupplyParameterFromQuery(Name = "id")]
-    public int? Id { get; set; }
-
-    // ── Lista ──────────────────────────────────────────────────
-    private ListaPaginadaOfEmpleadoResponse? _paginado;
-    private List<EmpleadoResponse> _empleados = [];
-    private List<SeccionResponse> _secciones = [];
-    private bool _cargandoLista = true;
-    private string _busqueda = string.Empty;
-    private int _pagina = 1;
-    private const int PorPagina = 15;
-
-    // ── Estado de selección ────────────────────────────────────
-    private bool _esNuevo;
-    private int? _idActual;
-
-    // ── Detalle ────────────────────────────────────────────────
-    private EmpleadoResponse? _empleadoDetalle;
-    private bool _cargandoDetalle;
-    private string? _errorDetalle;
-
-    // ── Formulario edición: datos personales ───────────────────
-    private string _editNombre = string.Empty;
-    private string _editApellidos = string.Empty;
-    private string _editDni = string.Empty;
-    private bool _guardandoDatos;
-    private string? _errorDatos;
-
-    // ── Formulario edición: organización ───────────────────────
-    private int _editSeccionId;
-    private int? _editEncargadoId;
-    private bool _editActivo;
-    private bool _guardandoOrg;
-    private string? _errorOrg;
-
-    // ── Foto ───────────────────────────────────────────────────
-    private bool _subiendoFoto;
-    private bool _eliminandoFoto;
-    private bool _mostrarModalEliminarFoto;
-    private string? _errorFoto;
-    private int _fotoVersion; // cache-buster para <img>
-
-    // ── Eliminar empleado ──────────────────────────────────────
-    private bool _mostrarModalEliminar;
-    private bool _eliminando;
-    private string? _errorEliminar;
-
-    // ── Formulario creación ────────────────────────────────────
-    private string _nuevoNombre = string.Empty;
-    private string _nuevoApellidos = string.Empty;
-    private string _nuevoDni = string.Empty;
-    private int _nuevoSeccionId;
-    private int? _nuevoEncargadoId;
-    private bool _creando;
-    private string? _errorCrear;
-
-    // ── Computed ───────────────────────────────────────────────
-    private string InputFotoId => $"input-foto-{Id}";
-
-    private List<EmpleadoResponse> _empleadosFiltrados =>
-        string.IsNullOrWhiteSpace(_busqueda)
-            ? _empleados
-            : _empleados.Where(e =>
-                TextHelper.ContieneBusqueda($"{e.Nombre} {e.Apellidos}", _busqueda) ||
-                TextHelper.ContieneBusqueda(e.Dni, _busqueda)).ToList();
-
-    private string PaginacionTexto
-    {
-        get
-        {
-            if (_paginado is null) return string.Empty;
-            var desde = (_pagina - 1) * PorPagina + 1;
-            var hasta = Math.Min(_pagina * PorPagina, _paginado.TotalRegistros);
-            return $"{desde}–{hasta} de {_paginado.TotalRegistros}";
-        }
-    }
-
-    // ── Ciclo de vida ──────────────────────────────────────────
-    protected override async Task OnInitializedAsync()
-    {
-        await Task.WhenAll(CargarListaAsync(), CargarSeccionesAsync());
-    }
-
-    protected override async Task OnParametersSetAsync()
-    {
-        if (Id == _idActual) return;
-
-        _idActual = Id;
-
-        if (Id.HasValue)
-        {
-            _esNuevo = false;
-            await CargarDetalleAsync(Id.Value);
-        }
-        else
-        {
-            LimpiarDetalle();
-        }
-    }
-
-    // ── Carga de datos ─────────────────────────────────────────
-    private async Task CargarListaAsync()
-    {
-        _cargandoLista = true;
-        try
-        {
-            _paginado = await EmpleadosClient.EmpleadosGETAsync(_pagina, PorPagina);
-            _empleados = _paginado.Items.ToList();
-        }
-        catch { /* lista queda vacía */ }
-        finally
-        {
-            _cargandoLista = false;
-        }
-    }
-
-    private async Task CargarSeccionesAsync()
-    {
-        try
-        {
-            var resultado = await SeccionesClient.SeccionesAsync();
-            _secciones = resultado.ToList();
-        }
-        catch { /* sin secciones disponibles */ }
-    }
-
-    private async Task CargarDetalleAsync(int id)
-    {
-        _cargandoDetalle = true;
-        _errorDetalle = null;
-        LimpiarFeedbackDetalle();
-
-        try
-        {
-            _empleadoDetalle = await EmpleadosClient.EmpleadosGET2Async(id);
-
-            _editNombre = _empleadoDetalle.Nombre;
-            _editApellidos = _empleadoDetalle.Apellidos;
-            _editDni = _empleadoDetalle.Dni;
-            _editSeccionId = _empleadoDetalle.SeccionId;
-            _editEncargadoId = _empleadoDetalle.EncargadoId;
-            _editActivo = _empleadoDetalle.Activo;
-        }
-        catch (ApiException ex) when (ex.StatusCode == 404)
-        {
-            _errorDetalle = "Empleado no encontrado.";
-        }
-        catch
-        {
-            _errorDetalle = "No se pudo cargar la información del empleado.";
-        }
-        finally
-        {
-            _cargandoDetalle = false;
-        }
-    }
-
-    private async Task<IEnumerable<EmpleadoResponse>> BuscarEmpleadosAsync(string query, CancellationToken ct)
-    {
-        var resultado = await EmpleadosClient.EmpleadosGETAsync(1, 100, ct);
-        return resultado.Items.Where(e =>
-            TextHelper.ContieneBusqueda($"{e.Nombre} {e.Apellidos}", query) ||
-            TextHelper.ContieneBusqueda(e.Dni, query));
-    }
-
-    // ── Helpers ────────────────────────────────────────────────
-    private void LimpiarDetalle()
-    {
-        _empleadoDetalle = null;
-        LimpiarFeedbackDetalle();
-    }
-
-    private void LimpiarFeedbackDetalle()
-    {
-        _errorDatos = null;
-        _errorOrg = null;
-        _errorFoto = null;
-        _errorEliminar = null;
-    }
-
-    private void NuevoEmpleado()
-    {
-        _esNuevo = true;
-        _nuevoNombre = string.Empty;
-        _nuevoApellidos = string.Empty;
-        _nuevoDni = string.Empty;
-        _nuevoSeccionId = _secciones.FirstOrDefault()?.Id ?? 0;
-        _nuevoEncargadoId = null;
-        _errorCrear = null;
-        Nav.NavigateTo("/empleados");
-    }
-
-    private void SeleccionarEmpleado(int id)
-    {
-        _esNuevo = false;
-        Nav.NavigateTo($"/empleados?id={id}");
-    }
-
-    private void VolverALista()
-    {
-        _esNuevo = false;
-        Nav.NavigateTo("/empleados");
-    }
-
-    private async Task PaginaAnterior()
-    {
-        if (_pagina <= 1) return;
-        _pagina--;
-        await CargarListaAsync();
-    }
-
-    private async Task PaginaSiguiente()
-    {
-        if (_paginado is null || _pagina >= _paginado.TotalPaginas) return;
-        _pagina++;
-        await CargarListaAsync();
-    }
-
-    // ── Acciones ───────────────────────────────────────────────
-    private async Task GuardarDatosAsync()
-    {
-        if (_empleadoDetalle is null || !Id.HasValue) return;
-
-        _errorDatos = null;
-        _guardandoDatos = true;
-        try
-        {
-            await EmpleadosClient.EmpleadosPUTAsync(Id.Value, new UpdateEmpleadoRequest
-            {
-                Nombre = _editNombre,
-                Apellidos = _editApellidos,
-                Dni = _editDni
-            });
-
-            Toast.Exito("Datos personales guardados.");
-            _empleadoDetalle = await EmpleadosClient.EmpleadosGET2Async(Id.Value);
-            ActualizarEnLista(_empleadoDetalle);
-        }
-        catch (ApiException ex) when (ex.StatusCode == 409)
-        {
-            _errorDatos = "Ya existe un empleado con ese DNI.";
-        }
-        catch (ApiException ex) when (ex.StatusCode == 400)
-        {
-            _errorDatos = "Los datos no son válidos.";
-        }
-        catch
-        {
-            _errorDatos = "No se pudieron guardar los cambios.";
-        }
-        finally
-        {
-            _guardandoDatos = false;
-        }
-    }
-
-    private async Task GuardarOrgAsync()
-    {
-        if (_empleadoDetalle is null || !Id.HasValue) return;
-
-        _errorOrg = null;
-        _guardandoOrg = true;
-        try
-        {
-            await EmpleadosClient.EmpleadosPUTAsync(Id.Value, new UpdateEmpleadoRequest
-            {
-                SeccionId = _editSeccionId,
-                EncargadoId = _editEncargadoId,
-                Activo = _editActivo
-            });
-
-            Toast.Exito("Organización guardada.");
-            _empleadoDetalle = await EmpleadosClient.EmpleadosGET2Async(Id.Value);
-            ActualizarEnLista(_empleadoDetalle);
-        }
-        catch
-        {
-            _errorOrg = "No se pudieron guardar los cambios.";
-        }
-        finally
-        {
-            _guardandoOrg = false;
-        }
-    }
-
-    private async Task SubirFotoAsync(InputFileChangeEventArgs e)
-    {
-        if (!Id.HasValue) return;
-
-        _errorFoto = null;
-        _subiendoFoto = true;
-        try
-        {
-            var file = e.File;
-            using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
-            await EmpleadosClient.ArchivosPUTAsync(Id.Value, "foto",
-                new FileParameter(stream, file.Name, file.ContentType));
-
-            _fotoVersion++;
-            Toast.Exito("Foto actualizada correctamente.");
-            _empleadoDetalle = await EmpleadosClient.EmpleadosGET2Async(Id.Value);
-            ActualizarEnLista(_empleadoDetalle);
-        }
-        catch (ApiException ex) when (ex.StatusCode == 400)
-        {
-            _errorFoto = "Formato no permitido. Usa JPG, PNG o WEBP.";
-        }
-        catch (Exception ex) when (ex.Message.Contains("exceeds the maximum"))
-        {
-            _errorFoto = "El archivo supera el límite de 5 MB.";
-        }
-        catch
-        {
-            _errorFoto = "No se pudo subir la foto.";
-        }
-        finally
-        {
-            _subiendoFoto = false;
-        }
-    }
-
-    private async Task EliminarFotoAsync()
-    {
-        if (!Id.HasValue) return;
-
-        _eliminandoFoto = true;
-        try
-        {
-            await EmpleadosClient.ArchivosDELETEAsync(Id.Value, "foto");
-            _mostrarModalEliminarFoto = false;
-            _fotoVersion++;
-            Toast.Exito("Foto eliminada.");
-            _empleadoDetalle = await EmpleadosClient.EmpleadosGET2Async(Id.Value);
-            ActualizarEnLista(_empleadoDetalle);
-        }
-        catch
-        {
-            _errorFoto = "No se pudo eliminar la foto.";
-            _mostrarModalEliminarFoto = false;
-        }
-        finally
-        {
-            _eliminandoFoto = false;
-        }
-    }
-
-    private async Task EliminarEmpleadoAsync()
-    {
-        if (!Id.HasValue) return;
-
-        _errorEliminar = null;
-        _eliminando = true;
-        try
-        {
-            await EmpleadosClient.EmpleadosDELETEAsync(Id.Value);
-            _mostrarModalEliminar = false;
-            await CargarListaAsync();
-            Toast.Exito("Empleado eliminado correctamente.");
-            Nav.NavigateTo("/empleados");
-        }
-        catch
-        {
-            _errorEliminar = "No se pudo eliminar el empleado.";
-        }
-        finally
-        {
-            _eliminando = false;
-        }
-    }
-
-    private async Task CrearEmpleadoAsync()
-    {
-        _errorCrear = null;
-
-        if (string.IsNullOrWhiteSpace(_nuevoNombre))
-        {
-            _errorCrear = "El nombre es obligatorio."; return;
-        }
-        if (string.IsNullOrWhiteSpace(_nuevoApellidos))
-        {
-            _errorCrear = "Los apellidos son obligatorios."; return;
-        }
-        if (string.IsNullOrWhiteSpace(_nuevoDni))
-        {
-            _errorCrear = "El DNI es obligatorio."; return;
-        }
-        if (_nuevoSeccionId <= 0)
-        {
-            _errorCrear = "Selecciona una sección."; return;
-        }
-
-        _creando = true;
-        try
-        {
-            var creado = await EmpleadosClient.EmpleadosPOSTAsync(new CreateEmpleadoRequest
-            {
-                Nombre = _nuevoNombre,
-                Apellidos = _nuevoApellidos,
-                Dni = _nuevoDni,
-                SeccionId = _nuevoSeccionId,
-                EncargadoId = _nuevoEncargadoId
-            });
-
-            await CargarListaAsync();
-            Toast.Exito("Empleado creado correctamente.");
-            Nav.NavigateTo($"/empleados?id={creado.Id}");
-        }
-        catch (ApiException ex) when (ex.StatusCode == 409)
-        {
-            _errorCrear = "Ya existe un empleado con ese DNI.";
-        }
-        catch (ApiException ex) when (ex.StatusCode == 400)
-        {
-            _errorCrear = "Los datos no son válidos.";
-        }
-        catch
-        {
-            _errorCrear = "No se pudo crear el empleado.";
-        }
-        finally
-        {
-            _creando = false;
-        }
-    }
-
-    private void ActualizarEnLista(EmpleadoResponse empleado)
-    {
-        var idx = _empleados.FindIndex(e => e.Id == empleado.Id);
-        if (idx >= 0) _empleados[idx] = empleado;
-    }
-}
