@@ -122,6 +122,13 @@
     [Parameter]
     public bool Disabled { get; set; }
 
+    /// <summary>
+    /// Item preseleccionado externamente (p. ej. desde una herramienta IA).
+    /// Se aplica al montar el componente; usa @key en el padre para forzar remount.
+    /// </summary>
+    [Parameter]
+    public TItem? PreselectedItem { get; set; }
+
     private readonly string _id = $"isd-{Guid.NewGuid():N}";
     private ElementReference _inputRef;
 
@@ -135,11 +142,28 @@
 
     private int _indiceActivo = -1;
     private bool _debeScrollar;
+    private bool _keysRegistered;
+
+    protected override void OnInitialized()
+    {
+        if (PreselectedItem is not null)
+            _itemSeleccionado = PreselectedItem;
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        // El input solo existe en el DOM cuando no hay item seleccionado.
+        // Registramos las teclas cada vez que el input aparece por primera vez,
+        // y reseteamos la bandera cuando desaparece para re-registrar si vuelve.
+        if (_itemSeleccionado is null && !_keysRegistered)
+        {
+            _keysRegistered = true;
             await JS.InvokeVoidAsync("itemSelector.registerKeys", _inputRef);
+        }
+        else if (_itemSeleccionado is not null)
+        {
+            _keysRegistered = false;
+        }
 
         if (_debeScrollar && _indiceActivo >= 0)
         {
