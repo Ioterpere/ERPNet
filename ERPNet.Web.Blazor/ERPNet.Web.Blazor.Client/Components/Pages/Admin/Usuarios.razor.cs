@@ -295,6 +295,13 @@ public partial class Usuarios
         {
             await UsuariosClient.ResetearContrasenaAsync(Id.Value);
             Toast.Exito("Contraseña reseteada. Se ha enviado la contraseña temporal por email.");
+
+            _usuarioDetalle = await UsuariosClient.UsuariosGET2Async(Id.Value);
+            _editActivo = _usuarioDetalle.Activo;
+            _editEmail = _usuarioDetalle.Email;
+            _editCaducidadDate = _usuarioDetalle.CaducidadContrasena?.LocalDateTime;
+            var idx = _usuarios.FindIndex(u => u.Id == Id.Value);
+            if (idx >= 0) _usuarios[idx] = _usuarioDetalle;
         }
         catch
         {
