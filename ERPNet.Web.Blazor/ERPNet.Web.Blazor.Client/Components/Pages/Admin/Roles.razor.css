@@ -83,6 +83,16 @@
     padding: 2rem;
 }
 
+/* ── Celdas de permiso clickables ───────────────── */
+.perm-cell {
+    cursor: pointer;
+    user-select: none;
+}
+
+.perm-cell:hover {
+    background-color: var(--bs-tertiary-bg);
+}
+
 /* ── Card header override ────────────────────────── */
 .card-header {
     background-color: transparent;

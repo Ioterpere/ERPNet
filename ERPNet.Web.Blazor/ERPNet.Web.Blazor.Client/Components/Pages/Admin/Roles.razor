@@ -344,17 +344,17 @@
                                                 {
                                                     <tr>
                                                         <td class="fw-semibold small">@permiso.Codigo</td>
-                                                        <td class="text-center">
+                                                        <td class="text-center perm-cell" @onclick="() => permiso.CanCreate = !permiso.CanCreate">
                                                             <input type="checkbox" class="form-check-input"
-                                                                   @bind="permiso.CanCreate" />
+                                                                   @bind="permiso.CanCreate" @onclick:stopPropagation="true" />
                                                         </td>
-                                                        <td class="text-center">
+                                                        <td class="text-center perm-cell" @onclick="() => permiso.CanEdit = !permiso.CanEdit">
                                                             <input type="checkbox" class="form-check-input"
-                                                                   @bind="permiso.CanEdit" />
+                                                                   @bind="permiso.CanEdit" @onclick:stopPropagation="true" />
                                                         </td>
-                                                        <td class="text-center">
+                                                        <td class="text-center perm-cell" @onclick="() => permiso.CanDelete = !permiso.CanDelete">
                                                             <input type="checkbox" class="form-check-input"
-                                                                   @bind="permiso.CanDelete" />
+                                                                   @bind="permiso.CanDelete" @onclick:stopPropagation="true" />
                                                         </td>
                                                         <td>
                                                             <select class="form-select form-select-sm"
