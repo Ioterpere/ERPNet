@@ -1,6 +1,7 @@
 using ERPNet.ApiClient;
 using ERPNet.Web.Blazor.Bff;
 using ERPNet.Web.Blazor.Client;
+using ERPNet.Web.Blazor.Client.Mcp;
 using ERPNet.Web.Blazor.Components;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
@@ -38,10 +39,20 @@ builder.Services.AddHttpClient("ErpNetApi", client =>
     client.BaseAddress = new Uri(builder.Configuration["ErpNetApi:BaseUrl"]!);
 });
 
+var valorDirecto = Environment.GetEnvironmentVariable("OpenAi__ApiKey");
+
+// Cliente HTTP para OpenAI — la API key se añade en AiChatEndpoints (nunca viaja al browser)
+builder.Services.AddHttpClient("OpenAi", client =>
+{
+    client.BaseAddress = new Uri("https://api.openai.com/");
+    client.Timeout = TimeSpan.FromSeconds(120);
+});
+
 builder.Services.AddHttpContextAccessor();
 
 // Servicios compartidos con el WASM client (deben registrarse en ambos contenedores DI)
 builder.Services.AddScoped<ToastService>();
+builder.Services.AddScoped<McpToolService>();
 
 // BffTokenService: gestiona tokens JWT en caché del servidor (get, refresh, invalidate)
 builder.Services.AddScoped<BffTokenService>();
@@ -95,5 +106,8 @@ app.MapControllers();
 // Proxy genérico BFF → API: captura cualquier /api/** del WASM (cookie auth),
 // añade Bearer token y reenvía a ERPNet.Api. Sin boilerplate por endpoint.
 app.MapBffProxy();
+
+// Chat IA: proxy autenticado hacia OpenAI (la API key vive solo en el servidor)
+app.MapAiChat();
 
 app.Run();

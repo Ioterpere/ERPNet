@@ -1,13 +1,16 @@
+using System.Text.Json;
 using ERPNet.ApiClient;
+using ERPNet.Web.Blazor.Client.Mcp;
 using Microsoft.AspNetCore.Components;
 
 namespace ERPNet.Web.Blazor.Client.Components.Pages.Admin;
 
-public partial class Usuarios
+public partial class Usuarios : IAsyncDisposable
 {
     [Inject] private IUsuariosClient UsuariosClient { get; set; } = default!;
     [Inject] private IEmpleadosClient EmpleadosClient { get; set; } = default!;
     [Inject] private IRolesClient RolesClient { get; set; } = default!;
+    [Inject] private McpToolService Mcp { get; set; } = default!;
 
     // ── Paginación ─────────────────────────────────────────────
     protected override int? TotalPaginas => _paginado?.TotalPaginas;
@@ -54,6 +57,8 @@ public partial class Usuarios
     private ElementReference _refNuevoEmail;
     private string _nuevoEmail = string.Empty;
     private int? _nuevoEmpleadoId;
+    private EmpleadoResponse? _empleadoPreseleccionado;
+    private int _selectorKeyNuevoEmpleado;
     private HashSet<int> _rolesNuevo = [];
     private bool _creando;
     private string? _errorCrear;
@@ -79,6 +84,7 @@ public partial class Usuarios
     protected override async Task OnInitializedAsync()
     {
         await Task.WhenAll(CargarListaAsync(), CargarTodosRolesAsync());
+        await RegisterMcpToolsAsync();
     }
 
     // ── Implementación de abstracts ────────────────────────────
@@ -151,6 +157,8 @@ public partial class Usuarios
         _esNuevo = true;
         _nuevoEmail = string.Empty;
         _nuevoEmpleadoId = null;
+        _empleadoPreseleccionado = null;
+        _selectorKeyNuevoEmpleado++;
         _rolesNuevo.Clear();
         _errorCrear = null;
         _enfocarNuevo = true;
@@ -388,4 +396,73 @@ public partial class Usuarios
             _creando = false;
         }
     }
+
+    // ── WebMCP tools ────────────────────────────────────────────
+
+    private async Task RegisterMcpToolsAsync()
+    {
+        await Mcp.RegisterToolAsync(
+            name: "buscar_empleados",
+            description: "Busca empleados por nombre, apellidos o DNI. Úsalo antes de crear_usuario para resolver el ID del empleado a partir del nombre.",
+            inputSchema: new
+            {
+                type = "object",
+                properties = new
+                {
+                    query = new { type = "string", description = "Nombre, apellidos o DNI del empleado" }
+                },
+                required = new[] { "query" }
+            },
+            readOnly: true,
+            handler: async input =>
+            {
+                var query = TextHelper.Normalizar(input.GetProperty("query").GetString() ?? string.Empty);
+                var resultado = await EmpleadosClient.EmpleadosGETAsync(1, 100);
+                var coincidencias = resultado.Items
+                    .Where(e =>
+                        TextHelper.ContieneBusqueda($"{e.Nombre} {e.Apellidos}", query) ||
+                        TextHelper.ContieneBusqueda(e.Dni, query))
+                    .Select(e => new { e.Id, e.Nombre, e.Apellidos, e.Dni });
+                return JsonSerializer.Serialize(coincidencias);
+            });
+
+        await Mcp.RegisterToolAsync(
+            name: "crear_usuario",
+            description: "Precarga el formulario de nuevo usuario con los datos indicados y lo deja listo para que el usuario confirme la creación pulsando el botón 'Crear usuario'.",
+            inputSchema: new
+            {
+                type = "object",
+                properties = new
+                {
+                    email      = new { type = "string",  description = "Email del nuevo usuario" },
+                    empleadoId = new { type = "integer", description = "ID del empleado que será vinculado al usuario" }
+                },
+                required = new[] { "email", "empleadoId" }
+            },
+            readOnly: true,
+            handler: async input =>
+            {
+                var email      = input.GetProperty("email").GetString() ?? string.Empty;
+                var empleadoId = input.GetProperty("empleadoId").GetInt32();
+
+                try { _empleadoPreseleccionado = await EmpleadosClient.EmpleadosGET2Async(empleadoId); }
+                catch { _empleadoPreseleccionado = null; }
+
+                _nuevoEmail             = email;
+                _nuevoEmpleadoId        = empleadoId;
+                _selectorKeyNuevoEmpleado++;
+                _rolesNuevo.Clear();
+                _errorCrear             = null;
+                _esNuevo                = true;
+                Nav.NavigateTo(Nav.GetUriWithQueryParameter("id", (int?)null));
+                await InvokeAsync(StateHasChanged);
+                Mcp.RequestCloseChat();
+                return JsonSerializer.Serialize(new
+                {
+                    mensaje = "Formulario precargado. El usuario debe pulsar 'Crear usuario' para confirmar."
+                });
+            });
+    }
+
+    public async ValueTask DisposeAsync() => await Mcp.UnregisterPageToolsAsync();
 }

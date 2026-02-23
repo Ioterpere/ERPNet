@@ -1,13 +1,16 @@
+using System.Text.Json;
 using ERPNet.ApiClient;
+using ERPNet.Web.Blazor.Client.Mcp;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 
 namespace ERPNet.Web.Blazor.Client.Components.Pages.RRHH;
 
-public partial class Empleados
+public partial class Empleados : IAsyncDisposable
 {
     [Inject] private IEmpleadosClient EmpleadosClient { get; set; } = default!;
     [Inject] private ISeccionesClient SeccionesClient { get; set; } = default!;
+    [Inject] private McpToolService Mcp { get; set; } = default!;
 
     // ── Paginación ─────────────────────────────────────────────
     protected override int? TotalPaginas => _paginado?.TotalPaginas;
@@ -51,6 +54,8 @@ public partial class Empleados
     private string _nuevoDni = string.Empty;
     private int _nuevoSeccionId;
     private int? _nuevoEncargadoId;
+    private EmpleadoResponse? _encargadoPreseleccionado;
+    private int _selectorKeyNuevoEncargado;
     private bool _creando;
     private string? _errorCrear;
 
@@ -79,6 +84,7 @@ public partial class Empleados
     protected override async Task OnInitializedAsync()
     {
         await Task.WhenAll(CargarListaAsync(), CargarSeccionesAsync());
+        await RegisterMcpToolsAsync();
     }
 
     // ── Implementación de abstracts ────────────────────────────
@@ -136,14 +142,16 @@ public partial class Empleados
 
     protected override Task OnNuevo()
     {
-        _esNuevo          = true;
-        _nuevoNombre      = string.Empty;
-        _nuevoApellidos   = string.Empty;
-        _nuevoDni         = string.Empty;
-        _nuevoSeccionId   = _secciones.FirstOrDefault()?.Id ?? 0;
-        _nuevoEncargadoId = null;
-        _errorCrear       = null;
-        _enfocarNuevo     = true;
+        _esNuevo                  = true;
+        _nuevoNombre              = string.Empty;
+        _nuevoApellidos           = string.Empty;
+        _nuevoDni                 = string.Empty;
+        _nuevoSeccionId           = _secciones.FirstOrDefault()?.Id ?? 0;
+        _nuevoEncargadoId         = null;
+        _encargadoPreseleccionado = null;
+        _selectorKeyNuevoEncargado++;
+        _errorCrear               = null;
+        _enfocarNuevo             = true;
         Nav.NavigateTo(Nav.GetUriWithQueryParameter("id", (int?)null));
         return Task.CompletedTask;
     }
@@ -383,4 +391,90 @@ public partial class Empleados
             _creando = false;
         }
     }
+
+    // ── WebMCP tools ────────────────────────────────────────────
+
+    private async Task RegisterMcpToolsAsync()
+    {
+        await Mcp.RegisterToolAsync(
+            name: "buscar_empleados",
+            description: "Busca empleados por nombre, apellidos o DNI. Úsalo para resolver el encargadoId antes de llamar a crear_empleado.",
+            inputSchema: new
+            {
+                type = "object",
+                properties = new
+                {
+                    query = new { type = "string", description = "Nombre, apellidos o DNI del empleado" }
+                },
+                required = new[] { "query" }
+            },
+            readOnly: true,
+            handler: async input =>
+            {
+                var query = TextHelper.Normalizar(input.GetProperty("query").GetString() ?? string.Empty);
+                var resultado = await EmpleadosClient.EmpleadosGETAsync(1, 100);
+                var coincidencias = resultado.Items
+                    .Where(e =>
+                        TextHelper.ContieneBusqueda($"{e.Nombre} {e.Apellidos}", query) ||
+                        TextHelper.ContieneBusqueda(e.Dni, query))
+                    .Select(e => new { e.Id, e.Nombre, e.Apellidos, e.Dni });
+                return JsonSerializer.Serialize(coincidencias);
+            });
+
+        await Mcp.RegisterToolAsync(
+            name: "buscar_secciones",
+            description: "Lista todas las secciones disponibles con su id y nombre. Úsalo para resolver el seccionId antes de llamar a crear_empleado.",
+            inputSchema: new { type = "object", properties = new { } },
+            readOnly: true,
+            handler: _ => Task.FromResult(JsonSerializer.Serialize(
+                _secciones.Select(s => new { s.Id, s.Nombre }))));
+
+        await Mcp.RegisterToolAsync(
+            name: "crear_empleado",
+            description: "Precarga el formulario de nuevo empleado con los datos indicados y lo deja listo para que el usuario confirme la creación pulsando el botón 'Crear empleado'.",
+            inputSchema: new
+            {
+                type = "object",
+                properties = new
+                {
+                    nombre      = new { type = "string",  description = "Nombre del empleado" },
+                    apellidos   = new { type = "string",  description = "Apellidos del empleado" },
+                    dni         = new { type = "string",  description = "DNI del empleado" },
+                    seccionId   = new { type = "integer", description = "ID de la sección (usar buscar_secciones para obtenerlo)" },
+                    encargadoId = new { type = "integer", description = "ID del empleado encargado (opcional)" }
+                },
+                required = new[] { "nombre", "apellidos", "dni", "seccionId" }
+            },
+            readOnly: true,
+            handler: async input =>
+            {
+                _nuevoNombre    = input.GetProperty("nombre").GetString() ?? string.Empty;
+                _nuevoApellidos = input.GetProperty("apellidos").GetString() ?? string.Empty;
+                _nuevoDni       = input.GetProperty("dni").GetString() ?? string.Empty;
+                _nuevoSeccionId = input.GetProperty("seccionId").GetInt32();
+
+                _nuevoEncargadoId         = null;
+                _encargadoPreseleccionado = null;
+                if (input.TryGetProperty("encargadoId", out var encProp) &&
+                    encProp.ValueKind == JsonValueKind.Number)
+                {
+                    _nuevoEncargadoId = encProp.GetInt32();
+                    try { _encargadoPreseleccionado = await EmpleadosClient.EmpleadosGET2Async(_nuevoEncargadoId.Value); }
+                    catch { _encargadoPreseleccionado = null; }
+                }
+
+                _selectorKeyNuevoEncargado++;
+                _errorCrear = null;
+                _esNuevo    = true;
+                Nav.NavigateTo(Nav.GetUriWithQueryParameter("id", (int?)null));
+                await InvokeAsync(StateHasChanged);
+                Mcp.RequestCloseChat();
+                return JsonSerializer.Serialize(new
+                {
+                    mensaje = "Formulario precargado. El usuario debe pulsar 'Crear empleado' para confirmar."
+                });
+            });
+    }
+
+    public async ValueTask DisposeAsync() => await Mcp.UnregisterPageToolsAsync();
 }

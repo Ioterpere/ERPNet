@@ -1,0 +1,312 @@
+@using System.Text
+@using System.Text.Json
+@using System.Text.Json.Nodes
+@using ERPNet.Web.Blazor.Client.Mcp
+
+@inject McpToolService Mcp
+@inject IHttpClientFactory HttpFactory
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div class="chat-panel">
+
+    <div class="chat-messages" id="chat-messages">
+        @if (_displayMessages.Count == 0)
+        {
+            <div class="chat-welcome">
+                <i class="bi bi-robot display-5 mb-3 opacity-25"></i>
+                <p class="fw-semibold mb-1">¿En qué puedo ayudarte?</p>
+                <p class="text-muted small mb-0">
+                    Puedo consultar y gestionar los datos de la página activa,
+                    crear registros y navegar a cualquier ficha.
+                </p>
+            </div>
+        }
+
+        @foreach (var msg in _displayMessages)
+        {
+            if (msg is MensajeUsuario u)
+            {
+                <div class="chat-bubble chat-bubble-user">@u.Texto</div>
+            }
+            else if (msg is MensajeAsistente a)
+            {
+                <div class="chat-bubble chat-bubble-ai">
+                    <i class="bi bi-robot me-2 opacity-50 flex-shrink-0 mt-1"></i>
+                    <span style="white-space: pre-wrap">@a.Texto</span>
+                </div>
+            }
+            else if (msg is MensajeHerramienta h)
+            {
+                <div class="chat-tool-badge @(h.Ejecutando ? "chat-tool-running" : "chat-tool-done")">
+                    <i class="bi @(h.Ejecutando ? "bi-gear-fill" : "bi-check-circle-fill") me-1"></i>
+                    <span>@NombreLegible(h.Nombre)</span>
+                    @if (h.Ejecutando)
+                    {
+                        <span class="spinner-border spinner-border-sm ms-1" style="width:.7rem;height:.7rem"></span>
+                    }
+                </div>
+            }
+        }
+
+        @if (_error is not null)
+        {
+            <div class="alert alert-danger mx-0 my-1 py-2 px-3 small" role="alert">
+                <i class="bi bi-exclamation-triangle me-1"></i>@_error
+            </div>
+        }
+    </div>
+
+    <div class="chat-input-area">
+        <textarea class="form-control chat-textarea"
+                  @ref="_textareaRef"
+                  @bind="_inputText"
+                  @bind:event="oninput"
+                  @onkeydown="OnKeyDown"
+                  placeholder="Escribe un mensaje…"
+                  rows="1"
+                  disabled="@_loading"></textarea>
+        <button class="btn btn-outline-secondary chat-mic-btn"
+                @onclick="ToggleMic"
+                disabled="@_loading"
+                title="Dictar mensaje">
+            <i class="bi @(_escuchando ? "bi-mic-fill text-danger" : "bi-mic")"></i>
+        </button>
+        <button class="btn btn-primary chat-send-btn"
+                @onclick="SendMessage"
+                disabled="@(_loading || string.IsNullOrWhiteSpace(_inputText))"
+                title="Enviar (Enter)">
+            @if (_loading)
+            {
+                <span class="spinner-border spinner-border-sm"></span>
+            }
+            else
+            {
+                <i class="bi bi-send-fill"></i>
+            }
+        </button>
+    </div>
+</div>
+
+@code {
+    // ── Modelo de mensajes UI ────────────────────────────────────────────
+    private abstract class Mensaje { }
+    private sealed class MensajeUsuario(string texto) : Mensaje { public string Texto => texto; }
+    private sealed class MensajeAsistente(string texto) : Mensaje { public string Texto => texto; }
+    private sealed class MensajeHerramienta : Mensaje
+    {
+        public required string Nombre { get; init; }
+        public bool Ejecutando { get; set; } = true;
+    }
+
+    // ── Estado ───────────────────────────────────────────────────────────
+    private readonly List<Mensaje> _displayMessages = [];
+    private readonly List<string> _apiMessages = [];  // JSON strings en formato OpenAI
+    private string _inputText = "";
+    private bool _loading;
+    private string? _error;
+    private bool _shouldScroll;
+    private bool _shouldFocusInput;
+    private ElementReference _textareaRef;
+    private bool _escuchando;
+    private DotNetObjectReference<ChatPanel>? _selfRef;
+
+    // ── Ciclo de vida ────────────────────────────────────────────────────
+    protected override void OnInitialized()
+        => _selfRef = DotNetObjectReference.Create(this);
+
+    public async ValueTask DisposeAsync()
+    {
+        try { await JS.InvokeVoidAsync("stt.stop"); } catch { }
+        _selfRef?.Dispose();
+    }
+
+    // ── Auto-scroll ──────────────────────────────────────────────────────
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_shouldScroll)
+        {
+            _shouldScroll = false;
+            try { await JS.InvokeVoidAsync("chat.scrollToBottom", "chat-messages"); } catch { }
+        }
+
+        if (_shouldFocusInput)
+        {
+            _shouldFocusInput = false;
+            try { await _textareaRef.FocusAsync(); } catch { }
+        }
+    }
+
+    // ── Envío ────────────────────────────────────────────────────────────
+    private async Task SendMessage()
+    {
+        var texto = _inputText.Trim();
+        if (string.IsNullOrEmpty(texto) || _loading) return;
+
+        _inputText = "";
+        _error = null;
+
+        _displayMessages.Add(new MensajeUsuario(texto));
+        _apiMessages.Add($"{{\"role\":\"user\",\"content\":{JsonSerializer.Serialize(texto)}}}");
+
+        await RunLoop();
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+            await SendMessage();
+    }
+
+    // ── Loop de tool-calling ─────────────────────────────────────────────
+    private async Task RunLoop()
+    {
+        _loading = true;
+        _shouldScroll = true;
+        var cerrarChat = false;
+        StateHasChanged();
+
+        try
+        {
+            while (true)
+            {
+                var json = await CallApi();
+                if (json is null)
+                {
+                    _error = "Error al conectar con el asistente. Comprueba la API key en configuración.";
+                    break;
+                }
+
+                var choice = json["choices"]?[0];
+                if (choice is null) { _error = "Respuesta inesperada."; break; }
+
+                var message = choice["message"]!;
+                var finishReason = choice["finish_reason"]?.GetValue<string>() ?? "stop";
+
+                _apiMessages.Add(message.ToJsonString());
+
+                if (finishReason is "stop" or "end_turn")
+                {
+                    var content = message["content"]?.GetValue<string>() ?? "";
+                    _displayMessages.Add(new MensajeAsistente(content));
+                    break;
+                }
+
+                if (finishReason == "tool_calls")
+                {
+                    var toolCalls = message["tool_calls"]?.AsArray();
+                    if (toolCalls is null) break;
+
+                    foreach (var tc in toolCalls)
+                    {
+                        var name    = tc!["function"]!["name"]!.GetValue<string>();
+                        var argsRaw = tc["function"]!["arguments"]!.GetValue<string>();
+                        var callId  = tc["id"]!.GetValue<string>();
+
+                        var badge = new MensajeHerramienta { Nombre = name };
+                        _displayMessages.Add(badge);
+                        _shouldScroll = true;
+                        StateHasChanged();
+                        await Task.Delay(1); // cede el hilo para que Blazor muestre el spinner
+
+                        // Ejecutar el tool via McpToolService (handler C# de la página activa)
+                        string resultado;
+                        using (var doc = JsonDocument.Parse(argsRaw.Length > 0 ? argsRaw : "{}"))
+                        {
+                            resultado = await Mcp.ExecuteTool(name, doc.RootElement);
+                        }
+
+                        badge.Ejecutando = false;
+                        _apiMessages.Add(
+                            $"{{\"role\":\"tool\",\"tool_call_id\":{JsonSerializer.Serialize(callId)},\"content\":{JsonSerializer.Serialize(resultado)}}}");
+
+                        if (Mcp.TakeCloseChat()) cerrarChat = true;
+                    }
+
+                    _shouldScroll = true;
+                    StateHasChanged();
+                    continue;
+                }
+
+                break; // finish_reason desconocido
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error inesperado: {ex.Message}";
+        }
+        finally
+        {
+            _loading = false;
+            _shouldScroll = true;
+            _shouldFocusInput = true;
+            StateHasChanged();
+        }
+
+        if (cerrarChat && _error is null)
+        {
+            await Task.Delay(900);
+            try { await JS.InvokeVoidAsync("chat.hide"); } catch { }
+        }
+    }
+
+    // ── Llamada al BFF ───────────────────────────────────────────────────
+    private async Task<JsonNode?> CallApi()
+    {
+        // Obtener los tools que la página activa tiene registrados ahora mismo
+        var toolsJson = Mcp.GetOpenAiToolsJson();
+
+        var messagesJson = "[" + string.Join(",", _apiMessages) + "]";
+
+        // Incluir tools solo si hay alguno registrado
+        var body = toolsJson == "[]"
+            ? $"{{\"messages\":{messagesJson}}}"
+            : $"{{\"messages\":{messagesJson},\"tools\":{toolsJson}}}";
+
+        var client = HttpFactory.CreateClient("BffInternal");
+        using var content = new StringContent(body, Encoding.UTF8, "application/json");
+        using var response = await client.PostAsync("/bff/ai/chat", content);
+
+        if (!response.IsSuccessStatusCode) return null;
+
+        return await JsonNode.ParseAsync(await response.Content.ReadAsStreamAsync());
+    }
+
+    // ── Speech to text ───────────────────────────────────────────────────
+    private async Task ToggleMic()
+    {
+        if (_escuchando)
+        {
+            await JS.InvokeVoidAsync("stt.stop");
+            _escuchando = false;
+            return;
+        }
+        var ok = await JS.InvokeAsync<bool>("stt.start", _selfRef);
+        if (ok) _escuchando = true;
+    }
+
+    [JSInvokable]
+    public void OnSpeechResult(string texto)
+    {
+        _inputText = texto;
+        _escuchando = false;
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void OnSpeechEnd()
+    {
+        _escuchando = false;
+        StateHasChanged();
+    }
+
+    // ── Helper ───────────────────────────────────────────────────────────
+    private static string NombreLegible(string name) => name switch
+    {
+        "buscar_empleados" => "Buscando empleado",
+        "buscar_secciones" => "Buscando secciones",
+        "crear_usuario"    => "Cubriendo datos usuario",
+        "crear_empleado"   => "Cubriendo datos empleado",
+        _                  => name.Replace('_', ' ')
+    };
+}

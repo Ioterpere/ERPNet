@@ -77,6 +77,12 @@ main .content {
     }
 }
 
+/* Offcanvas del chat: ancho fijo cómodo para una conversación */
+::deep .chat-offcanvas {
+    width: 400px;
+    max-width: 100vw;
+}
+
 #blazor-error-ui {
     color-scheme: light only;
     background: lightyellow;

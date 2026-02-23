@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "build:css": "sass Styles/bootstrap-custom.scss wwwroot/lib/bootstrap/dist/css/bootstrap.min.css --style compressed --no-source-map --load-path=node_modules",
-    "watch:css": "sass Styles/bootstrap-custom.scss wwwroot/lib/bootstrap/dist/css/bootstrap.min.css --style compressed --no-source-map --load-path=node_modules --watch"
+    "watch:css": "sass Styles/bootstrap-custom.scss wwwroot/lib/bootstrap/dist/css/bootstrap.min.css --style compressed --no-source-map --load-path=node_modules --watch",
+    "build:mcp": "node -e \"require('fs').copyFileSync('node_modules/@mcp-b/global/dist/index.iife.js', 'wwwroot/lib/mcp-b/mcp-b.iife.js')\""
   },
   "keywords": [],
   "author": "",
@@ -13,5 +14,8 @@
     "bootstrap": "^5.3.3",
     "bootswatch": "^5.3.3",
     "sass": "^1.97.3"
+  },
+  "dependencies": {
+    "@mcp-b/global": "^1.5.0"
   }
 }

@@ -1,6 +1,8 @@
 @using ERPNet.Web.Blazor.Client.Components.Common
+@using ERPNet.Web.Blazor.Client.Mcp
 @inherits LayoutComponentBase
 @inject IJSRuntime JS
+@inject McpToolService Mcp
 
 
 <div class="page">
@@ -23,6 +25,13 @@
             <a class="navbar-brand text-white m-0 d-md-none" href="">
                 <i class="bi bi-box-seam-fill me-2"></i>ERP<span>Net</span>
             </a>
+
+            <!-- Botón del asistente IA -->
+            <button class="btn btn-link text-white p-0 me-3" type="button"
+                    data-bs-toggle="offcanvas" data-bs-target="#chat-offcanvas"
+                    title="Asistente IA">
+                <i class="bi bi-robot fs-5"></i>
+            </button>
 
             <div class="dropdown">
                 <button class="btn btn-link text-white text-decoration-none dropdown-toggle p-0 d-flex align-items-center gap-2" type="button"
@@ -57,6 +66,20 @@
     </main>
 </div>
 
+<!-- Offcanvas del asistente IA (se superpone al contenido, la página activa sigue renderizada) -->
+<div class="offcanvas offcanvas-end chat-offcanvas" tabindex="-1" id="chat-offcanvas"
+     aria-labelledby="chat-offcanvas-label">
+    <div class="offcanvas-header">
+        <h6 class="offcanvas-title mb-0" id="chat-offcanvas-label">
+            <i class="bi bi-robot me-2"></i>Asistente IA
+        </h6>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+        <ChatPanel />
+    </div>
+</div>
+
 <ToastContainer />
 
 @code {
@@ -77,6 +100,9 @@
     {
         if (firstRender)
         {
+            await Mcp.InitializeAsync();
+            try { await JS.InvokeVoidAsync("chat.registerShortcut"); } catch { }
+
             try
             {
                 var val = await JS.InvokeAsync<string?>("localStorage.getItem", "sidebar-collapsed");

@@ -1,5 +1,7 @@
 @page "/usuarios"
 @inherits ErpPage
+@using ERPNet.Web.Blazor.Client.Mcp
+@inject McpToolService Mcp
 
 <PageTitle>Usuarios — ERPNet</PageTitle>
 
@@ -137,10 +139,12 @@
                             <div class="col-sm-6">
                                 <label class="form-label">Empleado <span class="text-danger">*</span></label>
                                 <ItemSelector TItem="EmpleadoResponse"
+                                                 @key="_selectorKeyNuevoEmpleado"
                                                  SearchAsync="BuscarEmpleadosAsync"
                                                  GetId="e => e.Id"
                                                  GetLabel='e => $"{e.Nombre} {e.Apellidos}"'
                                                  GetSubLabel="e => e.Dni"
+                                                 PreselectedItem="_empleadoPreseleccionado"
                                                  Value="_nuevoEmpleadoId"
                                                  ValueChanged="id => _nuevoEmpleadoId = id"
                                                  Placeholder="Buscar por nombre o DNI..." />
