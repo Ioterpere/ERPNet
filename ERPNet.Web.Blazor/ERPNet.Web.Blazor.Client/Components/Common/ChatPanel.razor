@@ -1,6 +1,7 @@
 @using System.Text
 @using System.Text.Json
 @using System.Text.Json.Nodes
+@using Microsoft.AspNetCore.Components.Forms
 @using ERPNet.Web.Blazor.Client.Mcp
 
 @inject McpToolService Mcp
@@ -27,7 +28,21 @@
         {
             if (msg is MensajeUsuario u)
             {
-                <div class="chat-bubble chat-bubble-user">@u.Texto</div>
+                <div class="chat-bubble chat-bubble-user">
+                    @if (u.ImagenDataUrls?.Count > 0)
+                    {
+                        <div class="chat-bubble-images">
+                            @foreach (var url in u.ImagenDataUrls)
+                            {
+                                <img src="@url" class="chat-bubble-img" alt="imagen adjunta" />
+                            }
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(u.Texto))
+                    {
+                        <span>@u.Texto</span>
+                    }
+                </div>
             }
             else if (msg is MensajeAsistente a)
             {
@@ -57,6 +72,22 @@
         }
     </div>
 
+    @if (_adjuntos.Count > 0)
+    {
+        <div class="chat-attachments">
+            @for (var i = 0; i < _adjuntos.Count; i++)
+            {
+                var idx = i;
+                <div class="chat-attachment-item">
+                    <img src="@_adjuntos[idx].DataUrl" class="chat-attachment-img" alt="@_adjuntos[idx].Nombre" />
+                    <button class="chat-attachment-remove" @onclick="() => EliminarAdjunto(idx)" title="Quitar">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            }
+        </div>
+    }
+
     <div class="chat-input-area">
         <textarea class="form-control chat-textarea"
                   @ref="_textareaRef"
@@ -66,6 +97,11 @@
                   placeholder="Escribe un mensaje…"
                   rows="1"
                   disabled="@_loading"></textarea>
+        <label class="btn btn-outline-secondary chat-attach-btn @(_loading ? "disabled" : "")"
+               title="Adjuntar imagen">
+            <i class="bi bi-paperclip"></i>
+            <InputFile OnChange="OnArchivoSeleccionado" accept="image/*" multiple style="display:none" disabled="@_loading" />
+        </label>
         <button class="btn btn-outline-secondary chat-mic-btn"
                 @onclick="ToggleMic"
                 disabled="@_loading"
@@ -74,7 +110,7 @@
         </button>
         <button class="btn btn-primary chat-send-btn"
                 @onclick="SendMessage"
-                disabled="@(_loading || string.IsNullOrWhiteSpace(_inputText))"
+                disabled="@(_loading || (string.IsNullOrWhiteSpace(_inputText) && _adjuntos.Count == 0))"
                 title="Enviar (Enter)">
             @if (_loading)
             {
@@ -91,7 +127,11 @@
 @code {
     // ── Modelo de mensajes UI ────────────────────────────────────────────
     private abstract class Mensaje { }
-    private sealed class MensajeUsuario(string texto) : Mensaje { public string Texto => texto; }
+    private sealed class MensajeUsuario(string texto, IReadOnlyList<string>? dataUrls = null) : Mensaje
+    {
+        public string Texto => texto;
+        public IReadOnlyList<string>? ImagenDataUrls => dataUrls;
+    }
     private sealed class MensajeAsistente(string texto) : Mensaje { public string Texto => texto; }
     private sealed class MensajeHerramienta : Mensaje
     {
@@ -99,9 +139,13 @@
         public bool Ejecutando { get; set; } = true;
     }
 
+    // ── Modelo de adjuntos ───────────────────────────────────────────────
+    private record Adjunto(string Nombre, string ContentType, string DataUrl);
+
     // ── Estado ───────────────────────────────────────────────────────────
     private readonly List<Mensaje> _displayMessages = [];
     private readonly List<string> _apiMessages = [];  // JSON strings en formato OpenAI
+    private readonly List<Adjunto> _adjuntos = [];
     private string _inputText = "";
     private bool _loading;
     private string? _error;
@@ -137,17 +181,81 @@
         }
     }
 
+    // ── Adjuntos ─────────────────────────────────────────────────────────
+    private async Task OnArchivoSeleccionado(InputFileChangeEventArgs e)
+    {
+        const long maxBytes = 4 * 1024 * 1024; // 4 MB
+        _error = null;
+
+        foreach (var file in e.GetMultipleFiles(4))
+        {
+            if (!file.ContentType.StartsWith("image/"))
+            {
+                _error = $"{file.Name}: solo se permiten imágenes (JPG, PNG, GIF, WebP).";
+                continue;
+            }
+            if (file.Size > maxBytes)
+            {
+                _error = $"{file.Name} supera el límite de 4 MB.";
+                continue;
+            }
+
+            using var stream = file.OpenReadStream(maxBytes);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var base64 = Convert.ToBase64String(ms.ToArray());
+            var dataUrl = $"data:{file.ContentType};base64,{base64}";
+            _adjuntos.Add(new Adjunto(file.Name, file.ContentType, dataUrl));
+        }
+
+        StateHasChanged();
+    }
+
+    private void EliminarAdjunto(int i)
+    {
+        if (i >= 0 && i < _adjuntos.Count)
+            _adjuntos.RemoveAt(i);
+    }
+
     // ── Envío ────────────────────────────────────────────────────────────
     private async Task SendMessage()
     {
         var texto = _inputText.Trim();
-        if (string.IsNullOrEmpty(texto) || _loading) return;
+        if ((string.IsNullOrEmpty(texto) && _adjuntos.Count == 0) || _loading) return;
 
         _inputText = "";
         _error = null;
 
-        _displayMessages.Add(new MensajeUsuario(texto));
-        _apiMessages.Add($"{{\"role\":\"user\",\"content\":{JsonSerializer.Serialize(texto)}}}");
+        // Capturar adjuntos actuales y limpiar la lista antes de renderizar
+        var dataUrls = _adjuntos.Select(a => a.DataUrl).ToList();
+        _displayMessages.Add(new MensajeUsuario(texto, dataUrls.Count > 0 ? dataUrls : null));
+
+        string apiMessage;
+        if (_adjuntos.Count == 0)
+        {
+            apiMessage = $"{{\"role\":\"user\",\"content\":{JsonSerializer.Serialize(texto)}}}";
+        }
+        else
+        {
+            var content = new JsonArray();
+            if (!string.IsNullOrEmpty(texto))
+                content.Add(new JsonObject { ["type"] = "text", ["text"] = texto });
+            foreach (var adj in _adjuntos)
+                content.Add(new JsonObject
+                {
+                    ["type"] = "image_url",
+                    ["image_url"] = new JsonObject { ["url"] = adj.DataUrl }
+                });
+
+            apiMessage = new JsonObject
+            {
+                ["role"] = "user",
+                ["content"] = content
+            }.ToJsonString();
+        }
+
+        _adjuntos.Clear();
+        _apiMessages.Add(apiMessage);
 
         await RunLoop();
     }
