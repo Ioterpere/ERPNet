@@ -1,3 +1,4 @@
+using ERPNet.Web.Blazor.Client.Mcp;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -15,6 +16,7 @@ public abstract class ErpPage : ComponentBase, IAsyncDisposable
     [Inject] protected IJSRuntime JS { get; set; } = default!;
     [Inject] protected NavigationManager Nav { get; set; } = default!;
     [Inject] protected ToastService Toast { get; set; } = default!;
+    [Inject] protected McpToolService Mcp { get; set; } = default!;
 
     [SupplyParameterFromQuery(Name = "id")]
     public int? Id { get; set; }
@@ -54,6 +56,9 @@ public abstract class ErpPage : ComponentBase, IAsyncDisposable
     protected abstract Task OnNuevo();
     protected abstract Task OnGuardar();
     protected abstract Task OnBorrar();
+
+    // ── MCP tools ──────────────────────────────────────────────
+    protected virtual Task RegisterMcpToolsAsync() => Task.CompletedTask;
 
     // ── Ciclo de vida ──────────────────────────────────────────
     private int? _idActual;
@@ -150,5 +155,6 @@ public abstract class ErpPage : ComponentBase, IAsyncDisposable
             await _jsModule.DisposeAsync();
         }
         _dotNetRef?.Dispose();
+        await Mcp.UnregisterPageToolsAsync();
     }
 }

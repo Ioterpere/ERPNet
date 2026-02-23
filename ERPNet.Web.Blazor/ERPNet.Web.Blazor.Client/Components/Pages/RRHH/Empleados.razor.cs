@@ -1,16 +1,14 @@
 using System.Text.Json;
 using ERPNet.ApiClient;
-using ERPNet.Web.Blazor.Client.Mcp;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 
 namespace ERPNet.Web.Blazor.Client.Components.Pages.RRHH;
 
-public partial class Empleados : IAsyncDisposable
+public partial class Empleados
 {
     [Inject] private IEmpleadosClient EmpleadosClient { get; set; } = default!;
     [Inject] private ISeccionesClient SeccionesClient { get; set; } = default!;
-    [Inject] private McpToolService Mcp { get; set; } = default!;
 
     // ── Paginación ─────────────────────────────────────────────
     protected override int? TotalPaginas => _paginado?.TotalPaginas;
@@ -394,7 +392,7 @@ public partial class Empleados : IAsyncDisposable
 
     // ── WebMCP tools ────────────────────────────────────────────
 
-    private async Task RegisterMcpToolsAsync()
+    protected override async Task RegisterMcpToolsAsync()
     {
         await Mcp.RegisterToolAsync(
             name: "buscar_empleados",
@@ -476,5 +474,4 @@ public partial class Empleados : IAsyncDisposable
             });
     }
 
-    public async ValueTask DisposeAsync() => await Mcp.UnregisterPageToolsAsync();
 }
