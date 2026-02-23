@@ -72,6 +72,12 @@ else
 app.UseStatusCodePagesWithReExecute("/not-found");
 app.UseHttpsRedirection();
 
+app.Use(async (ctx, next) =>
+{
+    ctx.Response.Headers["X-Robots-Tag"] = "noindex, nofollow";
+    await next();
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 
