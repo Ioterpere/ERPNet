@@ -33,7 +33,7 @@ public class EmpleadoRepositoryTests : RepositoryTestBase
         Context.ChangeTracker.Clear();
     }
 
-    private static Empleado CrearEmpleado(int id, string dni, int seccionId = 1, bool deleted = false) => new()
+    private static Empleado CrearEmpleado(int id, string dni, int seccionId = 1, bool deleted = false, int? encargadoId = null) => new()
     {
         Id = id,
         Nombre = $"Emp{id}",
@@ -41,7 +41,8 @@ public class EmpleadoRepositoryTests : RepositoryTestBase
         DNI = Dni.From(dni),
         Activo = true,
         SeccionId = seccionId,
-        IsDeleted = deleted
+        IsDeleted = deleted,
+        EncargadoId = encargadoId
     };
 
     /// <summary>Genera un DNI válido a partir de un número.</summary>
@@ -127,19 +128,20 @@ public class EmpleadoRepositoryTests : RepositoryTestBase
         Assert.All(items, e => Assert.Equal(1, e.SeccionId));
     }
 
-    [Fact(DisplayName = "GetPaginated: Propio filtra por empleadoId")]
+    [Fact(DisplayName = "GetPaginated: Propio filtra empleados cuyo encargadoId coincide")]
     public async Task GetPaginated_Propio_FiltraPorEmpleadoId()
     {
         Context.Empleados.AddRange(
-            CrearEmpleado(1, DniValido(1)),
-            CrearEmpleado(2, DniValido(2)));
+            CrearEmpleado(1, DniValido(1)),                          // jefe
+            CrearEmpleado(2, DniValido(2), encargadoId: 1),         // subordinado del jefe
+            CrearEmpleado(3, DniValido(3), encargadoId: 2));        // subordinado de otro
         await SaveAndClearAsync();
 
         var (items, total) = await _sut.GetPaginatedAsync(new PaginacionFilter(), Alcance.Propio, 1, 1);
 
         Assert.Equal(1, total);
         Assert.Single(items);
-        Assert.Equal(1, items[0].Id);
+        Assert.Equal(2, items[0].Id);
     }
 
     [Fact(DisplayName = "GetPaginated: respeta paginacion")]
