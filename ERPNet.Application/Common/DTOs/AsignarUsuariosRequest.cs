@@ -1,6 +1,6 @@
 namespace ERPNet.Application.Common.DTOs;
 
-public class AsignarUsuariosRequest
+public record AsignarUsuariosRequest
 {
-    public List<int> UsuarioIds { get; set; } = [];
+    public List<int> UsuarioIds { get; init; } = [];
 }

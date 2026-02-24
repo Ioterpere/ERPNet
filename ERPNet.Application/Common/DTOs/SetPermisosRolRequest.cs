@@ -1,15 +1,15 @@
 namespace ERPNet.Application.Common.DTOs;
 
-public class SetPermisosRolRequest
+public record SetPermisosRolRequest
 {
-    public List<PermisoRolRecursoDto> Permisos { get; set; } = [];
+    public List<PermisoRolRecursoDto> Permisos { get; init; } = [];
 }
 
-public class PermisoRolRecursoDto
+public record PermisoRolRecursoDto
 {
-    public int RecursoId { get; set; }
-    public bool CanCreate { get; set; }
-    public bool CanEdit { get; set; }
-    public bool CanDelete { get; set; }
-    public int Alcance { get; set; }
+    public int RecursoId { get; init; }
+    public bool CanCreate { get; init; }
+    public bool CanEdit { get; init; }
+    public bool CanDelete { get; init; }
+    public int Alcance { get; init; }
 }

@@ -1,7 +1,7 @@
 namespace ERPNet.Application.Common.DTOs;
 
-public class CreateUsuarioRequest
+public record CreateUsuarioRequest
 {
-    public string Email { get; set; } = null!;
-    public int EmpleadoId { get; set; }
+    public required string Email { get; init; }
+    public int EmpleadoId { get; init; }
 }

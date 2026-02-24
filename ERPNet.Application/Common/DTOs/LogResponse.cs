@@ -1,12 +1,12 @@
 namespace ERPNet.Application.Common.DTOs;
 
-public class LogResponse
+public record LogResponse
 {
-    public long Id { get; set; }
-    public int? UsuarioId { get; set; }
-    public string Accion { get; set; } = null!;
-    public string? Entidad { get; set; }
-    public string? EntidadId { get; set; }
-    public DateTime Fecha { get; set; }
-    public string? Detalle { get; set; }
+    public long Id { get; init; }
+    public int? UsuarioId { get; init; }
+    public required string Accion { get; init; }
+    public string? Entidad { get; init; }
+    public string? EntidadId { get; init; }
+    public DateTime Fecha { get; init; }
+    public string? Detalle { get; init; }
 }

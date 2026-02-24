@@ -1,8 +1,8 @@
 namespace ERPNet.Application.Common.DTOs;
 
-public class RolResponse
+public record RolResponse
 {
-    public int Id { get; set; }
-    public string Nombre { get; set; } = null!;
-    public string? Descripcion { get; set; }
+    public int Id { get; init; }
+    public required string Nombre { get; init; }
+    public string? Descripcion { get; init; }
 }

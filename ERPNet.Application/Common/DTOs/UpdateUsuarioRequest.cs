@@ -1,9 +1,9 @@
 namespace ERPNet.Application.Common.DTOs;
 
-public class UpdateUsuarioRequest
+public record UpdateUsuarioRequest
 {
-    public string? Email { get; set; }
-    public int? EmpleadoId { get; set; }
-    public bool? Activo { get; set; }
-    public DateTime? CaducidadContrasena { get; set; }
+    public string? Email { get; init; }
+    public int? EmpleadoId { get; init; }
+    public bool? Activo { get; init; }
+    public DateTime? CaducidadContrasena { get; init; }
 }

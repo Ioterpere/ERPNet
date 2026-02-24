@@ -1,7 +1,7 @@
 namespace ERPNet.Application.Common.DTOs;
 
-public class RecursoResponse
+public record RecursoResponse
 {
-    public int Id { get; set; }
-    public string Codigo { get; set; } = null!;
+    public int Id { get; init; }
+    public required string Codigo { get; init; }
 }

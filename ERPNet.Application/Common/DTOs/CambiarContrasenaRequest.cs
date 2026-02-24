@@ -1,8 +1,8 @@
 namespace ERPNet.Application.Common.DTOs;
 
-public class CambiarContrasenaRequest
+public record CambiarContrasenaRequest
 {
-    public string ContrasenaActual { get; set; } = null!;
-    public string NuevaContrasena { get; set; } = null!;
-    public string ConfirmarContrasena { get; set; } = null!;
+    public required string ContrasenaActual { get; init; }
+    public required string NuevaContrasena { get; init; }
+    public required string ConfirmarContrasena { get; init; }
 }

@@ -1,7 +1,7 @@
 namespace ERPNet.Application.Common.DTOs;
 
-public class UpdateRolRequest
+public record UpdateRolRequest
 {
-    public string? Nombre { get; set; }
-    public string? Descripcion { get; set; }
+    public string? Nombre { get; init; }
+    public string? Descripcion { get; init; }
 }

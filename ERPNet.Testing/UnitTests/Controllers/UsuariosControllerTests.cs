@@ -134,7 +134,7 @@ public class UsuariosControllerTests
     public async Task GetMe_DevuelveUsuarioResponse()
     {
         SetupUsuarioContext(id: 5, rolIds: [1, 2]);
-        var response = new UsuarioResponse { Id = 5, Email = "test@test.com", Roles = [new(), new()] };
+        var response = new UsuarioResponse { Id = 5, Email = "test@test.com", Roles = [new(){Nombre="Rol 1"}, new(){Nombre="Rol 2"}] };
         _service.GetMeAsync(Arg.Any<UsuarioContext>())
             .Returns(Result<UsuarioResponse>.Success(response));
 

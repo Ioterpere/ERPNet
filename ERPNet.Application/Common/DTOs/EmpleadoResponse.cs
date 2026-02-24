@@ -1,14 +1,14 @@
 namespace ERPNet.Application.Common.DTOs;
 
-public class EmpleadoResponse
+public record EmpleadoResponse
 {
-    public int Id { get; set; }
-    public string Nombre { get; set; } = null!;
-    public string Apellidos { get; set; } = null!;
-    public string Dni { get; set; } = null!;
-    public bool Activo { get; set; }
-    public int SeccionId { get; set; }
-    public string SeccionNombre { get; set; } = null!;
-    public int? EncargadoId { get; set; }
-    public Guid? FotoId { get; set; }
+    public int Id { get; init; }
+    public required string Nombre { get; init; }
+    public required string Apellidos { get; init; }
+    public required string Dni { get; init; }
+    public bool Activo { get; init; }
+    public int SeccionId { get; init; }
+    public string? SeccionNombre { get; init; }
+    public int? EncargadoId { get; init; }
+    public Guid? FotoId { get; init; }
 }

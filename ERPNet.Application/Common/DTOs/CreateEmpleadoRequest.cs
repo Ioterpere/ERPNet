@@ -1,10 +1,10 @@
 namespace ERPNet.Application.Common.DTOs;
 
-public class CreateEmpleadoRequest
+public record CreateEmpleadoRequest
 {
-    public string Nombre { get; set; } = null!;
-    public string Apellidos { get; set; } = null!;
-    public string Dni { get; set; } = null!;
-    public int SeccionId { get; set; }
-    public int? EncargadoId { get; set; }
+    public required string Nombre { get; init; }
+    public required string Apellidos { get; init; }
+    public required string Dni { get; init; }
+    public int SeccionId { get; init; }
+    public int? EncargadoId { get; init; }
 }

@@ -1,9 +1,9 @@
 namespace ERPNet.Application.Common.DTOs;
 
-public class CreateMaquinariaRequest
+public record CreateMaquinariaRequest
 {
-    public string Nombre { get; set; } = null!;
-    public string Codigo { get; set; } = null!;
-    public string? Ubicacion { get; set; }
-    public int? SeccionId { get; set; }
+    public required string Nombre { get; init; }
+    public required string Codigo { get; init; }
+    public string? Ubicacion { get; init; }
+    public int? SeccionId { get; init; }
 }

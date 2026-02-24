@@ -1,7 +1,7 @@
 namespace ERPNet.Application.Common.DTOs;
 
-public class CreateRolRequest
+public record CreateRolRequest
 {
-    public string Nombre { get; set; } = null!;
-    public string? Descripcion { get; set; }
+    public required string Nombre { get; init; }
+    public string? Descripcion { get; init; }
 }

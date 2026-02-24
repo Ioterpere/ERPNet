@@ -1,12 +1,12 @@
 namespace ERPNet.Application.Common.DTOs;
 
-public class MenuResponse
+public record MenuResponse
 {
-    public int Id { get; set; }
-    public string Nombre { get; set; } = null!;
-    public string? Path { get; set; }
-    public string? IconClass { get; set; }
-    public string? CustomClass { get; set; }
-    public int Orden { get; set; }
-    public List<MenuResponse> SubMenus { get; set; } = [];
+    public int Id { get; init; }
+    public required string Nombre { get; init; }
+    public string? Path { get; init; }
+    public string? IconClass { get; init; }
+    public string? CustomClass { get; init; }
+    public int Orden { get; init; }
+    public List<MenuResponse> SubMenus { get; init; } = [];
 }

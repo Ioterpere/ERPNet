@@ -1,15 +1,15 @@
 namespace ERPNet.Application.Common.DTOs;
 
-public class MaquinariaResponse
+public record MaquinariaResponse
 {
-    public int Id { get; set; }
-    public string Nombre { get; set; } = null!;
-    public string Codigo { get; set; } = null!;
-    public string? Ubicacion { get; set; }
-    public bool Activa { get; set; }
-    public int? SeccionId { get; set; }
-    public Guid? FichaTecnicaId { get; set; }
-    public Guid? ManualId { get; set; }
-    public Guid? CertificadoCeId { get; set; }
-    public Guid? FotoId { get; set; }
+    public int Id { get; init; }
+    public required string Nombre { get; init; }
+    public required string Codigo { get; init; }
+    public string? Ubicacion { get; init; }
+    public bool Activa { get; init; }
+    public int? SeccionId { get; init; }
+    public Guid? FichaTecnicaId { get; init; }
+    public Guid? ManualId { get; init; }
+    public Guid? CertificadoCeId { get; init; }
+    public Guid? FotoId { get; init; }
 }

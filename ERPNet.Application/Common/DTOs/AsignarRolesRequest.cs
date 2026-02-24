@@ -1,6 +1,6 @@
 namespace ERPNet.Application.Common.DTOs;
 
-public class AsignarRolesRequest
+public record AsignarRolesRequest
 {
-    public List<int> RolIds { get; set; } = [];
+    public List<int> RolIds { get; init; } = [];
 }

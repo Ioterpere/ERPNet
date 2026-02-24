@@ -1,7 +1,7 @@
 namespace ERPNet.Application.Common.DTOs;
 
-public class SeccionResponse
+public record SeccionResponse
 {
-    public int Id { get; set; }
-    public string Nombre { get; set; } = null!;
+    public int Id { get; init; }
+    public required string Nombre { get; init; }
 }

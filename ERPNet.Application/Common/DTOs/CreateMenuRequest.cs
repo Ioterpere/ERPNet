@@ -2,14 +2,14 @@ using ERPNet.Domain.Enums;
 
 namespace ERPNet.Application.Common.DTOs;
 
-public class CreateMenuRequest
+public record CreateMenuRequest
 {
-    public string Nombre { get; set; } = null!;
-    public string? Path { get; set; }
-    public string? IconClass { get; set; }
-    public string? CustomClass { get; set; }
-    public int Orden { get; set; }
-    public Plataforma Plataforma { get; set; }
-    public int? MenuPadreId { get; set; }
-    public List<int> RolIds { get; set; } = [];
+    public required string Nombre { get; init; }
+    public string? Path { get; init; }
+    public string? IconClass { get; init; }
+    public string? CustomClass { get; init; }
+    public int Orden { get; init; }
+    public Plataforma Plataforma { get; init; }
+    public int? MenuPadreId { get; init; }
+    public List<int> RolIds { get; init; } = [];
 }
