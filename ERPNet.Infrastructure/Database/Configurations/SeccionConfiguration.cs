@@ -10,6 +10,11 @@ public class SeccionConfiguration : IEntityTypeConfiguration<Seccion>
     {
         builder.Property(s => s.Nombre).HasMaxLength(200);
 
+        builder.HasOne(s => s.Empresa)
+            .WithMany()
+            .HasForeignKey(s => s.EmpresaId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne(s => s.Responsable)
             .WithMany()
             .HasForeignKey(s => s.ResponsableId)

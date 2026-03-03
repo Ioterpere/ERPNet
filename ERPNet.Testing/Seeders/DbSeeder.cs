@@ -40,13 +40,21 @@ public class DbSeeder(ITestOutputHelper output)
         PermisoRolRecurso Permiso(int rolId, RecursoCodigo recurso, bool c, bool e, bool d, Alcance alcance) =>
             new() { RolId = rolId, RecursoId = (int)recurso, CanCreate = c, CanEdit = e, CanDelete = d, Alcance = alcance };
 
+        // ── Empresas ───────────────────────────────────────────────────────
+
+        var empresa1 = new Empresa { Nombre = "ERP Demo SA", Cif = "A12345678", Activo = true, CreatedAt = DateTime.UtcNow };
+        var empresa2 = new Empresa { Nombre = "ERP Test SL", Cif = "B87654321", Activo = true, CreatedAt = DateTime.UtcNow };
+
+        context.Empresas.AddRange(empresa1, empresa2);
+        await context.SaveChangesAsync();
+
         // ── Secciones ──────────────────────────────────────────────────────
 
         var secciones = new[]
         {
             "Recursos Humanos", "Calidad", "Mantenimiento", "Produccion",
             "Contabilidad", "Comercial", "Carnicos", "Pescados", "Paletizado", "Informatica",
-        }.Select(n => new Seccion { Nombre = n, CreatedAt = DateTime.UtcNow }).ToArray();
+        }.Select(n => new Seccion { Nombre = n, EmpresaId = empresa1.Id, CreatedAt = DateTime.UtcNow }).ToArray();
 
         context.Secciones.AddRange(secciones);
         await context.SaveChangesAsync();
@@ -58,7 +66,7 @@ public class DbSeeder(ITestOutputHelper output)
         var empAdmin = new Empleado
         {
             Nombre = "Admin", Apellidos = "Sistema", DNI = Dni.From("00000000T"),
-            Activo = true, SeccionId = seccionInformatica.Id, CreatedAt = DateTime.UtcNow,
+            Activo = true, EmpresaId = empresa1.Id, SeccionId = seccionInformatica.Id, CreatedAt = DateTime.UtcNow,
         };
         context.Empleados.Add(empAdmin);
         await context.SaveChangesAsync();
@@ -80,6 +88,7 @@ public class DbSeeder(ITestOutputHelper output)
         var menuUsuarios = new Menu { Nombre = "Usuarios", Path = "/usuarios", Icon = "bi-person-lines-fill", Orden = 1, MenuPadreId = menuAdmin.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
         var menuRoles = new Menu { Nombre = "Roles", Path = "/roles", Icon = "bi-shield-fill", Orden = 2, MenuPadreId = menuAdmin.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
         var menuMenus = new Menu { Nombre = "Menu", Path = "/menus", Icon = "bi-list-ul", Orden = 3, MenuPadreId = menuAdmin.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuEmpresas = new Menu { Nombre = "Empresas", Path = "/empresas", Icon = "bi-building-fill", Orden = 4, MenuPadreId = menuAdmin.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
 
         // 2. Recursos Humanos
         var menuEmpleados = new Menu { Nombre = "Empleados", Path = "/empleados", Icon = "bi-person-badge-fill", Orden = 1, MenuPadreId = menuRRHH.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
@@ -102,7 +111,7 @@ public class DbSeeder(ITestOutputHelper output)
         var menuFacturas = new Menu { Nombre = "Facturas", Path = "/facturas", Icon = "bi-receipt", Orden = 2, MenuPadreId = menuComercial.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
 
         context.Menus.AddRange(
-            menuUsuarios, menuRoles, menuMenus,
+            menuUsuarios, menuRoles, menuMenus, menuEmpresas,
             menuEmpleados, menuJornadas, menuIncidencias, menuValidar,
             menuMaquinaria, menuOrdenesMant, menuTareasMant, menuReportarAveria,
             menuOrdenesFab, menuControlCalidad,
@@ -143,7 +152,7 @@ public class DbSeeder(ITestOutputHelper output)
         // Admin: todos los menus
         var todosMenus = new[]
         {
-            menuAdmin, menuUsuarios, menuRoles, menuMenus,
+            menuAdmin, menuUsuarios, menuRoles, menuMenus, menuEmpresas,
             menuRRHH, menuEmpleados, menuJornadas, menuIncidencias, menuValidar,
             menuMantenimiento, menuMaquinaria, menuOrdenesMant, menuTareasMant, menuReportarAveria,
             menuProduccion, menuOrdenesFab, menuControlCalidad,
@@ -269,7 +278,11 @@ public class DbSeeder(ITestOutputHelper output)
         context.Usuarios.Add(usuarioAdmin);
         await context.SaveChangesAsync();
 
-        context.RolesUsuarios.Add(new RolUsuario { UsuarioId = usuarioAdmin.Id, RolId = rolAdmin.Id });
+        // Admin tiene rol global (EmpresaId=null) y acceso a ambas empresas
+        context.RolesUsuarios.Add(new RolUsuario { UsuarioId = usuarioAdmin.Id, RolId = rolAdmin.Id, EmpresaId = null });
+        context.UsuarioEmpresas.AddRange(
+            new UsuarioEmpresa { UsuarioId = usuarioAdmin.Id, EmpresaId = empresa1.Id },
+            new UsuarioEmpresa { UsuarioId = usuarioAdmin.Id, EmpresaId = empresa2.Id });
         await context.SaveChangesAsync();
 
         // ── Datos masivos ──────────────────────────────────────
@@ -290,6 +303,7 @@ public class DbSeeder(ITestOutputHelper output)
             .RuleFor(e => e.Apellidos, f => f.Name.LastName())
             .RuleFor(e => e.DNI, _ => Dni.From(GenerarDni(10000001 + empIndex)))
             .RuleFor(e => e.Activo, f => f.Random.Bool(0.95f))
+            .RuleFor(e => e.EmpresaId, _ => empresa1.Id)
             .RuleFor(e => e.SeccionId, _ => seccionIds[empIndex % seccionIds.Length])
             .RuleFor(e => e.CreatedAt, DateTime.UtcNow)
             .FinishWith((_, _) => empIndex++);
@@ -308,6 +322,7 @@ public class DbSeeder(ITestOutputHelper output)
             .RuleFor(m => m.Codigo, _ => $"MAQ-{maqIndex + 1:D4}")
             .RuleFor(m => m.Ubicacion, f => $"Nave {f.Random.Number(1, 5)}, Zona {f.Random.Char('A', 'F')}")
             .RuleFor(m => m.Activa, f => f.Random.Bool(0.9f))
+            .RuleFor(m => m.EmpresaId, _ => empresa1.Id)
             .RuleFor(m => m.SeccionId, f => f.PickRandom(seccionIds))
             .RuleFor(m => m.CreatedAt, DateTime.UtcNow)
             .FinishWith((_, _) => maqIndex++);
@@ -341,8 +356,9 @@ public class DbSeeder(ITestOutputHelper output)
         context.Usuarios.AddRange(usuariosNuevos);
         await context.SaveChangesAsync();
 
-        // Asignacion de roles a los 25 usuarios
+        // Asignacion de roles a los 25 usuarios (todos en empresa1)
         var rolesUsuarios = new List<RolUsuario>();
+        var usuarioEmpresasNuevos = new List<UsuarioEmpresa>();
 
         // Indices en usuariosNuevos:
         //  0-1:  Responsable RRHH (2)
@@ -356,10 +372,14 @@ public class DbSeeder(ITestOutputHelper output)
 
         void AsignarRol(int idx, Rol rol, bool conReportarAverias = false)
         {
-            rolesUsuarios.Add(new RolUsuario { UsuarioId = usuariosNuevos[idx].Id, RolId = rol.Id });
+            rolesUsuarios.Add(new RolUsuario { UsuarioId = usuariosNuevos[idx].Id, RolId = rol.Id, EmpresaId = empresa1.Id });
             if (conReportarAverias)
-                rolesUsuarios.Add(new RolUsuario { UsuarioId = usuariosNuevos[idx].Id, RolId = rolReportarAverias.Id });
+                rolesUsuarios.Add(new RolUsuario { UsuarioId = usuariosNuevos[idx].Id, RolId = rolReportarAverias.Id, EmpresaId = empresa1.Id });
         }
+
+        // Todos los 25 usuarios pertenecen a empresa1
+        usuarioEmpresasNuevos.AddRange(usuariosNuevos.Select(u =>
+            new UsuarioEmpresa { UsuarioId = u.Id, EmpresaId = empresa1.Id }));
 
         // 0-1: Responsable RRHH
         AsignarRol(0, rolRRHH);
@@ -391,10 +411,12 @@ public class DbSeeder(ITestOutputHelper output)
             AsignarRol(i, rolReportarAverias);
 
         context.RolesUsuarios.AddRange(rolesUsuarios);
+        context.UsuarioEmpresas.AddRange(usuarioEmpresasNuevos);
         await context.SaveChangesAsync();
         output.WriteLine($"  {usuariosNuevos.Count} usuarios creados (password: Test123!).");
 
         output.WriteLine("Seed completado.");
-        output.WriteLine("  admin@erpnet.com / Admin123! (Administrador)");
+        output.WriteLine("  admin@erpnet.com / Admin123! (Administrador - acceso a ERP Demo SA y ERP Test SL)");
+        output.WriteLine("  Empresas creadas: ERP Demo SA (empresa1), ERP Test SL (empresa2)");
     }
 }

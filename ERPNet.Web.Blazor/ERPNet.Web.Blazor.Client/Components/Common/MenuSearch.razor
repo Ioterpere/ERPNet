@@ -1,0 +1,65 @@
+@inject IMenusClient MenusClient
+@inject NavigationManager Nav
+
+<div class="menu-search">
+<ItemSelector TItem="MenuItem"
+              SearchAsync="@BuscarAsync"
+              GetLabel="@(m => m.Nombre)"
+              OnNavigate="@OnItemNavigate"
+              Placeholder="Buscar en el menú... (Ctrl+K)"
+              ShowSearchIcon="false"
+              DebounceMs="100"
+              DetachedDropdown="true"
+              GlobalShortcutKey="k">
+    <ItemTemplate Context="item">
+        <i class="bi @(item.IconClass ?? "bi-dash") opacity-75 flex-shrink-0"></i>
+        <span class="flex-grow-1 text-truncate">
+            @if (item.Padre is not null)
+            {
+                <small class="text-secondary">@item.Padre / </small>
+            }
+            @item.Nombre
+        </span>
+    </ItemTemplate>
+</ItemSelector>
+</div>
+
+@code {
+    private sealed record MenuItem(string Nombre, string Path, string? IconClass, string? Padre);
+
+    private List<MenuItem> _todosItems = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var menus = await MenusClient.MenusAllAsync(plataforma: 1);
+            _todosItems.Add(new("Inicio", "/", "bi-house-door-fill", null));
+            foreach (var menu in menus)
+            {
+                if (menu.SubMenus?.Count > 0)
+                {
+                    foreach (var sub in menu.SubMenus.Where(s => !string.IsNullOrEmpty(s.Path)))
+                        _todosItems.Add(new(sub.Nombre, sub.Path!, sub.IconClass, menu.Nombre));
+                }
+                else if (!string.IsNullOrEmpty(menu.Path))
+                {
+                    _todosItems.Add(new(menu.Nombre, menu.Path, menu.IconClass, null));
+                }
+            }
+        }
+        catch { }
+    }
+
+    private Task<IEnumerable<MenuItem>> BuscarAsync(string query, CancellationToken _)
+    {
+        IEnumerable<MenuItem> resultados = _todosItems
+            .Where(m => TextHelper.ContieneBusqueda(m.Nombre, query)
+                     || TextHelper.ContieneBusqueda(m.Padre, query))
+            .Take(8);
+        return Task.FromResult(resultados);
+    }
+
+    private void OnItemNavigate(MenuItem item) =>
+        Nav.NavigateTo(item.Path == "/" ? "" : item.Path.TrimStart('/'));
+}

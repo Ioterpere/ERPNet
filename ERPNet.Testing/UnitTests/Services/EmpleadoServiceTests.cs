@@ -29,9 +29,13 @@ public class EmpleadoServiceTests
     {
         var permisos = new List<PermisoUsuario>
         {
-            new(RecursoCodigo.Empleados, true, true, true, alcance)
+            new PermisoUsuario { Codigo = RecursoCodigo.Empleados, CanCreate = true, CanEdit = true, CanDelete = true, Alcance = alcance }
         };
-        _currentUser.Current.Returns(new UsuarioContext(1, "test@test.com", empleadoId, seccionId, permisos, [1], false));
+        _currentUser.Current.Returns(new UsuarioContext
+        {
+            Id = 1, Email = "test@test.com", EmpleadoId = empleadoId, SeccionId = seccionId,
+            Permisos = permisos, RolIds = [1]
+        });
     }
 
     private static Empleado CrearEmpleado(int id = 1, int seccionId = 1) => new()

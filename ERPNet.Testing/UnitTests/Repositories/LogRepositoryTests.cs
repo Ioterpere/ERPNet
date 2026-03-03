@@ -18,10 +18,10 @@ public class LogRepositoryTests : RepositoryTestBase
 
     private void SeedBase()
     {
-        Context.Secciones.Add(new Seccion { Id = 1, Nombre = "IT" });
+        Context.Secciones.Add(new Seccion { Id = 1, Nombre = "IT", EmpresaId = 1 });
         Context.Empleados.AddRange(
-            new Empleado { Id = 1, Nombre = "E1", Apellidos = "A1", DNI = Dni.From("00000001R"), SeccionId = 1 },
-            new Empleado { Id = 2, Nombre = "E2", Apellidos = "A2", DNI = Dni.From("00000002W"), SeccionId = 1 });
+            new Empleado { Id = 1, Nombre = "E1", Apellidos = "A1", DNI = Dni.From("00000001R"), SeccionId = 1, EmpresaId = 1 },
+            new Empleado { Id = 2, Nombre = "E2", Apellidos = "A2", DNI = Dni.From("00000002W"), SeccionId = 1, EmpresaId = 1 });
         Context.Usuarios.AddRange(
             new Usuario { Id = 1, Email = Email.From("test01@mail.com"), PasswordHash = BCrypt.Net.BCrypt.HashPassword("Abc123!"), EmpleadoId = 1 },
             new Usuario { Id = 2, Email = Email.From("test02@mail.com"), PasswordHash = BCrypt.Net.BCrypt.HashPassword("Abc123!"), EmpleadoId = 2 }

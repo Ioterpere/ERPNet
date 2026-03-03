@@ -56,6 +56,17 @@ public class AuthenticationController(BffAuthService authService) : Controller
     }
 
     /// <summary>
+    /// Cambia la empresa activa del usuario sin necesidad de logout.
+    /// Actualiza el claim empresa_id en la cookie de sesión.
+    /// </summary>
+    [HttpPost("cambiar-empresa")]
+    public async Task<IActionResult> CambiarEmpresa([FromForm] int empresaId)
+    {
+        var ok = await authService.CambiarEmpresaAsync(empresaId);
+        return ok ? NoContent() : Forbid();
+    }
+
+    /// <summary>
     /// Construye una URL de redirección segura que previene open redirects.
     /// </summary>
     private static string SafeRedirect(string? returnUrl)

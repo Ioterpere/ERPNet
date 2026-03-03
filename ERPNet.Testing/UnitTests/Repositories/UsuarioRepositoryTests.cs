@@ -12,17 +12,17 @@ public class UsuarioRepositoryTests : RepositoryTestBase
 
     public UsuarioRepositoryTests()
     {
-        _sut = new UsuarioRepository(Context);
+        _sut = new UsuarioRepository(Context, CurrentUser);
         SeedBase();
     }
 
     private void SeedBase()
     {
-        Context.Secciones.Add(new Seccion { Id = 1, Nombre = "IT" });
+        Context.Secciones.Add(new Seccion { Id = 1, Nombre = "IT", EmpresaId = 1 });
         Context.Empleados.AddRange(
-            new Empleado { Id = 1, Nombre = "E1", Apellidos = "A1", DNI = Dni.From("00000001R"), SeccionId = 1 },
-            new Empleado { Id = 2, Nombre = "E2", Apellidos = "A2", DNI = Dni.From("00000002W"), SeccionId = 1 },
-            new Empleado { Id = 3, Nombre = "E3", Apellidos = "A3", DNI = Dni.From("00000003A"), SeccionId = 1 });
+            new Empleado { Id = 1, Nombre = "E1", Apellidos = "A1", DNI = Dni.From("00000001R"), SeccionId = 1, EmpresaId = 1 },
+            new Empleado { Id = 2, Nombre = "E2", Apellidos = "A2", DNI = Dni.From("00000002W"), SeccionId = 1, EmpresaId = 1 },
+            new Empleado { Id = 3, Nombre = "E3", Apellidos = "A3", DNI = Dni.From("00000003A"), SeccionId = 1, EmpresaId = 1 });
         Context.SaveChanges();
         Context.ChangeTracker.Clear();
     }
@@ -116,26 +116,7 @@ public class UsuarioRepositoryTests : RepositoryTestBase
 
     #endregion
 
-    #region GetRolIdsAsync / SincronizarRolesAsync
-
-    [Fact(DisplayName = "GetRolIds: devuelve los roles del usuario")]
-    public async Task GetRolIds_DevuelveRoles()
-    {
-        Context.Usuarios.Add(Crear(1, "u@t.com", 1));
-        Context.Roles.AddRange(
-            new Rol { Id = 1, Nombre = "Admin" },
-            new Rol { Id = 2, Nombre = "Editor" });
-        Context.RolesUsuarios.AddRange(
-            new RolUsuario { UsuarioId = 1, RolId = 1 },
-            new RolUsuario { UsuarioId = 1, RolId = 2 });
-        await SaveAndClearAsync();
-
-        var result = await _sut.GetRolIdsAsync(1);
-
-        Assert.Equal(2, result.Count);
-        Assert.Contains(1, result);
-        Assert.Contains(2, result);
-    }
+    #region SincronizarRolesAsync
 
     [Fact(DisplayName = "SincronizarRoles: agrega nuevos y elimina viejos")]
     public async Task SincronizarRoles_AgregaYElimina()
@@ -154,12 +135,13 @@ public class UsuarioRepositoryTests : RepositoryTestBase
         await _sut.SincronizarRolesAsync(1, [2, 3]);
         await SaveAndClearAsync();
 
-        var result = await _sut.GetRolIdsAsync(1);
+        var result = await _sut.GetTodasAsignacionesRolAsync(1);
+        var rolIds = result.Select(a => a.RolId).ToList();
 
-        Assert.Equal(2, result.Count);
-        Assert.Contains(2, result);
-        Assert.Contains(3, result);
-        Assert.DoesNotContain(1, result);
+        Assert.Equal(2, rolIds.Count);
+        Assert.Contains(2, rolIds);
+        Assert.Contains(3, rolIds);
+        Assert.DoesNotContain(1, rolIds);
     }
 
     [Fact(DisplayName = "SincronizarRoles: lista vacia elimina todos")]
@@ -173,7 +155,7 @@ public class UsuarioRepositoryTests : RepositoryTestBase
         await _sut.SincronizarRolesAsync(1, []);
         await SaveAndClearAsync();
 
-        var result = await _sut.GetRolIdsAsync(1);
+        var result = await _sut.GetTodasAsignacionesRolAsync(1);
         Assert.Empty(result);
     }
 

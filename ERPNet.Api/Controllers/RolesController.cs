@@ -31,10 +31,15 @@ public class RolesController(IRolService rolService) : BaseController
     public async Task<IActionResult> GetPermisos(int id)
         => FromResult(await rolService.GetPermisosAsync(id));
 
-    [HttpGet("{id}/usuarios")]
-    [ProducesResponseType<IEnumerable<UsuarioResponse>>(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetUsuarios(int id)
-        => FromResult(await rolService.GetUsuariosAsync(id));
+    [HttpGet("{id}/usuarios/todas")]
+    [ProducesResponseType<List<AsignacionUsuarioDto>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetTodasAsignacionesUsuario(int id)
+        => FromResult(await rolService.GetTodasAsignacionesUsuarioAsync(id));
+
+    [HttpPut("{id}/usuarios/todas")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> SincronizarTodasAsignacionesUsuario(int id, [FromBody] List<AsignacionUsuarioDto> asignaciones)
+        => FromResult(await rolService.SincronizarTodasAsignacionesUsuarioAsync(id, asignaciones));
 
     [HttpPost]
     [ProducesResponseType<RolResponse>(StatusCodes.Status201Created)]
@@ -50,11 +55,6 @@ public class RolesController(IRolService rolService) : BaseController
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> SetPermisos(int id, [FromBody] SetPermisosRolRequest request)
         => FromResult(await rolService.SetPermisosAsync(id, request));
-
-    [HttpPut("{id}/usuarios")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> SetUsuarios(int id, [FromBody] AsignarUsuariosRequest request)
-        => FromResult(await rolService.SetUsuariosAsync(id, request));
 
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]

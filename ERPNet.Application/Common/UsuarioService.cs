@@ -80,7 +80,7 @@ public class UsuarioService(
 
         request.ApplyTo(usuario);
         await unitOfWork.SaveChangesAsync();
-        cache.Remove($"usuario:{id}");
+        cache.RemoveByPrefix($"usuario:{id}:");
 
         return Result.Success();
     }
@@ -94,7 +94,7 @@ public class UsuarioService(
 
         usuarioRepository.Delete(usuario);
         await unitOfWork.SaveChangesAsync();
-        cache.Remove($"usuario:{id}");
+        cache.RemoveByPrefix($"usuario:{id}:");
 
         return Result.Success();
     }
@@ -113,7 +113,7 @@ public class UsuarioService(
         usuario.UltimoCambioContrasena = DateTime.UtcNow;
         usuario.CaducidadContrasena = DateTime.UtcNow.AddDays(ContrasenaSettings.DiasExpiracionPorDefecto);
         await unitOfWork.SaveChangesAsync();
-        cache.Remove($"usuario:{usuarioId}");
+        cache.RemoveByPrefix($"usuario:{usuarioId}:");
 
         return Result.Success();
     }
@@ -130,7 +130,7 @@ public class UsuarioService(
         usuario.UltimoCambioContrasena = DateTime.UtcNow;
         usuario.CaducidadContrasena = DateTime.UtcNow;  // caducada: fuerza cambio en el próximo acceso
         await unitOfWork.SaveChangesAsync();
-        cache.Remove($"usuario:{usuarioId}");
+        cache.RemoveByPrefix($"usuario:{usuarioId}:");
 
         await mailService.EnviarAsync(
             usuario.Email,
@@ -158,27 +158,44 @@ public class UsuarioService(
         return new string(chars);
     }
 
-    public async Task<Result<List<int>>> GetRolesAsync(int usuarioId)
-    {
-        var usuario = await usuarioRepository.GetByIdAsync(usuarioId);
-
-        if (usuario is null)
-            return Result<List<int>>.Failure("Usuario no encontrado.", ErrorType.NotFound);
-
-        var rolIds = await usuarioRepository.GetRolIdsAsync(usuarioId);
-        return Result<List<int>>.Success(rolIds);
-    }
-
-    public async Task<Result> AsignarRolesAsync(int usuarioId, AsignarRolesRequest request)
+    public async Task<Result> AsignarRolesAsync(int usuarioId, AsignarRolesRequest request, int? empresaId = null)
     {
         var usuario = await usuarioRepository.GetByIdAsync(usuarioId);
 
         if (usuario is null)
             return Result.Failure("Usuario no encontrado.", ErrorType.NotFound);
 
-        await usuarioRepository.SincronizarRolesAsync(usuarioId, request.RolIds);
+        await usuarioRepository.SincronizarRolesAsync(usuarioId, request.RolIds, empresaId);
         await unitOfWork.SaveChangesAsync();
-        cache.Remove($"usuario:{usuarioId}");
+        cache.RemoveByPrefix($"usuario:{usuarioId}:");
+
+        return Result.Success();
+    }
+
+    public async Task<Result<List<AsignacionRolDto>>> GetTodasAsignacionesRolAsync(int usuarioId)
+    {
+        var usuario = await usuarioRepository.GetByIdAsync(usuarioId);
+
+        if (usuario is null)
+            return Result<List<AsignacionRolDto>>.Failure("Usuario no encontrado.", ErrorType.NotFound);
+
+        var asignaciones = await usuarioRepository.GetTodasAsignacionesRolAsync(usuarioId);
+        return Result<List<AsignacionRolDto>>.Success(
+            asignaciones.Select(a => new AsignacionRolDto { RolId = a.RolId, EmpresaId = a.EmpresaId }).ToList());
+    }
+
+    public async Task<Result> SincronizarTodasAsignacionesRolAsync(int usuarioId, List<AsignacionRolDto> asignaciones)
+    {
+        var usuario = await usuarioRepository.GetByIdAsync(usuarioId);
+
+        if (usuario is null)
+            return Result.Failure("Usuario no encontrado.", ErrorType.NotFound);
+
+        await usuarioRepository.SincronizarTodasAsignacionesRolAsync(
+            usuarioId,
+            asignaciones.Select(a => (a.RolId, a.EmpresaId)).ToList());
+        await unitOfWork.SaveChangesAsync();
+        cache.RemoveByPrefix($"usuario:{usuarioId}:");
 
         return Result.Success();
     }

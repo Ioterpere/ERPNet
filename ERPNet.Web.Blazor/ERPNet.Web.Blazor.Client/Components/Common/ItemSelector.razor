@@ -1,10 +1,10 @@
 @typeparam TItem
-@implements IDisposable
+@implements IAsyncDisposable
 @inject IJSRuntime JS
 
 <div class="item-selector" @onfocusout="OnFocusOut">
 
-    @if (_itemSeleccionado is not null)
+    @if (_itemSeleccionado is not null && !OnNavigate.HasDelegate)
     {
         <!-- Modo seleccionado -->
         <div class="input-group">
@@ -30,18 +30,21 @@
     {
         <!-- Modo búsqueda -->
         <div class="input-group">
-            <span class="input-group-text bg-transparent border-end-0">
-                @if (_buscando)
-                {
-                    <span class="spinner-border spinner-border-sm text-muted" aria-hidden="true"></span>
-                }
-                else
-                {
-                    <i class="bi bi-search text-muted"></i>
-                }
-            </span>
+            @if (ShowSearchIcon)
+            {
+                <span class="input-group-text bg-transparent border-end-0">
+                    @if (_buscando)
+                    {
+                        <span class="spinner-border spinner-border-sm text-muted" aria-hidden="true"></span>
+                    }
+                    else
+                    {
+                        <i class="bi bi-search text-muted"></i>
+                    }
+                </span>
+            }
             <input type="search"
-                   class="form-control border-start-0 ps-0"
+                   class="form-control @(ShowSearchIcon ? "border-start-0 ps-0" : "")"
                    placeholder="@Placeholder"
                    value="@_query"
                    @oninput="OnInput"
@@ -54,7 +57,7 @@
 
         @if (_abierto)
         {
-            <div class="item-selector-dropdown" @onmousedown:preventDefault>
+            <div class="item-selector-dropdown @(DetachedDropdown ? "detached" : "")" @onmousedown:preventDefault>
                 @if (_buscando)
                 {
                     <div class="item-selector-mensaje text-muted">
@@ -77,11 +80,23 @@
                         <button type="button"
                                 id="@($"{_id}-{index}")"
                                 class="item-selector-item @(index == _indiceActivo ? "activo" : "")"
-                                @onclick="() => Seleccionar(item)">
-                            <span class="item-selector-item-label">@GetLabel(item)</span>
-                            @if (GetSubLabel?.Invoke(item) is { Length: > 0 } subItem)
+                                @onclick="() => Seleccionar(item)"
+                                @onmouseenter="() => _indiceActivo = index">
+                            @if (ItemTemplate is not null)
                             {
-                                <span class="item-selector-item-sub">@subItem</span>
+                                @ItemTemplate(item)
+                            }
+                            else
+                            {
+                                <span class="item-selector-item-label">@GetLabel(item)</span>
+                                @if (GetSubLabel?.Invoke(item) is { Length: > 0 } subItem)
+                                {
+                                    <span class="item-selector-item-sub">@subItem</span>
+                                }
+                            }
+                            @if (index == _indiceActivo)
+                            {
+                                <kbd class="item-selector-kbd ms-auto">↵</kbd>
                             }
                         </button>
                     }
@@ -93,13 +108,13 @@
 </div>
 
 @code {
-    /// <summary>Función que recibe la query actual y devuelve los items coincidentes.</summary>
+    /// <summary>Función que recibe la query normalizada y devuelve los items coincidentes.</summary>
     [Parameter, EditorRequired]
     public Func<string, CancellationToken, Task<IEnumerable<TItem>>> SearchAsync { get; set; } = null!;
 
-    /// <summary>Extrae el identificador (int) del item seleccionado.</summary>
-    [Parameter, EditorRequired]
-    public Func<TItem, int> GetId { get; set; } = null!;
+    /// <summary>Extrae el identificador (int) del item. Requerido cuando se usa Value/ValueChanged; no necesario en modo navegación.</summary>
+    [Parameter]
+    public Func<TItem, int>? GetId { get; set; }
 
     /// <summary>Texto principal que se muestra en el dropdown y en el chip de selección.</summary>
     [Parameter, EditorRequired]
@@ -109,7 +124,18 @@
     [Parameter]
     public Func<TItem, string?>? GetSubLabel { get; set; }
 
-    /// <summary>Valor actual (id del item seleccionado).</summary>
+    /// <summary>Plantilla personalizada para cada item del dropdown. Sustituye a GetLabel/GetSubLabel en el listado.</summary>
+    [Parameter]
+    public RenderFragment<TItem>? ItemTemplate { get; set; }
+
+    /// <summary>
+    /// Callback invocado al seleccionar un item en modo navegación.
+    /// Cuando está definido no se muestra el chip de seleccionado y el estado se limpia tras cada selección.
+    /// </summary>
+    [Parameter]
+    public EventCallback<TItem> OnNavigate { get; set; }
+
+    /// <summary>Valor actual (id del item seleccionado). Solo para modo selección.</summary>
     [Parameter]
     public int? Value { get; set; }
 
@@ -122,8 +148,27 @@
     [Parameter]
     public bool Disabled { get; set; }
 
+    /// <summary>Muestra el icono de lupa (y el spinner de carga) a la izquierda del input. Default true.</summary>
+    [Parameter]
+    public bool ShowSearchIcon { get; set; } = true;
+
+    /// <summary>Milisegundos de debounce antes de lanzar la búsqueda. 0 para búsqueda inmediata (datos locales).</summary>
+    [Parameter]
+    public int DebounceMs { get; set; } = 280;
+
     /// <summary>
-    /// Item preseleccionado externamente (p. ej. desde una herramienta IA).
+    /// Cuando es true, el dropdown se separa del input con un hueco y bordes completamente redondeados.
+    /// Útil fuera de formularios (p. ej. en la barra superior).
+    /// </summary>
+    [Parameter]
+    public bool DetachedDropdown { get; set; }
+
+    /// <summary>Tecla (junto a Ctrl) que enfoca este input desde cualquier parte de la página. Ej: "k" → Ctrl+K.</summary>
+    [Parameter]
+    public string? GlobalShortcutKey { get; set; }
+
+    /// <summary>
+    /// Item preseleccionado externamente.
     /// Se aplica al montar el componente; usa @key en el padre para forzar remount.
     /// </summary>
     [Parameter]
@@ -143,6 +188,7 @@
     private int _indiceActivo = -1;
     private bool _debeScrollar;
     private bool _keysRegistered;
+    private bool _globalShortcutRegistered;
 
     protected override void OnInitialized()
     {
@@ -152,17 +198,20 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // El input solo existe en el DOM cuando no hay item seleccionado.
-        // Registramos las teclas cada vez que el input aparece por primera vez,
-        // y reseteamos la bandera cuando desaparece para re-registrar si vuelve.
         if (_itemSeleccionado is null && !_keysRegistered)
         {
             _keysRegistered = true;
             await JS.InvokeVoidAsync("itemSelector.registerKeys", _inputRef);
         }
-        else if (_itemSeleccionado is not null)
+        else if (_itemSeleccionado is not null && !OnNavigate.HasDelegate)
         {
             _keysRegistered = false;
+        }
+
+        if (firstRender && GlobalShortcutKey is not null && !_globalShortcutRegistered && _itemSeleccionado is null)
+        {
+            _globalShortcutRegistered = true;
+            await JS.InvokeVoidAsync("globalShortcut.register", _id, GlobalShortcutKey, _inputRef);
         }
 
         if (_debeScrollar && _indiceActivo >= 0)
@@ -190,19 +239,22 @@
             return;
         }
 
-        _buscando = true;
         _abierto = true;
         _sinResultados = false;
-        StateHasChanged();
+
+        if (DebounceMs > 0)
+        {
+            _buscando = true;
+            StateHasChanged();
+            try { await Task.Delay(DebounceMs, token); }
+            catch (OperationCanceledException) { return; }
+            if (token.IsCancellationRequested) return;
+        }
 
         try
         {
-            await Task.Delay(280, token);
-            if (token.IsCancellationRequested) return;
-
             var items = await SearchAsync(TextHelper.Normalizar(_query), token);
             if (token.IsCancellationRequested) return;
-
             _resultados = items.ToList();
             _sinResultados = _resultados.Count == 0;
         }
@@ -245,6 +297,7 @@
             case "Escape":
                 _abierto = false;
                 _indiceActivo = -1;
+                if (OnNavigate.HasDelegate) _query = string.Empty;
                 break;
         }
 
@@ -268,13 +321,21 @@
 
     private async Task Seleccionar(TItem item)
     {
-        _itemSeleccionado = item;
         _abierto = false;
         _indiceActivo = -1;
         _query = string.Empty;
         _resultados.Clear();
         _sinResultados = false;
-        await ValueChanged.InvokeAsync(GetId(item));
+
+        if (OnNavigate.HasDelegate)
+        {
+            await OnNavigate.InvokeAsync(item);
+        }
+        else
+        {
+            _itemSeleccionado = item;
+            await ValueChanged.InvokeAsync(GetId!(item));
+        }
     }
 
     private async Task Limpiar()
@@ -288,9 +349,11 @@
         await ValueChanged.InvokeAsync(null);
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         _cts?.Cancel();
         _cts?.Dispose();
+        if (_globalShortcutRegistered)
+            try { await JS.InvokeVoidAsync("globalShortcut.unregister", _id); } catch { }
     }
 }

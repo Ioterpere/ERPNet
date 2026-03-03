@@ -28,9 +28,13 @@ public class MaquinariaServiceTests
     {
         var permisos = new List<PermisoUsuario>
         {
-            new(RecursoCodigo.Maquinaria, true, true, true, alcance)
+            new PermisoUsuario { Codigo = RecursoCodigo.Maquinaria, CanCreate = true, CanEdit = true, CanDelete = true, Alcance = alcance }
         };
-        _currentUser.Current.Returns(new UsuarioContext(1, "test@test.com", 1, seccionId, permisos, [1], false));
+        _currentUser.Current.Returns(new UsuarioContext
+        {
+            Id = 1, Email = "test@test.com", EmpleadoId = 1, SeccionId = seccionId,
+            Permisos = permisos, RolIds = [1]
+        });
     }
 
     private static Maquinaria CrearMaquinaria(int id = 1, int? seccionId = 1) => new()

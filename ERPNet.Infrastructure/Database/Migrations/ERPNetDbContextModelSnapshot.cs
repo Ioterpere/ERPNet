@@ -152,6 +152,9 @@ namespace ERPNet.Infrastructure.Database.Migrations
                     b.Property<int?>("DeletedBy")
                         .HasColumnType("int");
 
+                    b.Property<int>("EmpresaId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("EncargadoId")
                         .HasColumnType("int");
 
@@ -180,6 +183,8 @@ namespace ERPNet.Infrastructure.Database.Migrations
                     b.HasIndex("DNI")
                         .IsUnique();
 
+                    b.HasIndex("EmpresaId");
+
                     b.HasIndex("EncargadoId");
 
                     b.HasIndex("FotoId")
@@ -189,6 +194,52 @@ namespace ERPNet.Infrastructure.Database.Migrations
                     b.HasIndex("SeccionId");
 
                     b.ToTable("Empleados");
+                });
+
+            modelBuilder.Entity("ERPNet.Domain.Entities.Empresa", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Cif")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Empresas");
                 });
 
             modelBuilder.Entity("ERPNet.Domain.Entities.IncidenciaMarcaje", b =>
@@ -357,6 +408,9 @@ namespace ERPNet.Infrastructure.Database.Migrations
                     b.Property<int?>("DeletedBy")
                         .HasColumnType("int");
 
+                    b.Property<int>("EmpresaId")
+                        .HasColumnType("int");
+
                     b.Property<Guid?>("FichaTecnicaId")
                         .HasColumnType("uniqueidentifier");
 
@@ -395,6 +449,8 @@ namespace ERPNet.Infrastructure.Database.Migrations
 
                     b.HasIndex("Codigo")
                         .IsUnique();
+
+                    b.HasIndex("EmpresaId");
 
                     b.HasIndex("FichaTecnicaId")
                         .IsUnique()
@@ -703,6 +759,11 @@ namespace ERPNet.Infrastructure.Database.Migrations
                         {
                             Id = 10,
                             Codigo = "Facturas"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Codigo = "Empresas"
                         });
                 });
 
@@ -796,18 +857,39 @@ namespace ERPNet.Infrastructure.Database.Migrations
 
             modelBuilder.Entity("ERPNet.Domain.Entities.RolUsuario", b =>
                 {
-                    b.Property<int>("UsuarioId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int>("RolId")
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("EmpresaId")
                         .HasColumnType("int");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.HasKey("UsuarioId", "RolId");
+                    b.Property<int>("RolId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmpresaId");
 
                     b.HasIndex("RolId");
+
+                    b.HasIndex("UsuarioId", "RolId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_RolUsuario_UsuarioId_RolId_Global")
+                        .HasFilter("[EmpresaId] IS NULL");
+
+                    b.HasIndex("UsuarioId", "RolId", "EmpresaId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_RolUsuario_UsuarioId_RolId_Empresa")
+                        .HasFilter("[EmpresaId] IS NOT NULL");
 
                     b.ToTable("RolesUsuarios");
                 });
@@ -832,6 +914,9 @@ namespace ERPNet.Infrastructure.Database.Migrations
                     b.Property<int?>("DeletedBy")
                         .HasColumnType("int");
 
+                    b.Property<int>("EmpresaId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -850,6 +935,8 @@ namespace ERPNet.Infrastructure.Database.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("EmpresaId");
 
                     b.HasIndex("ResponsableId");
 
@@ -1035,6 +1122,24 @@ namespace ERPNet.Infrastructure.Database.Migrations
                     b.ToTable("Usuarios");
                 });
 
+            modelBuilder.Entity("ERPNet.Domain.Entities.UsuarioEmpresa", b =>
+                {
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("EmpresaId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.HasKey("UsuarioId", "EmpresaId");
+
+                    b.HasIndex("EmpresaId");
+
+                    b.ToTable("UsuarioEmpresas");
+                });
+
             modelBuilder.Entity("ERPNet.Domain.Entities.Vacacion", b =>
                 {
                     b.Property<int>("Id")
@@ -1123,6 +1228,12 @@ namespace ERPNet.Infrastructure.Database.Migrations
 
             modelBuilder.Entity("ERPNet.Domain.Entities.Empleado", b =>
                 {
+                    b.HasOne("ERPNet.Domain.Entities.Empresa", "Empresa")
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("ERPNet.Domain.Entities.Empleado", "Encargado")
                         .WithMany("Subordinados")
                         .HasForeignKey("EncargadoId")
@@ -1138,6 +1249,8 @@ namespace ERPNet.Infrastructure.Database.Migrations
                         .HasForeignKey("SeccionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Empresa");
 
                     b.Navigation("Encargado");
 
@@ -1191,6 +1304,12 @@ namespace ERPNet.Infrastructure.Database.Migrations
                         .HasForeignKey("ERPNet.Domain.Entities.Maquinaria", "CertificadoCeId")
                         .OnDelete(DeleteBehavior.NoAction);
 
+                    b.HasOne("ERPNet.Domain.Entities.Empresa", "Empresa")
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("ERPNet.Domain.Entities.Archivo", "FichaTecnica")
                         .WithOne()
                         .HasForeignKey("ERPNet.Domain.Entities.Maquinaria", "FichaTecnicaId")
@@ -1212,6 +1331,8 @@ namespace ERPNet.Infrastructure.Database.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("CertificadoCe");
+
+                    b.Navigation("Empresa");
 
                     b.Navigation("FichaTecnica");
 
@@ -1320,6 +1441,11 @@ namespace ERPNet.Infrastructure.Database.Migrations
 
             modelBuilder.Entity("ERPNet.Domain.Entities.RolUsuario", b =>
                 {
+                    b.HasOne("ERPNet.Domain.Entities.Empresa", "Empresa")
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("ERPNet.Domain.Entities.Rol", "Rol")
                         .WithMany("RolesUsuarios")
                         .HasForeignKey("RolId")
@@ -1332,6 +1458,8 @@ namespace ERPNet.Infrastructure.Database.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("Empresa");
+
                     b.Navigation("Rol");
 
                     b.Navigation("Usuario");
@@ -1339,10 +1467,18 @@ namespace ERPNet.Infrastructure.Database.Migrations
 
             modelBuilder.Entity("ERPNet.Domain.Entities.Seccion", b =>
                 {
+                    b.HasOne("ERPNet.Domain.Entities.Empresa", "Empresa")
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("ERPNet.Domain.Entities.Empleado", "Responsable")
                         .WithMany()
                         .HasForeignKey("ResponsableId")
                         .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Empresa");
 
                     b.Navigation("Responsable");
                 });
@@ -1356,6 +1492,25 @@ namespace ERPNet.Infrastructure.Database.Migrations
                         .IsRequired();
 
                     b.Navigation("Empleado");
+                });
+
+            modelBuilder.Entity("ERPNet.Domain.Entities.UsuarioEmpresa", b =>
+                {
+                    b.HasOne("ERPNet.Domain.Entities.Empresa", "Empresa")
+                        .WithMany("UsuarioEmpresas")
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ERPNet.Domain.Entities.Usuario", "Usuario")
+                        .WithMany("UsuarioEmpresas")
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Empresa");
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("ERPNet.Domain.Entities.Vacacion", b =>
@@ -1392,6 +1547,11 @@ namespace ERPNet.Infrastructure.Database.Migrations
                     b.Navigation("Usuario");
 
                     b.Navigation("Vacaciones");
+                });
+
+            modelBuilder.Entity("ERPNet.Domain.Entities.Empresa", b =>
+                {
+                    b.Navigation("UsuarioEmpresas");
                 });
 
             modelBuilder.Entity("ERPNet.Domain.Entities.Maquinaria", b =>
@@ -1451,6 +1611,8 @@ namespace ERPNet.Infrastructure.Database.Migrations
                     b.Navigation("RefreshTokens");
 
                     b.Navigation("RolesUsuarios");
+
+                    b.Navigation("UsuarioEmpresas");
                 });
 #pragma warning restore 612, 618
         }

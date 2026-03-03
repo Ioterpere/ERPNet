@@ -45,6 +45,49 @@ public sealed class BffTokenService(
         return tokenData.AccessToken;
     }
 
+    /// <summary>
+    /// Devuelve la empresa activa almacenada junto al token del usuario actual.
+    /// </summary>
+    public async Task<int?> GetEmpresaIdAsync()
+    {
+        var sessionKey = httpContextAccessor.HttpContext?.User.FindFirst("session_key")?.Value;
+        if (sessionKey is null) return null;
+
+        var tokenJson = await cache.GetStringAsync($"bff-token:{sessionKey}");
+        if (tokenJson is null) return null;
+
+        var tokenData = JsonSerializer.Deserialize<BffTokenData>(tokenJson);
+        return tokenData?.EmpresaId;
+    }
+
+    /// <summary>
+    /// Actualiza la empresa activa en el caché del token y en la cookie de sesión.
+    /// </summary>
+    public async Task<bool> SetEmpresaIdAsync(int empresaId)
+    {
+        var httpContext = httpContextAccessor.HttpContext;
+        var sessionKey = httpContext?.User.FindFirst("session_key")?.Value;
+        if (sessionKey is null) return false;
+
+        var tokenJson = await cache.GetStringAsync($"bff-token:{sessionKey}");
+        if (tokenJson is null) return false;
+
+        var tokenData = JsonSerializer.Deserialize<BffTokenData>(tokenJson);
+        if (tokenData is null) return false;
+
+        tokenData.EmpresaId = empresaId;
+
+        await cache.SetStringAsync(
+            $"bff-token:{sessionKey}",
+            JsonSerializer.Serialize(tokenData),
+            new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(8)
+            });
+
+        return true;
+    }
+
     internal async Task<BffTokenData?> RefreshAsync(
         string sessionKey, BffTokenData current, HttpClient client)
     {
@@ -78,7 +121,8 @@ public sealed class BffTokenService(
             AccessToken = result.AccessToken,
             RefreshToken = result.RefreshToken,
             Expiration = new DateTimeOffset(
-                DateTime.SpecifyKind(result.Expiration, DateTimeKind.Utc))
+                DateTime.SpecifyKind(result.Expiration, DateTimeKind.Utc)),
+            EmpresaId = current.EmpresaId
         };
 
         await cache.SetStringAsync(
@@ -113,6 +157,7 @@ public sealed class BffTokenData
     public string AccessToken { get; set; } = string.Empty;
     public string RefreshToken { get; set; } = string.Empty;
     public DateTimeOffset Expiration { get; set; }
+    public int? EmpresaId { get; set; }
 }
 
 /// <summary>

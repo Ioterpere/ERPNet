@@ -14,5 +14,6 @@ public enum RecursoCodigo
     Mantenimiento = 7,
     OrdenesFabrica = 8,
     Clientes = 9,
-    Facturas = 10
+    Facturas = 10,
+    Empresas = 11
 }

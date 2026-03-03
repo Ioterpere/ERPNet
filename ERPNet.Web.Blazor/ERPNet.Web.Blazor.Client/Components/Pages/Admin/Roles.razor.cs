@@ -1,5 +1,6 @@
 using ERPNet.ApiClient;
 using Microsoft.AspNetCore.Components;
+using System.Net.Http.Json;
 
 namespace ERPNet.Web.Blazor.Client.Components.Pages.Admin;
 
@@ -7,6 +8,8 @@ public partial class Roles
 {
     [Inject] private IRolesClient RolesClient { get; set; } = default!;
     [Inject] private IUsuariosClient UsuariosClient { get; set; } = default!;
+    [Inject] private IEmpresasClient EmpresasClient { get; set; } = default!;
+    [Inject] private HttpClient Http { get; set; } = default!;
 
     // ── Paginación ─────────────────────────────────────────────
     protected override int? TotalPaginas => _paginado?.TotalPaginas;
@@ -47,12 +50,18 @@ public partial class Roles
         _todosRecursos.Where(r => !_permisosEdit.Any(p => p.RecursoId == r.Id));
 
     // ── Tab Usuarios ───────────────────────────────────────────
-    private List<UsuarioResponse> _usuariosEdit = [];
-    private int? _usuarioParaAnadirId;
+    private List<AsignacionUsuario> _asignacionesUsuario = [];
+    private Dictionary<int, UsuarioResponse> _usuariosPorId = [];
+    private List<EmpresaResponse> _todasEmpresas = [];
     private Dictionary<int, UsuarioResponse> _cacheBusquedaUsuarios = [];
-    private int _selectorKey;
+    private int? _addUsuarioId;
+    private int _selectorKeyUsuario;
+    private string _addEmpresaStr = "";
     private bool _guardandoUsuarios;
     private string? _errorUsuarios;
+
+    private int? AddEmpresaIdUsuario => string.IsNullOrEmpty(_addEmpresaStr) ? null
+        : int.TryParse(_addEmpresaStr, out var id) ? id : null;
 
     // ── Formulario edición ─────────────────────────────────────
     private ElementReference _refEditNombre;
@@ -84,7 +93,7 @@ public partial class Roles
     // ── Ciclo de vida ──────────────────────────────────────────
     protected override async Task OnInitializedAsync()
     {
-        await Task.WhenAll(CargarListaAsync(), CargarTodosRecursosAsync());
+        await Task.WhenAll(CargarListaAsync(), CargarTodosRecursosAsync(), CargarTodosUsuariosAsync(), CargarTodasEmpresasAsync());
     }
 
     // ── Implementación de abstracts ────────────────────────────
@@ -111,10 +120,10 @@ public partial class Roles
 
         try
         {
-            var rolTask      = RolesClient.RolesGET2Async(id);
-            var permisosTask = RolesClient.PermisosAllAsync(id);
-            var usuariosTask = RolesClient.UsuariosAllAsync(id);
-            await Task.WhenAll(rolTask, permisosTask, usuariosTask);
+            var rolTask          = RolesClient.RolesGET2Async(id);
+            var permisosTask     = RolesClient.PermisosAllAsync(id);
+            var asignacionesTask = Http.GetFromJsonAsync<List<AsignacionUsuario>>($"api/roles/{id}/usuarios/todas");
+            await Task.WhenAll(rolTask, permisosTask, asignacionesTask);
 
             _rolDetalle = await rolTask;
 
@@ -128,7 +137,7 @@ public partial class Roles
                 Alcance   = p.Alcance
             }).ToList();
 
-            _usuariosEdit = (await usuariosTask).ToList();
+            _asignacionesUsuario = (await asignacionesTask) ?? [];
 
             _editNombre      = _rolDetalle.Nombre;
             _editDescripcion = _rolDetalle.Descripcion ?? string.Empty;
@@ -214,12 +223,31 @@ public partial class Roles
         catch { /* sin recursos */ }
     }
 
+    private async Task CargarTodosUsuariosAsync()
+    {
+        try
+        {
+            var resultado = await UsuariosClient.UsuariosGETAsync(1, 500);
+            _usuariosPorId = resultado.Items.ToDictionary(u => u.Id);
+        }
+        catch { /* sin usuarios */ }
+    }
+
+    private async Task CargarTodasEmpresasAsync()
+    {
+        try
+        {
+            var resultado = await EmpresasClient.EmpresasGETAsync(1, 200);
+            _todasEmpresas = resultado.Items.ToList();
+        }
+        catch { /* sin empresas */ }
+    }
+
     private async Task<IEnumerable<UsuarioResponse>> BuscarUsuariosAsync(string query, CancellationToken ct)
     {
         var resultado = await UsuariosClient.UsuariosGETAsync(1, 100, ct);
         var filtrados = resultado.Items
             .Where(u => TextHelper.ContieneBusqueda(u.Email, query))
-            .Where(u => !_usuariosEdit.Any(ue => ue.Id == u.Id))
             .ToList();
         _cacheBusquedaUsuarios = filtrados.ToDictionary(u => u.Id);
         return filtrados;
@@ -230,7 +258,7 @@ public partial class Roles
     {
         _rolDetalle = null;
         _permisosEdit.Clear();
-        _usuariosEdit.Clear();
+        _asignacionesUsuario.Clear();
         LimpiarFeedbackDetalle();
     }
 
@@ -253,19 +281,22 @@ public partial class Roles
 
     private void QuitarPermiso(PermisoEditModel permiso) => _permisosEdit.Remove(permiso);
 
-    private void AñadirUsuario()
+    private void AñadirAsignacionUsuario()
     {
-        if (_usuarioParaAnadirId is null) return;
-        if (_cacheBusquedaUsuarios.TryGetValue(_usuarioParaAnadirId.Value, out var usuario)
-            && !_usuariosEdit.Any(u => u.Id == usuario.Id))
-        {
-            _usuariosEdit.Add(usuario);
-        }
-        _usuarioParaAnadirId = null;
-        _selectorKey++;
+        if (_addUsuarioId is null) return;
+        var empresaId = AddEmpresaIdUsuario;
+        if (_asignacionesUsuario.Any(a => a.UsuarioId == _addUsuarioId && a.EmpresaId == empresaId)) return;
+
+        if (_cacheBusquedaUsuarios.TryGetValue(_addUsuarioId.Value, out var usuario))
+            _usuariosPorId.TryAdd(usuario.Id, usuario);
+
+        _asignacionesUsuario.Add(new AsignacionUsuario { UsuarioId = _addUsuarioId.Value, EmpresaId = empresaId });
+        _addUsuarioId = null;
+        _selectorKeyUsuario++;
     }
 
-    private void QuitarUsuario(UsuarioResponse usuario) => _usuariosEdit.Remove(usuario);
+    private void EliminarAsignacionUsuario(int usuarioId, int? empresaId)
+        => _asignacionesUsuario.RemoveAll(a => a.UsuarioId == usuarioId && a.EmpresaId == empresaId);
 
     // ── Acciones ───────────────────────────────────────────────
     private async Task GuardarDatosAsync()
@@ -338,14 +369,19 @@ public partial class Roles
     {
         if (!Id.HasValue) return;
 
-        _errorUsuarios    = null;
+        _errorUsuarios     = null;
         _guardandoUsuarios = true;
         try
         {
-            await RolesClient.UsuariosAsync(Id.Value, new AsignarUsuariosRequest
+            var response = await Http.PutAsJsonAsync(
+                $"api/roles/{Id.Value}/usuarios/todas",
+                _asignacionesUsuario.Select(a => new { a.UsuarioId, a.EmpresaId }).ToList());
+
+            if (!response.IsSuccessStatusCode)
             {
-                UsuarioIds = _usuariosEdit.Select(u => u.Id).ToList()
-            });
+                _errorUsuarios = "No se pudieron actualizar los usuarios.";
+                return;
+            }
             Toast.Exito("Usuarios actualizados correctamente.");
         }
         catch
@@ -429,4 +465,12 @@ public partial class Roles
         public bool CanDelete { get; set; }
         public int Alcance { get; set; }
     }
+
+    // ── Modelos locales para usuarios ──────────────────────────
+    private record AsignacionUsuario
+    {
+        public int UsuarioId { get; init; }
+        public int? EmpresaId { get; init; }
+    }
+
 }

@@ -1,3 +1,4 @@
+using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Domain.Entities;
 using ERPNet.Domain.Enums;
 using ERPNet.Domain.Filters;
@@ -7,11 +8,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ERPNet.Infrastructure.Database.Repositories;
 
-public class MaquinariaRepository(ERPNetDbContext context) : Repository<Maquinaria>(context), IMaquinariaRepository
+public class MaquinariaRepository(ERPNetDbContext context, ICurrentUserProvider currentUser)
+    : Repository<Maquinaria>(context, currentUser), IMaquinariaRepository
 {
     public override async Task<Maquinaria?> GetByIdAsync(int id)
     {
-        return await Context.Maquinas
+        return await Query
             .Include(m => m.FichaTecnica)
             .Include(m => m.Manual)
             .Include(m => m.CertificadoCe)
@@ -30,9 +32,9 @@ public class MaquinariaRepository(ERPNetDbContext context) : Repository<Maquinar
     {
         var query = alcance switch
         {
-            Alcance.Seccion => Context.Maquinas.Where(m => m.SeccionId == seccionId),
-            Alcance.Global => Context.Maquinas.AsQueryable(),
-            _ => Context.Maquinas.Where(_ => false)
+            Alcance.Seccion => Query.Where(m => m.SeccionId == seccionId),
+            Alcance.Propio  => Query.Where(_ => false),
+            _               => Query
         };
 
         var total = await query.CountAsync();

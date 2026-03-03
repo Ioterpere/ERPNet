@@ -12,7 +12,7 @@ public class MenuRepositoryTests : RepositoryTestBase
 
     public MenuRepositoryTests()
     {
-        _sut = new MenuRepository(Context);
+        _sut = new MenuRepository(Context, CurrentUser);
         SeedRoles();
     }
 
@@ -145,11 +145,11 @@ public class MenuRepositoryTests : RepositoryTestBase
     [Fact(DisplayName = "GetUsuarioIdsPorRoles: devuelve usuarios distinctos")]
     public async Task GetUsuarioIdsPorRoles_DevuelveDistinctos()
     {
-        var seccion = new Seccion { Id = 1, Nombre = "IT" };
+        var seccion = new Seccion { Id = 1, Nombre = "IT", EmpresaId = 1 };
         Context.Secciones.Add(seccion);
         Context.Empleados.AddRange(
-            new Empleado { Id = 1, Nombre = "E1", Apellidos = "A1", DNI = Dni.From("00000001R"), SeccionId = 1 },
-            new Empleado { Id = 2, Nombre = "E2", Apellidos = "A2", DNI = Dni.From("00000002W"), SeccionId = 1 });
+            new Empleado { Id = 1, Nombre = "E1", Apellidos = "A1", DNI = Dni.From("00000001R"), SeccionId = 1, EmpresaId = 1 },
+            new Empleado { Id = 2, Nombre = "E2", Apellidos = "A2", DNI = Dni.From("00000002W"), SeccionId = 1, EmpresaId = 1 });
         Context.Usuarios.AddRange(
             new Usuario { Id = 1, Email = Email.From("u1@t.com"), PasswordHash = "h", EmpleadoId = 1 },
             new Usuario { Id = 2, Email = Email.From("u2@t.com"), PasswordHash = "h", EmpleadoId = 2 });

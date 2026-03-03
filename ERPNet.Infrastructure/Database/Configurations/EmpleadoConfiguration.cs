@@ -12,6 +12,11 @@ public class EmpleadoConfiguration : IEntityTypeConfiguration<Empleado>
         builder.Property(e => e.Nombre).HasMaxLength(100);
         builder.Property(e => e.Apellidos).HasMaxLength(200);
 
+        builder.HasOne(e => e.Empresa)
+            .WithMany()
+            .HasForeignKey(e => e.EmpresaId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne(e => e.Seccion)
             .WithMany(s => s.Empleados)
             .HasForeignKey(e => e.SeccionId)

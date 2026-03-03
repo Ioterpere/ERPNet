@@ -13,6 +13,11 @@ public class MaquinariaConfiguration : IEntityTypeConfiguration<Maquinaria>
         builder.Property(m => m.Codigo).HasMaxLength(50);
         builder.Property(m => m.Ubicacion).HasMaxLength(200);
 
+        builder.HasOne(m => m.Empresa)
+            .WithMany()
+            .HasForeignKey(m => m.EmpresaId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne(m => m.Seccion)
             .WithMany(s => s.Maquinarias)
             .HasForeignKey(m => m.SeccionId)

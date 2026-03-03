@@ -42,6 +42,11 @@ public static class BffProxy
 
         apiRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
+        // Inyectar empresa activa como header para que la API filtre por empresa
+        var empresaId = ctx.User.FindFirst("empresa_id")?.Value;
+        if (empresaId is not null)
+            apiRequest.Headers.TryAddWithoutValidation("X-Empresa-Id", empresaId);
+
         if (ctx.Request.ContentLength > 0 || ctx.Request.Headers.ContainsKey("Content-Type"))
         {
             apiRequest.Content = new StreamContent(ctx.Request.Body);

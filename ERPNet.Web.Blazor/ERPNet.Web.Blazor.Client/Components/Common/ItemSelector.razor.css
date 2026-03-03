@@ -24,10 +24,18 @@
     overflow-y: auto;
 }
 
+/* Variante separada del input (p. ej. en la barra superior) */
+.item-selector-dropdown.detached {
+    top: calc(100% + 4px);
+    border-top: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, .15);
+}
+
 /* ── Item de resultado ────────────────────────────────────── */
 .item-selector-item {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: .5rem;
     width: 100%;
     padding: .45rem .75rem;
@@ -58,6 +66,18 @@
 .item-selector-item-sub {
     font-size: .8em;
     color: var(--bs-secondary-color);
+}
+
+/* ── Atajo de teclado ─────────────────────────────────────── */
+.item-selector-kbd {
+    font-size: .65rem;
+    font-weight: 400;
+    color: var(--bs-secondary-color);
+    background: var(--bs-secondary-bg);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 3px;
+    padding: .1rem .35rem;
+    flex-shrink: 0;
 }
 
 /* ── Mensaje (cargando / sin resultados) ──────────────────── */

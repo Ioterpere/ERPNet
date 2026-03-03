@@ -28,8 +28,10 @@ public class MenusControllerTests
 
     private void SetupUsuarioContext(List<int>? rolIds = null)
     {
-        _sut.HttpContext.Items["UsuarioContext"] = new UsuarioContext(
-            1, "test@test.com", 1, 1, [], rolIds ?? [1, 2], false);
+        _sut.HttpContext.Items["UsuarioContext"] = new UsuarioContext
+        {
+            Id = 1, Email = "test@test.com", EmpleadoId = 1, SeccionId = 1, RolIds = rolIds ?? [1, 2]
+        };
     }
 
     #region GetMenus

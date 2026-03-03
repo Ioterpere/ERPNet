@@ -15,11 +15,12 @@ namespace ERPNet.Testing.UnitTests.Controllers;
 public class UsuariosControllerTests
 {
     private readonly IUsuarioService _service = Substitute.For<IUsuarioService>();
+    private readonly IEmpresaService _empresaService = Substitute.For<IEmpresaService>();
     private readonly UsuariosController _sut;
 
     public UsuariosControllerTests()
     {
-        _sut = new UsuariosController(_service);
+        _sut = new UsuariosController(_service, _empresaService);
         _sut.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext()
@@ -28,8 +29,10 @@ public class UsuariosControllerTests
 
     private void SetupUsuarioContext(int id = 1, List<int>? rolIds = null)
     {
-        _sut.HttpContext.Items["UsuarioContext"] = new UsuarioContext(
-            id, "test@test.com", 1, 1, [], rolIds ?? [1], false);
+        _sut.HttpContext.Items["UsuarioContext"] = new UsuarioContext
+        {
+            Id = id, Email = "test@test.com", EmpleadoId = 1, SeccionId = 1, RolIds = rolIds ?? [1]
+        };
     }
 
     #region CRUD
@@ -175,18 +178,6 @@ public class UsuariosControllerTests
     #endregion
 
     #region Roles
-
-    [Fact(DisplayName = "GetRoles: exitoso devuelve 200")]
-    public async Task GetRoles_Exitoso_Devuelve200()
-    {
-        _service.GetRolesAsync(1).Returns(Result<List<int>>.Success([1, 2]));
-
-        var result = await _sut.GetRoles(1);
-
-        var okResult = Assert.IsType<OkObjectResult>(result);
-        var roles = Assert.IsType<List<int>>(okResult.Value);
-        Assert.Equal(2, roles.Count);
-    }
 
     [Fact(DisplayName = "AsignarRoles: exitoso devuelve 204")]
     public async Task AsignarRoles_Exitoso_Devuelve204()

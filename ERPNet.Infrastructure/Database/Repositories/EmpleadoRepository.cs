@@ -1,3 +1,4 @@
+using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Domain.Entities;
 using ERPNet.Domain.Enums;
 using ERPNet.Domain.Filters;
@@ -7,11 +8,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ERPNet.Infrastructure.Database.Repositories;
 
-public class EmpleadoRepository(ERPNetDbContext context) : Repository<Empleado>(context), IEmpleadoRepository
+public class EmpleadoRepository(ERPNetDbContext context, ICurrentUserProvider currentUser)
+    : Repository<Empleado>(context, currentUser), IEmpleadoRepository
 {
     public override async Task<Empleado?> GetByIdAsync(int id)
     {
-        return await Context.Empleados
+        return await Query
             .Include(e => e.Foto)
             .Include(e => e.Seccion)
             .FirstOrDefaultAsync(e => e.Id == id);
@@ -29,9 +31,9 @@ public class EmpleadoRepository(ERPNetDbContext context) : Repository<Empleado>(
     {
         var query = alcance switch
         {
-            Alcance.Propio => Context.Empleados.Where(e => e.EncargadoId == empleadoId),
-            Alcance.Seccion => Context.Empleados.Where(e => e.SeccionId == seccionId),
-            _ => Context.Empleados.AsQueryable()
+            Alcance.Propio  => Query.Where(e => e.EncargadoId == empleadoId),
+            Alcance.Seccion => Query.Where(e => e.SeccionId == seccionId),
+            _               => Query
         };
 
         var total = await query.CountAsync();

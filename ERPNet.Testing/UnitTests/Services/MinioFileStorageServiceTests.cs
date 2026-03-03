@@ -33,7 +33,7 @@ public class MinioFileStorageServiceTests
 
     public MinioFileStorageServiceTests()
     {
-        _currentUser.Current.Returns(new UsuarioContext(1, "test@test.com", 1, 1, [], [], false));
+        _currentUser.Current.Returns(new UsuarioContext { Id = 1, Email = "test@test.com", EmpleadoId = 1, SeccionId = 1 });
 
         _sut = new MinioFileStorageService(
             _minio,

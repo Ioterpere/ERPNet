@@ -1,7 +1,9 @@
 @inject IMenusClient MenusClient
 @inject NavigationManager Nav
+@inject HttpClient Http
+@using Microsoft.AspNetCore.Components.Authorization
 
-<div class="nav-menu">
+<div class="nav-menu d-flex flex-column h-100">
     <div class="top-row ps-3 navbar navbar-dark d-none d-md-flex">
         <div class="container-fluid">
             <a class="navbar-brand" href="">
@@ -19,7 +21,7 @@
         </button>
     </div>
 
-    <nav class="nav flex-column">
+    <nav class="nav flex-column flex-grow-1 overflow-y-auto">
         <div class="nav-item px-3">
             <NavLink class="nav-link w-100 text-start d-flex align-items-center gap-2 border-0" href=""
                      Match="NavLinkMatch.All">
@@ -54,6 +56,7 @@
                             <span class="flex-grow-1">@menu.Nombre</span>
                             <i class="bi @(_expanded.Contains(menu.Id) ? "bi-chevron-up" : "bi-chevron-down") small opacity-75"></i>
                         </button>
+                        
 
                         @if (_expanded.Contains(menu.Id))
                         {
@@ -87,13 +90,74 @@
             }
         }
     </nav>
+
+    <div class="border-top flex-shrink-0">
+        @if (_cargandoEmpresas)
+        {
+            <div class="d-flex align-items-center gap-2 text-white small px-3 py-2 opacity-50">
+                <span class="spinner-border spinner-border-sm flex-shrink-0" role="status" aria-hidden="true"></span>
+                <span class="text-truncate">@(_empresaActualNombre ?? "Cargando...")</span>
+            </div>
+        }
+        else if (_empresas.Count > 1)
+        {
+            <div class="dropup px-3 py-2">
+                <button class="btn btn-link text-white text-decoration-none p-0 w-100 text-start d-flex align-items-center gap-2 dropdown-toggle"
+                        type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-building-fill flex-shrink-0"></i>
+                    <span class="text-truncate small flex-grow-1">@_empresaActualNombre</span>
+                </button>
+                <ul class="dropdown-menu">
+                    <li><h6 class="dropdown-header">Cambiar empresa</h6></li>
+                    @foreach (var empresa in _empresas)
+                    {
+                        <li>
+                            <button class="dropdown-item @(empresa.Id == _empresaActualId ? "active" : "")"
+                                    @onclick="() => CambiarEmpresaAsync(empresa.Id)"
+                                    disabled="@(empresa.Id == _empresaActualId)">
+                                <i class="bi bi-building me-2"></i>@empresa.Nombre
+                            </button>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+        else if (_empresaActualNombre is not null)
+        {
+            <div class="d-flex align-items-center gap-2 text-white small px-3 py-2 opacity-75">
+                <i class="bi bi-building-fill flex-shrink-0"></i>
+                <span class="text-truncate">@_empresaActualNombre</span>
+            </div>
+        }
+    </div>
 </div>
 
 @code {
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
+
     private ICollection<MenuResponse>? _menus;
     private readonly HashSet<int> _expanded = [];
 
+    private int? _empresaActualId;
+    private string? _empresaActualNombre;
+    private List<EmpresaItem> _empresas = [];
+    private bool _cargandoEmpresas = true;
+
     protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthStateTask;
+        var empresaIdStr = state.User.FindFirst("empresa_id")?.Value;
+        if (int.TryParse(empresaIdStr, out var eid))
+            _empresaActualId = eid;
+
+        // El nombre viene en el claim — disponible antes de cualquier llamada HTTP
+        _empresaActualNombre = state.User.FindFirst("empresa_nombre")?.Value;
+
+        await Task.WhenAll(CargarMenusAsync(), CargarEmpresasAsync());
+    }
+
+    private async Task CargarMenusAsync()
     {
         try
         {
@@ -104,6 +168,39 @@
         {
             _menus = [];
         }
+    }
+
+    private async Task CargarEmpresasAsync()
+    {
+        try
+        {
+            var empresas = await Http.GetFromJsonAsync<List<EmpresaItem>>("api/empresas/mis-empresas");
+            if (empresas is { Count: > 0 })
+            {
+                _empresas = empresas;
+                _empresaActualNombre = _empresas.FirstOrDefault(e => e.Id == _empresaActualId)?.Nombre
+                                    ?? _empresas.FirstOrDefault()?.Nombre;
+            }
+        }
+        catch { /* no interrumpir la navegación si falla */ }
+        finally { _cargandoEmpresas = false; }
+    }
+
+    private async Task CambiarEmpresaAsync(int empresaId)
+    {
+        if (empresaId == _empresaActualId) return;
+
+        _cargandoEmpresas = true; // Blazor renderiza el spinner en el primer await
+
+        try
+        {
+            var content = new FormUrlEncodedContent(
+                new[] { new KeyValuePair<string, string>(key: "empresaId", empresaId.ToString()) });
+            var response = await Http.PostAsync("bff/cambiar-empresa", content);
+            if (response.IsSuccessStatusCode)
+                Nav.NavigateTo("/", forceLoad: true);
+        }
+        catch { _cargandoEmpresas = false; /* ignorar errores de red */ }
     }
 
     private void AutoExpandActive()
@@ -122,4 +219,6 @@
         if (!_expanded.Remove(id))
             _expanded.Add(id);
     }
+
+    private sealed record EmpresaItem(int Id, string Nombre, string? Cif, bool Activo);
 }

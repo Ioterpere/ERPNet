@@ -1,3 +1,4 @@
+using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Domain.Repositories;
 using ERPNet.Infrastructure.Database.Context;
 using ERPNet.Domain.Enums;
@@ -6,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ERPNet.Infrastructure.Database.Repositories;
 
-public class MenuRepository(ERPNetDbContext context) : Repository<Menu>(context), IMenuRepository
+public class MenuRepository(ERPNetDbContext context, ICurrentUserProvider currentUser) : Repository<Menu>(context, currentUser), IMenuRepository
 {
     public async Task<List<Menu>> GetMenusVisiblesAsync(Plataforma plataforma, List<int> rolIds)
     {

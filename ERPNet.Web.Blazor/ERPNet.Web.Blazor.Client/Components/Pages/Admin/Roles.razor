@@ -224,61 +224,95 @@
                                     <i class="bi bi-people text-primary"></i>
                                     <span class="fw-semibold">Usuarios del rol</span>
                                 </div>
-                                @if (_usuariosEdit.Count > 0)
+                                @if (_asignacionesUsuario.Count > 0)
                                 {
-                                    <span class="badge bg-primary-subtle text-primary-emphasis">@_usuariosEdit.Count</span>
+                                    <span class="badge bg-primary-subtle text-primary-emphasis">@_asignacionesUsuario.Count</span>
                                 }
                             </div>
-                            <div class="card-body">
-
-                                <!-- Añadir usuario -->
-                                <div class="d-flex gap-2 mb-3">
-                                    <div class="flex-grow-1" style="max-width:400px">
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-sm align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="small ps-3">Usuario</th>
+                                                <th class="small">Empresa</th>
+                                                <th style="width:40px"></th>
+                                                <th style="width:40px"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @if (_asignacionesUsuario.Count == 0)
+                                            {
+                                                <tr>
+                                                    <td colspan="4" class="text-center text-muted py-4 small">
+                                                        <i class="bi bi-person-x d-block fs-4 mb-1"></i>
+                                                        Sin usuarios asignados
+                                                    </td>
+                                                </tr>
+                                            }
+                                            else
+                                            {
+                                                @foreach (var a in _asignacionesUsuario)
+                                                {
+                                                    var email = _usuariosPorId.TryGetValue(a.UsuarioId, out var u) ? u.Email : a.UsuarioId.ToString();
+                                                    var empresa = a.EmpresaId is null
+                                                        ? "Global"
+                                                        : (_todasEmpresas.FirstOrDefault(e => e.Id == a.EmpresaId)?.Nombre ?? a.EmpresaId.ToString());
+                                                    <tr>
+                                                        <td class="ps-3 small fw-semibold">@email</td>
+                                                        <td class="small text-muted">
+                                                            @if (a.EmpresaId is null)
+                                                            {
+                                                                <span class="badge bg-secondary-subtle text-secondary-emphasis">Global</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                @empresa
+                                                            }
+                                                        </td>
+                                                        <td>
+                                                            <a href="/usuarios?id=@a.UsuarioId" class="btn btn-sm btn-outline-secondary p-1 lh-1">
+                                                                <i class="bi bi-arrow-up-right-square"></i>
+                                                            </a>
+                                                        </td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger p-1 lh-1"
+                                                                    @onclick="() => EliminarAsignacionUsuario(a.UsuarioId, a.EmpresaId)">
+                                                                <i class="bi bi-x-lg"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <!-- Fila de añadir fuera del table-responsive para que el dropdown no quede recortado -->
+                                <div class="d-flex align-items-center gap-2 px-3 py-2 border-top bg-light">
+                                    <div class="flex-grow-1" style="min-width:0">
                                         <ItemSelector TItem="UsuarioResponse"
-                                                      @key="_selectorKey"
+                                                      @key="_selectorKeyUsuario"
                                                       SearchAsync="BuscarUsuariosAsync"
                                                       GetId="u => u.Id"
                                                       GetLabel="u => u.Email"
                                                       GetSubLabel='u => u.Activo ? "Activo" : "Inactivo"'
-                                                      Value="_usuarioParaAnadirId"
-                                                      ValueChanged="id => _usuarioParaAnadirId = id"
-                                                      Placeholder="Buscar usuario por email..." />
+                                                      Value="_addUsuarioId"
+                                                      ValueChanged="id => _addUsuarioId = id"
+                                                      Placeholder="Buscar usuario..." />
                                     </div>
-                                    <button class="btn btn-sm btn-outline-primary" @onclick="AñadirUsuario"
-                                            disabled="@(_usuarioParaAnadirId is null)">
-                                        <i class="bi bi-plus-lg me-1"></i>Añadir
+                                    <select class="form-select form-select-sm flex-shrink-0" style="width:160px" @bind="_addEmpresaStr">
+                                        <option value="">Global</option>
+                                        @foreach (var e in _todasEmpresas)
+                                        {
+                                            <option value="@e.Id">@e.Nombre</option>
+                                        }
+                                    </select>
+                                    <button type="button" class="btn btn-sm btn-outline-primary flex-shrink-0 p-1 lh-1"
+                                            @onclick="AñadirAsignacionUsuario"
+                                            disabled="@(_addUsuarioId is null)">
+                                        <i class="bi bi-plus-lg"></i>
                                     </button>
                                 </div>
-
-                                <!-- Lista de usuarios -->
-                                @if (_usuariosEdit.Count == 0)
-                                {
-                                    <div class="text-center text-muted py-4 small">
-                                        <i class="bi bi-person-x fs-4 d-block mb-1"></i>
-                                        Sin usuarios asignados
-                                    </div>
-                                }
-                                else
-                                {
-                                    @foreach (var u in _usuariosEdit)
-                                    {
-                                        <div class="d-flex align-items-center gap-3 py-2 border-bottom">
-                                            <div class="user-avatar flex-shrink-0">
-                                                @(u.Email.Length > 0 ? char.ToUpper(u.Email[0]).ToString() : "?")
-                                            </div>
-                                            <div class="flex-grow-1 overflow-hidden">
-                                                <div class="small fw-semibold text-truncate">@u.Email</div>
-                                            </div>
-                                            <a href="/usuarios?id=@u.Id" class="btn btn-sm btn-outline-secondary flex-shrink-0">
-                                                <i class="bi bi-arrow-up-right-square"></i>
-                                            </a>
-                                            <button type="button" class="btn btn-sm btn-outline-danger flex-shrink-0"
-                                                    @onclick="() => QuitarUsuario(u)">
-                                                <i class="bi bi-x-lg"></i>
-                                            </button>
-                                        </div>
-                                    }
-                                }
                             </div>
                         </div>
                     }

@@ -11,7 +11,7 @@ public class RolRepositoryTests : RepositoryTestBase
 
     public RolRepositoryTests()
     {
-        _sut = new RolRepository(Context);
+        _sut = new RolRepository(Context, CurrentUser);
     }
 
     private static Rol CrearRol(int id, string nombre) => new()
@@ -63,11 +63,11 @@ public class RolRepositoryTests : RepositoryTestBase
     [Fact(DisplayName = "GetUsuarioIdsPorRol: devuelve usuarios del rol")]
     public async Task GetUsuarioIdsPorRol_DevuelveUsuarios()
     {
-        var seccion = new Seccion { Id = 1, Nombre = "IT" };
+        var seccion = new Seccion { Id = 1, Nombre = "IT", EmpresaId = 1 };
         Context.Secciones.Add(seccion);
 
-        var emp1 = new Empleado { Id = 1, Nombre = "E1", Apellidos = "A1", DNI = Dni.From("00000001R"), SeccionId = 1 };
-        var emp2 = new Empleado { Id = 2, Nombre = "E2", Apellidos = "A2", DNI = Dni.From("00000002W"), SeccionId = 1 };
+        var emp1 = new Empleado { Id = 1, Nombre = "E1", Apellidos = "A1", DNI = Dni.From("00000001R"), SeccionId = 1, EmpresaId = 1 };
+        var emp2 = new Empleado { Id = 2, Nombre = "E2", Apellidos = "A2", DNI = Dni.From("00000002W"), SeccionId = 1, EmpresaId = 1 };
         Context.Empleados.AddRange(emp1, emp2);
 
         var u1 = new Usuario { Id = 1, Email = Email.From("u1@t.com"), PasswordHash = "h", EmpleadoId = 1 };
@@ -82,7 +82,7 @@ public class RolRepositoryTests : RepositoryTestBase
             new RolUsuario { UsuarioId = 2, RolId = 1 });
         await SaveAndClearAsync();
 
-        var result = _sut.GetUsuarioIdsPorRol(1);
+        var result = await _sut.GetUsuarioIdsPorRolAsync(1);
 
         Assert.Equal(2, result.Count);
         Assert.Contains(1, result);
@@ -95,7 +95,7 @@ public class RolRepositoryTests : RepositoryTestBase
         Context.Roles.Add(CrearRol(1, "Vacio"));
         await SaveAndClearAsync();
 
-        var result = _sut.GetUsuarioIdsPorRol(1);
+        var result = await _sut.GetUsuarioIdsPorRolAsync(1);
 
         Assert.Empty(result);
     }

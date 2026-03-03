@@ -22,8 +22,7 @@
                 <span class="input-group-text bg-transparent border-end-0">
                     <i class="bi bi-search text-muted"></i>
                 </span>
-                <input type="search" class="form-control border-start-0 ps-0"
-                       placeholder="Buscar por email..."
+                <input type="search" class="form-control border-start-0 ps-0" placeholder="Buscar por email..."
                        @bind-value="_busqueda" @bind-value:event="oninput" />
             </div>
         </div>
@@ -51,8 +50,7 @@
             {
                 @foreach (var u in _usuariosFiltrados)
                 {
-                    <button type="button"
-                            class="user-row  w-100 text-start @(Id == u.Id ? "active" : "")"
+                    <button type="button" class="user-row  w-100 text-start @(Id == u.Id ? "active" : "")"
                             @onclick="() => SeleccionarItem(u.Id)">
                         <div class="d-flex align-items-center gap-2">
                             <div class="fw-semibold text-truncate small flex-grow-1">@u.Email</div>
@@ -76,8 +74,7 @@
             <div class="px-3 py-2 border-top d-flex align-items-center justify-content-between flex-shrink-0 small text-muted">
                 <span>@PaginacionTexto</span>
                 <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-secondary" @onclick="PaginaAnterior"
-                            disabled="@(_pagina <= 1)">
+                    <button class="btn btn-outline-secondary" @onclick="PaginaAnterior" disabled="@(_pagina <= 1)">
                         <i class="bi bi-chevron-left"></i>
                     </button>
                     <button class="btn btn-outline-secondary" @onclick="PaginaSiguiente"
@@ -136,19 +133,16 @@
                             </div>
                             <div class="col-sm-6">
                                 <label class="form-label">Empleado <span class="text-danger">*</span></label>
-                                <ItemSelector TItem="EmpleadoResponse"
-                                                 SearchAsync="BuscarEmpleadosAsync"
-                                                 GetId="e => e.Id"
-                                                 GetLabel='e => $"{e.Nombre} {e.Apellidos}"'
-                                                 GetSubLabel="e => e.Dni"
-                                                 Value="_nuevoEmpleadoId"
-                                                 ValueChanged="id => _nuevoEmpleadoId = id"
-                                                 Placeholder="Buscar por nombre o DNI..." />
+                                <ItemSelector TItem="EmpleadoResponse" SearchAsync="BuscarEmpleadosAsync" GetId="e => e.Id"
+                                              GetLabel='e => $"{e.Nombre} {e.Apellidos}"' GetSubLabel="e => e.Dni"
+                                              Value="_nuevoEmpleadoId" ValueChanged="id => _nuevoEmpleadoId = id"
+                                              Placeholder="Buscar por nombre o DNI..." />
                             </div>
                             <div class="col-12">
                                 <p class="text-muted small mb-0">
                                     <i class="bi bi-info-circle me-1"></i>
-                                    Se generará una contraseña temporal y se enviará al usuario por email. Deberá cambiarla en su primer acceso.
+                                    Se generará una contraseña temporal y se enviará al usuario por email. Deberá cambiarla
+                                    en su primer acceso.
                                 </p>
                             </div>
                         </div>
@@ -210,178 +204,262 @@
         {
             <!-- Formulario de edición -->
             <div class="detail-content">
-            <div class="px-4 py-4">
+                <div class="px-4 py-4">
 
-                <!-- Header de detalle -->
-                <div class="d-flex align-items-center gap-3 mb-4">
-                    <button class="btn btn-sm btn-light d-lg-none" @onclick="VolverALista">
-                        <i class="bi bi-arrow-left"></i>
-                    </button>
+                    <!-- Header de detalle -->
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <button class="btn btn-sm btn-light d-lg-none" @onclick="VolverALista">
+                            <i class="bi bi-arrow-left"></i>
+                        </button>
 
-                    @if (_cargandoDetalle)
-                    {
-                        <div class="d-flex align-items-center gap-3 placeholder-glow flex-grow-1">
-                            <div>
-                                <span class="placeholder d-block mb-1" style="height:14px;width:160px"></span>
-                                <span class="placeholder" style="height:11px;width:120px"></span>
+                        @if (_cargandoDetalle)
+                        {
+                            <div class="d-flex align-items-center gap-3 placeholder-glow flex-grow-1">
+                                <div>
+                                    <span class="placeholder d-block mb-1" style="height:14px;width:160px"></span>
+                                    <span class="placeholder" style="height:11px;width:120px"></span>
+                                </div>
                             </div>
-                        </div>
-                    }
-                    else if (_usuarioDetalle is not null)
-                    {
-                        <div class="flex-grow-1 overflow-hidden">
-                            <h5 class="mb-0 fw-semibold text-truncate">
-                                @if (_empleadoDetalle is not null)
-                                {
-                                    @($"{_empleadoDetalle.Nombre} {_empleadoDetalle.Apellidos}")
-                                }
-                                else
-                                {
-                                    <span>Usuario #@_usuarioDetalle.Id</span>
-                                }
-                            </h5>
-                            <p class="text-muted small mb-0 text-truncate">@_usuarioDetalle.Email</p>
-                        </div>
-                        <span class="badge rounded-pill flex-shrink-0 @(_usuarioDetalle.Activo ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")">
-                            @(_usuarioDetalle.Activo ? "Activo" : "Inactivo")
-                        </span>
-                    }
-                </div>
-
-                @if (_errorDetalle is not null)
-                {
-                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
-                        <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
-                        <span>@_errorDetalle</span>
+                        }
+                        else if (_usuarioDetalle is not null)
+                        {
+                            <div class="flex-grow-1 overflow-hidden">
+                                <h5 class="mb-0 fw-semibold text-truncate">
+                                    @if (_empleadoDetalle is not null)
+                                    {
+                                        @($"{_empleadoDetalle.Nombre} {_empleadoDetalle.Apellidos}")
+                                    }
+                                    else
+                                    {
+                                        <span>Usuario #@_usuarioDetalle.Id</span>
+                                    }
+                                </h5>
+                                <p class="text-muted small mb-0 text-truncate">@_usuarioDetalle.Email</p>
+                            </div>
+                            <span
+                                class="badge rounded-pill flex-shrink-0 @(_usuarioDetalle.Activo ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")">
+                                @(_usuarioDetalle.Activo ? "Activo" : "Inactivo")
+                            </span>
+                        }
                     </div>
-                }
 
-                @if (!_cargandoDetalle && _usuarioDetalle is not null)
-                {
-                    <!-- Nav tabs -->
-                    <ul class="nav nav-tabs mb-3">
-                        <li class="nav-item">
-                            <button class="nav-link @(_tabActiva == "datos" ? "active" : "")"
-                                    @onclick='() => _tabActiva = "datos"'>
-                                <i class="bi bi-person-circle me-1"></i>Datos
-                            </button>
-                        </li>
-                        <li class="nav-item">
-                            <button class="nav-link @(_tabActiva == "roles" ? "active" : "")"
-                                    @onclick='() => _tabActiva = "roles"'>
-                                <i class="bi bi-shield me-1"></i>Roles
-                            </button>
-                        </li>
-                    </ul>
-
-                    <!-- ── Tab: Datos ─────────────────────────────── -->
-                    @if (_tabActiva == "datos")
+                    @if (_errorDetalle is not null)
                     {
-                        <div class="card mb-3">
-                            <div class="card-header d-flex align-items-center gap-2">
-                                <i class="bi bi-person-circle text-primary"></i>
-                                <span class="fw-semibold">Datos de cuenta</span>
-                            </div>
-                            <div class="card-body py-4">
-                                <div class="row g-3">
-                                    <div class="col-sm-6">
-                                        <label class="form-label">Email</label>
-                                        <input type="email" class="form-control" @bind="_editEmail" />
-                                    </div>
-                                    <div class="col-sm-6">
-                                        <label class="form-label">Caducidad de contraseña</label>
-                                        <input type="date" class="form-control" @bind="_editCaducidadDate" />
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input" type="checkbox" id="activo-usuario-switch" @bind="_editActivo" />
-                                            <label class="form-check-label" for="activo-usuario-switch">Usuario activo</label>
+                        <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+                            <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                            <span>@_errorDetalle</span>
+                        </div>
+                    }
+
+                    @if (!_cargandoDetalle && _usuarioDetalle is not null)
+                    {
+                        <!-- Nav tabs -->
+                        <ul class="nav nav-tabs mb-3">
+                            <li class="nav-item">
+                                <button class="nav-link @(_tabActiva == "datos" ? "active" : "")"
+                                        @onclick='() => _tabActiva = "datos"'>
+                                    <i class="bi bi-person-circle me-1"></i>Datos
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link @(_tabActiva == "empresas" ? "active" : "")"
+                                        @onclick='() => _tabActiva = "empresas"'>
+                                    <i class="bi bi-building me-1"></i>Empresas
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link @(_tabActiva == "roles" ? "active" : "")"
+                                        @onclick='() => _tabActiva = "roles"'>
+                                    <i class="bi bi-shield me-1"></i>Roles
+                                </button>
+                            </li>
+                        </ul>
+
+                        <!-- ── Tab: Datos ─────────────────────────────── -->
+                        @if (_tabActiva == "datos")
+                        {
+                            <div class="card mb-3">
+                                <div class="card-header d-flex align-items-center gap-2">
+                                    <i class="bi bi-person-circle text-primary"></i>
+                                    <span class="fw-semibold">Datos de cuenta</span>
+                                </div>
+                                <div class="card-body py-4">
+                                    <div class="row g-3">
+                                        <div class="col-sm-6">
+                                            <label class="form-label">Email</label>
+                                            <input type="email" class="form-control" @bind="_editEmail" />
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <label class="form-label">Caducidad de contraseña</label>
+                                            <input type="date" class="form-control" @bind="_editCaducidadDate" />
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="activo-usuario-switch"
+                                                       @bind="_editActivo" />
+                                                <label class="form-check-label" for="activo-usuario-switch">Usuario activo</label>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="card mb-3">
-                            <div class="card-header d-flex align-items-center gap-2">
-                                <i class="bi bi-shield-lock-fill text-primary"></i>
-                                <span class="fw-semibold">Seguridad</span>
-                            </div>
-                            <div class="card-body py-4">
-                                @if (_errorReset is not null)
-                                {
-                                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2">
-                                        <i class="bi bi-x-circle-fill flex-shrink-0"></i>
-                                        <span>@_errorReset</span>
-                                    </div>
-                                }
-                                <p class="text-muted small mb-3">
-                                    Genera una contraseña temporal aleatoria y la envía por email al usuario. El usuario deberá cambiarla en su próximo acceso.
-                                </p>
-                                <button class="btn btn-warning btn-sm px-3" @onclick="ResetearContrasenaAsync"
-                                        disabled="@_reseteandoContrasena">
-                                    @if (_reseteandoContrasena)
+                            <div class="card mb-3">
+                                <div class="card-header d-flex align-items-center gap-2">
+                                    <i class="bi bi-shield-lock-fill text-primary"></i>
+                                    <span class="fw-semibold">Seguridad</span>
+                                </div>
+                                <div class="card-body py-4">
+                                    @if (_errorReset is not null)
                                     {
-                                        <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                                        <div class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2">
+                                            <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                                            <span>@_errorReset</span>
+                                        </div>
+                                    }
+                                    <p class="text-muted small mb-3">
+                                        Genera una contraseña temporal aleatoria y la envía por email al usuario. El usuario deberá
+                                        cambiarla en su próximo acceso.
+                                    </p>
+                                    <button class="btn btn-warning btn-sm px-3" @onclick="ResetearContrasenaAsync"
+                                            disabled="@_reseteandoContrasena">
+                                        @if (_reseteandoContrasena)
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-key me-2"></i>
+                                        }
+                                        Resetear contraseña
+                                    </button>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- ── Tab: Empresas ───────────────────────────── -->
+                        else if (_tabActiva == "empresas")
+                        {
+                            <div class="card mb-3">
+                                <div class="card-header d-flex align-items-center gap-2">
+                                    <i class="bi bi-building text-primary"></i>
+                                    <span class="fw-semibold">Empresas con acceso</span>
+                                </div>
+                                <div class="card-body py-3">
+                                    @if (_todasEmpresas.Count == 0)
+                                    {
+                                        <p class="text-muted small mb-0">No hay empresas disponibles.</p>
                                     }
                                     else
                                     {
-                                        <i class="bi bi-key me-2"></i>
-                                    }
-                                    Resetear contraseña
-                                </button>
-                            </div>
-                        </div>
-                    }
-
-                    <!-- ── Tab: Roles ──────────────────────────────── -->
-                    else if (_tabActiva == "roles")
-                    {
-                        <div class="card mb-3">
-                            <div class="card-header d-flex align-items-center gap-2">
-                                <i class="bi bi-shield-person text-primary"></i>
-                                <span class="fw-semibold">Roles asignados</span>
-                            </div>
-                            <div class="card-body py-3">
-                                @if (_todosRoles.Count == 0)
-                                {
-                                    <p class="text-muted small mb-0">No hay roles disponibles.</p>
-                                }
-                                else
-                                {
-                                    <div class="row g-2">
-                                        @foreach (var rol in _todosRoles)
-                                        {
-                                            <div class="col-sm-6 col-lg-4">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="rol-@rol.Id"
-                                                           checked="@_rolesUsuario.Contains(rol.Id)"
-                                                           @onchange="e => ToggleRol(rol.Id, (bool)e.Value!)" />
-                                                    <label class="form-check-label" for="rol-@rol.Id">
-                                                        <span class="fw-semibold small">@rol.Nombre</span>
-                                                        @if (!string.IsNullOrWhiteSpace(rol.Descripcion))
-                                                        {
-                                                            <span class="d-block text-muted" style="font-size:.75rem">@rol.Descripcion</span>
-                                                        }
-                                                    </label>
+                                        <div class="row g-2">
+                                            @foreach (var empresa in _todasEmpresas)
+                                            {
+                                                <div class="col-sm-6 col-lg-4">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="empresa-@empresa.Id"
+                                                               checked="@_empresasUsuario.Contains(empresa.Id)"
+                                                               @onchange="e => ToggleEmpresa(empresa.Id, (bool)e.Value!)" />
+                                                        <label class="form-check-label" for="empresa-@empresa.Id">
+                                                            <span class="fw-semibold small">@empresa.Nombre</span>
+                                                            @if (!string.IsNullOrWhiteSpace(empresa.Cif))
+                                                            {
+                                                                <span class="d-block text-muted" style="font-size:.75rem">@empresa.Cif</span>
+                                                            }
+                                                        </label>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        }
-                                    </div>
-                                }
+                                            }
+                                        </div>
+                                    }
+                                </div>
                             </div>
-                        </div>
+                        }
+                    
+                        <!-- ── Tab: Roles ──────────────────────────────── -->
+                        else if (_tabActiva == "roles")
+                        {
+                            <div class="card mb-3">
+                                <div class="card-header d-flex align-items-center gap-2">
+                                    <i class="bi bi-shield-person text-primary"></i>
+                                    <span class="fw-semibold">Roles asignados</span>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-sm align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="small ps-3">Rol</th>
+                                                <th class="small">Empresa</th>
+                                                <th style="width:40px"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var a in _asignaciones)
+                                            {
+                                                var rolNombre = _todosRoles.FirstOrDefault(r => r.Id == a.RolId)?.Nombre ?? "–";
+                                                <tr>
+                                                    <td class="small fw-semibold ps-3">@rolNombre</td>
+                                                    <td class="small">
+                                                        @if (a.EmpresaId is null)
+                                                        {
+                                                            <span class="badge bg-secondary-subtle text-secondary-emphasis">Global</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            @(_todasEmpresas.FirstOrDefault(e => e.Id == a.EmpresaId)?.Nombre ?? "–")
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-sm btn-link text-danger p-0 lh-1"
+                                                                @onclick="() => EliminarAsignacion(a.RolId, a.EmpresaId)">
+                                                            <i class="bi bi-x-lg"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            }
+                                            <!-- Fila de añadir -->
+                                            <tr class="table-light">
+                                                <td class="ps-3">
+                                                    <select class="form-select form-select-sm" @ref="_refAddRol" @bind="_addRolStr">
+                                                        <option value="">— Rol —</option>
+                                                        @foreach (var rol in _todosRoles)
+                                                        {
+                                                            <option value="@rol.Id">@rol.Nombre</option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <select class="form-select form-select-sm" @bind="_addContexto">
+                                                        <option value="">Global</option>
+                                                        @foreach (var empresa in _todasEmpresas.Where(e =>
+                                                                                                                                                                                                                    _empresasUsuario.Contains(e.Id)))
+                                                        {
+                                                            <option value="@empresa.Id">@empresa.Nombre</option>
+                                                        }
+                                                    </select>
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-sm btn-outline-primary p-1 lh-1"
+                                                            @onclick="AñadirAsignacion" disabled="@(string.IsNullOrEmpty(_addRolStr))">
+                                                        <i class="bi bi-plus-lg"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        }
+
                     }
-                }
-            </div>
+                </div>
             </div>
 
             <!-- ── Toolbar de acciones ─────────────────────────── -->
             @if (!_cargandoDetalle && _usuarioDetalle is not null)
             {
                 <div class="detail-toolbar">
-                    <button class="btn btn-outline-danger me-auto"
-                            @onclick="AbrirModalEliminar">
+                    <button class="btn btn-outline-danger me-auto" @onclick="AbrirModalEliminar">
                         <i class="bi bi-trash3 me-1"></i>Eliminar usuario
                     </button>
                     @if (_tabActiva == "datos")
@@ -392,8 +470,7 @@
                                 <i class="bi bi-x-circle-fill"></i>@_errorDatos
                             </span>
                         }
-                        <button class="btn btn-primary" @onclick="GuardarDatosAsync"
-                                disabled="@_guardandoDatos">
+                        <button class="btn btn-primary" @onclick="GuardarDatosAsync" disabled="@_guardandoDatos">
                             @if (_guardandoDatos)
                             {
                                 <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
@@ -409,13 +486,28 @@
                                 <i class="bi bi-x-circle-fill"></i>@_errorRoles
                             </span>
                         }
-                        <button class="btn btn-primary" @onclick="GuardarRolesAsync"
-                                disabled="@_guardandoRoles">
+                        <button class="btn btn-primary" @onclick="GuardarRolesAsync" disabled="@_guardandoRoles">
                             @if (_guardandoRoles)
                             {
                                 <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
                             }
                             Guardar roles
+                        </button>
+                    }
+                    else if (_tabActiva == "empresas")
+                    {
+                        @if (_errorEmpresas is not null)
+                        {
+                            <span class="text-danger small me-auto d-flex align-items-center gap-1">
+                                <i class="bi bi-x-circle-fill"></i>@_errorEmpresas
+                            </span>
+                        }
+                        <button class="btn btn-primary" @onclick="GuardarEmpresasAsync" disabled="@_guardandoEmpresas">
+                            @if (_guardandoEmpresas)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                            }
+                            Guardar empresas
                         </button>
                     }
                 </div>
@@ -438,8 +530,7 @@
         }
     </ChildContent>
     <Footer>
-        <button class="btn btn-outline-secondary"
-                @onclick='() => _mostrarModalEliminar = false'>Cancelar</button>
+        <button class="btn btn-outline-secondary" @onclick='() => _mostrarModalEliminar = false'>Cancelar</button>
         <button class="btn btn-danger" @ref="_refBtnEliminar" @onclick="EliminarUsuarioAsync" disabled="@_eliminando">
             @if (_eliminando)
             {

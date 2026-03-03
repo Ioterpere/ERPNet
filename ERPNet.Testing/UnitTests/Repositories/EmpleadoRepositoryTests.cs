@@ -20,15 +20,15 @@ public class EmpleadoRepositoryTests : RepositoryTestBase
 
     public EmpleadoRepositoryTests()
     {
-        _sut = new EmpleadoRepository(Context);
+        _sut = new EmpleadoRepository(Context, CurrentUser);
         SeedSeccion();
     }
 
     private void SeedSeccion()
     {
         Context.Secciones.AddRange(
-            new Seccion { Id = 1, Nombre = "IT" },
-            new Seccion { Id = 2, Nombre = "RRHH" });
+            new Seccion { Id = 1, Nombre = "IT", EmpresaId = 1 },
+            new Seccion { Id = 2, Nombre = "RRHH", EmpresaId = 1 });
         Context.SaveChanges();
         Context.ChangeTracker.Clear();
     }
@@ -41,6 +41,7 @@ public class EmpleadoRepositoryTests : RepositoryTestBase
         DNI = Dni.From(dni),
         Activo = true,
         SeccionId = seccionId,
+        EmpresaId = 1,
         IsDeleted = deleted,
         EncargadoId = encargadoId
     };

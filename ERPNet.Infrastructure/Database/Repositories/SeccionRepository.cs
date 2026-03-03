@@ -1,3 +1,4 @@
+using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Domain.Entities;
 using ERPNet.Domain.Repositories;
 using ERPNet.Infrastructure.Database.Context;
@@ -5,10 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ERPNet.Infrastructure.Database.Repositories;
 
-public class SeccionRepository(ERPNetDbContext context) : Repository<Seccion>(context), ISeccionRepository
+public class SeccionRepository(ERPNetDbContext context, ICurrentUserProvider currentUser)
+    : Repository<Seccion>(context, currentUser), ISeccionRepository
 {
     public override async Task<List<Seccion>> GetAllAsync()
-        => await Context.Set<Seccion>()
-            .OrderBy(s => s.Nombre)
-            .ToListAsync();
+        => await Query.OrderBy(s => s.Nombre).ToListAsync();
 }

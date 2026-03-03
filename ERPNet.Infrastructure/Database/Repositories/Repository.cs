@@ -1,3 +1,4 @@
+using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Domain.Common;
 using ERPNet.Domain.Filters;
 using ERPNet.Domain.Repositories;
@@ -6,19 +7,36 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ERPNet.Infrastructure.Database.Repositories;
 
-public abstract class Repository<T>(ERPNetDbContext context) : IRepository<T> where T : BaseEntity
+public abstract class Repository<T>(ERPNetDbContext context, ICurrentUserProvider currentUser)
+    : IRepository<T> where T : BaseEntity
 {
     protected ERPNetDbContext Context => context;
+    protected DbSet<T> DbSet => context.Set<T>();
+
+    /// <summary>
+    /// IQueryable base con el filtro de empresa aplicado automáticamente
+    /// para entidades que implementen IPerteneceEmpresa.
+    /// </summary>
+    protected IQueryable<T> Query
+    {
+        get
+        {
+            if (typeof(IPerteneceEmpresa).IsAssignableFrom(typeof(T))
+                && currentUser.Current?.EmpresaId is int empresaId)
+                return DbSet.Where(e => ((IPerteneceEmpresa)e).EmpresaId == empresaId);
+            return DbSet;
+        }
+    }
 
     public virtual async Task<T?> GetByIdAsync(int id)
-        => await context.Set<T>().FirstOrDefaultAsync(e => e.Id == id);
+        => await Query.FirstOrDefaultAsync(e => e.Id == id);
 
     public virtual async Task<List<T>> GetAllAsync()
-        => await context.Set<T>().ToListAsync();
+        => await Query.ToListAsync();
 
     public virtual async Task<(List<T> Items, int TotalRegistros)> GetPaginatedAsync(PaginacionFilter filtro)
     {
-        var query = context.Set<T>().AsQueryable();
+        var query = Query;
         var total = await query.CountAsync();
         var items = await query
             .OrderByDescending(e => e.Id)
@@ -31,7 +49,7 @@ public abstract class Repository<T>(ERPNetDbContext context) : IRepository<T> wh
 
     public virtual async Task<T> CreateAsync(T entity)
     {
-        await context.Set<T>().AddAsync(entity);
+        await DbSet.AddAsync(entity);
         return entity;
     }
 

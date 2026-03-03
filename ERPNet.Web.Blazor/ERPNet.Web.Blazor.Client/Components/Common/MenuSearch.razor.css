@@ -1,0 +1,18 @@
+/* ── ItemSelector: estilos oscuros para la top-row ───────── */
+.menu-search ::deep .form-control {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: var(--bs-border-radius) !important;
+    color: white !important;
+    transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.menu-search ::deep .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.menu-search ::deep .form-control:focus {
+    background: rgba(255, 255, 255, 0.22) !important;
+    border-color: rgba(255, 255, 255, 0.45) !important;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08) !important;
+}

@@ -60,7 +60,7 @@ public class RolService(
 
         request.ApplyTo(rol);
         await unitOfWork.SaveChangesAsync();
-        InvalidarCacheUsuarios(id);
+        await InvalidarCacheUsuariosAsync(id);
 
         return Result.Success();
     }
@@ -74,7 +74,7 @@ public class RolService(
 
         rolRepository.Delete(rol);
         await unitOfWork.SaveChangesAsync();
-        InvalidarCacheUsuarios(id);
+        await InvalidarCacheUsuariosAsync(id);
 
         return Result.Success();
     }
@@ -116,40 +116,46 @@ public class RolService(
 
         await rolRepository.SincronizarPermisosAsync(rolId, nuevos);
         await unitOfWork.SaveChangesAsync();
-        InvalidarCacheUsuarios(rolId);
+        await InvalidarCacheUsuariosAsync(rolId);
 
         return Result.Success();
     }
 
-    public async Task<Result<IEnumerable<UsuarioResponse>>> GetUsuariosAsync(int rolId)
+    public async Task<Result<List<AsignacionUsuarioDto>>> GetTodasAsignacionesUsuarioAsync(int rolId)
     {
         var rol = await rolRepository.GetByIdAsync(rolId);
 
         if (rol is null)
-            return Result<IEnumerable<UsuarioResponse>>.Failure("Rol no encontrado.", ErrorType.NotFound);
+            return Result<List<AsignacionUsuarioDto>>.Failure("Rol no encontrado.", ErrorType.NotFound);
 
-        var usuarios = await rolRepository.GetUsuariosAsync(rolId);
-        return Result<IEnumerable<UsuarioResponse>>.Success(usuarios.Select(u => u.ToResponse()));
+        var asignaciones = await rolRepository.GetTodasAsignacionesUsuarioAsync(rolId);
+        return Result<List<AsignacionUsuarioDto>>.Success(
+            asignaciones.Select(a => new AsignacionUsuarioDto { UsuarioId = a.UsuarioId, EmpresaId = a.EmpresaId }).ToList());
     }
 
-    public async Task<Result> SetUsuariosAsync(int rolId, AsignarUsuariosRequest request)
+    public async Task<Result> SincronizarTodasAsignacionesUsuarioAsync(int rolId, List<AsignacionUsuarioDto> asignaciones)
     {
         var rol = await rolRepository.GetByIdAsync(rolId);
 
         if (rol is null)
             return Result.Failure("Rol no encontrado.", ErrorType.NotFound);
 
-        await rolRepository.SincronizarUsuariosAsync(rolId, request.UsuarioIds);
+        var idsAnteriores = await rolRepository.GetUsuarioIdsPorRolAsync(rolId);
+
+        await rolRepository.SincronizarTodasAsignacionesUsuarioAsync(
+            rolId, asignaciones.Select(a => (a.UsuarioId, a.EmpresaId)).ToList());
         await unitOfWork.SaveChangesAsync();
-        InvalidarCacheUsuarios(rolId);
+
+        foreach (var uid in idsAnteriores.Union(asignaciones.Select(a => a.UsuarioId)))
+            cache.RemoveByPrefix($"usuario:{uid}:");
 
         return Result.Success();
     }
 
-    private void InvalidarCacheUsuarios(int rolId)
+    private async Task InvalidarCacheUsuariosAsync(int rolId)
     {
-        var usuarioIds = rolRepository.GetUsuarioIdsPorRol(rolId);
+        var usuarioIds = await rolRepository.GetUsuarioIdsPorRolAsync(rolId);
         foreach (var uid in usuarioIds)
-            cache.Remove($"usuario:{uid}");
+            cache.RemoveByPrefix($"usuario:{uid}:");
     }
 }

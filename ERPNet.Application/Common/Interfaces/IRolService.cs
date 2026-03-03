@@ -13,6 +13,6 @@ public interface IRolService
     Task<Result<IEnumerable<RecursoResponse>>> GetAllRecursosAsync();
     Task<Result<IEnumerable<PermisoRolRecursoResponse>>> GetPermisosAsync(int rolId);
     Task<Result> SetPermisosAsync(int rolId, SetPermisosRolRequest request);
-    Task<Result<IEnumerable<UsuarioResponse>>> GetUsuariosAsync(int rolId);
-    Task<Result> SetUsuariosAsync(int rolId, AsignarUsuariosRequest request);
+    Task<Result<List<AsignacionUsuarioDto>>> GetTodasAsignacionesUsuarioAsync(int rolId);
+    Task<Result> SincronizarTodasAsignacionesUsuarioAsync(int rolId, List<AsignacionUsuarioDto> asignaciones);
 }

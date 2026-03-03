@@ -17,7 +17,15 @@ public class UsuarioContextMiddleware(RequestDelegate next)
 
         if (userId is not null && int.TryParse(userId, out var id))
         {
-            var cacheKey = $"usuario:{id}";
+            // Leer empresa activa del header X-Empresa-Id
+            int? empresaId = null;
+            if (context.Request.Headers.TryGetValue("X-Empresa-Id", out var empresaHeader)
+                && int.TryParse(empresaHeader, out var parsedEmpresaId))
+            {
+                empresaId = parsedEmpresaId;
+            }
+
+            var cacheKey = $"usuario:{id}:{empresaId ?? 0}";
             var usuarioContext = cache.Get<UsuarioContext>(cacheKey);
 
             if (usuarioContext is null)
@@ -26,32 +34,54 @@ public class UsuarioContextMiddleware(RequestDelegate next)
 
                 if (usuario is not null)
                 {
-                    var permisos = usuario.RolesUsuarios
-                        .SelectMany(ru => ru.Rol.PermisosRolRecurso)
-                        .GroupBy(p => (RecursoCodigo)p.RecursoId)
-                        .Select(g => new PermisoUsuario(
-                            g.Key,
-                            g.Any(p => p.CanCreate),
-                            g.Any(p => p.CanEdit),
-                            g.Any(p => p.CanDelete),
-                            g.Max(p => p.Alcance)))
+                    var empresaIds = usuario.UsuarioEmpresas
+                        .Select(ue => ue.EmpresaId)
                         .ToList();
 
-                    var rolIds = usuario.RolesUsuarios
+                    // Validar que la empresa solicitada es accesible para el usuario
+                    if (empresaId.HasValue && !empresaIds.Contains(empresaId.Value))
+                    {
+                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                        return;
+                    }
+
+                    // Permisos = roles globales (EmpresaId == null) + roles de la empresa activa
+                    var rolesAplicables = usuario.RolesUsuarios
+                        .Where(ru => ru.EmpresaId == null || ru.EmpresaId == empresaId)
+                        .ToList();
+
+                    var permisos = rolesAplicables
+                        .SelectMany(ru => ru.Rol.PermisosRolRecurso)
+                        .GroupBy(p => (RecursoCodigo)p.RecursoId)
+                        .Select(g => new PermisoUsuario
+                        {
+                            Codigo = g.Key,
+                            CanCreate = g.Any(p => p.CanCreate),
+                            CanEdit = g.Any(p => p.CanEdit),
+                            CanDelete = g.Any(p => p.CanDelete),
+                            Alcance = g.Max(p => p.Alcance)
+                        })
+                        .ToList();
+
+                    var rolIds = rolesAplicables
                         .Select(ru => ru.RolId)
                         .ToList();
 
                     var requiereCambio = usuario.CaducidadContrasena.HasValue
                         && usuario.CaducidadContrasena.Value < DateTime.UtcNow;
 
-                    usuarioContext = new UsuarioContext(
-                        usuario.Id,
-                        usuario.Email,
-                        usuario.EmpleadoId,
-                        usuario.Empleado.SeccionId,
-                        permisos,
-                        rolIds,
-                        requiereCambio);
+                    usuarioContext = new UsuarioContext
+                    {
+                        Id = usuario.Id,
+                        Email = usuario.Email,
+                        EmpleadoId = usuario.EmpleadoId,
+                        SeccionId = usuario.Empleado?.SeccionId ?? 0,
+                        EmpresaId = empresaId,
+                        EmpresaIds = empresaIds,
+                        Permisos = permisos,
+                        RolIds = rolIds,
+                        RequiereCambioContrasena = requiereCambio
+                    };
 
                     cache.Set(cacheKey, usuarioContext);
                 }

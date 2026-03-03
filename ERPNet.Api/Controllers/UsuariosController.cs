@@ -10,7 +10,7 @@ using ERPNet.Api.Controllers.Common;
 namespace ERPNet.Api.Controllers;
 
 [Recurso(RecursoCodigo.Aplicacion)]
-public class UsuariosController(IUsuarioService usuarioService) : BaseController
+public class UsuariosController(IUsuarioService usuarioService, IEmpresaService empresaService) : BaseController
 {
     [HttpGet]
     [ProducesResponseType<ListaPaginada<UsuarioResponse>>(StatusCodes.Status200OK)]
@@ -56,13 +56,32 @@ public class UsuariosController(IUsuarioService usuarioService) : BaseController
     public async Task<IActionResult> ResetearContrasena(int id)
         => FromResult(await usuarioService.ResetearContrasenaAsync(id));
 
-    [HttpGet("{id}/roles")]
-    [ProducesResponseType<List<int>>(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetRoles(int id)
-        => FromResult(await usuarioService.GetRolesAsync(id));
-
     [HttpPut("{id}/roles")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    public async Task<IActionResult> AsignarRoles(int id, [FromBody] AsignarRolesRequest request)
-        => FromResult(await usuarioService.AsignarRolesAsync(id, request));
+    public async Task<IActionResult> AsignarRoles(int id, [FromBody] AsignarRolesRequest request, [FromQuery] int? empresaId = null)
+        => FromResult(await usuarioService.AsignarRolesAsync(id, request, empresaId));
+
+    [HttpGet("{id}/roles/todas")]
+    [ProducesResponseType<List<AsignacionRolDto>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetTodasAsignaciones(int id)
+        => FromResult(await usuarioService.GetTodasAsignacionesRolAsync(id));
+
+    [HttpPut("{id}/roles/todas")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> SincronizarTodasAsignaciones(int id, [FromBody] List<AsignacionRolDto> asignaciones)
+        => FromResult(await usuarioService.SincronizarTodasAsignacionesRolAsync(id, asignaciones));
+
+    [HttpGet("{id}/empresas")]
+    [ProducesResponseType<List<int>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetEmpresas(int id)
+    {
+        var result = await empresaService.GetEmpresasDeUsuarioAsync(id);
+        if (!result.IsSuccess) return FromResult(result);
+        return Ok(result.Value!.Select(e => e.Id).ToList());
+    }
+
+    [HttpPut("{id}/empresas")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> AsignarEmpresas(int id, [FromBody] AsignarEmpresasRequest request)
+        => FromResult(await empresaService.SincronizarEmpresasDeUsuarioAsync(id, request));
 }

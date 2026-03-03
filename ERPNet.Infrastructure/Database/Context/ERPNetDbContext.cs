@@ -33,6 +33,9 @@ public class ERPNetDbContext(DbContextOptions<ERPNetDbContext> options) : DbCont
 
     public DbSet<Archivo> Archivos => Set<Archivo>();
 
+    public DbSet<Empresa> Empresas => Set<Empresa>();
+    public DbSet<UsuarioEmpresa> UsuarioEmpresas => Set<UsuarioEmpresa>();
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         configurationBuilder.Properties<Email>()

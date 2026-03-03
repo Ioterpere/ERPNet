@@ -116,8 +116,8 @@ public class UsuarioContextMiddlewareTests
     public async Task CacheHit_NoConsultaRepo()
     {
         var httpContext = CrearHttpContext(1);
-        var cached = new UsuarioContext(1, "cached@test.com", 1, 1, [], [], false);
-        _cache.Get<UsuarioContext>("usuario:1").Returns(cached);
+        var cached = new UsuarioContext { Id = 1, Email = "cached@test.com", EmpleadoId = 1, SeccionId = 1 };
+        _cache.Get<UsuarioContext>("usuario:1:0").Returns(cached);
 
         var middleware = CrearMiddleware();
         await middleware.InvokeAsync(httpContext, _cache, _usuarioRepo);

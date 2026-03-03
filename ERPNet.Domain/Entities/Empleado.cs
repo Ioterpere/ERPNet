@@ -4,12 +4,15 @@ using ERPNet.Domain.Enums;
 
 namespace ERPNet.Domain.Entities;
 
-public class Empleado : BaseEntity, IHasArchivos<CampoArchivoEmpleado>
+public class Empleado : BaseEntity, IPerteneceEmpresa, IHasArchivos<CampoArchivoEmpleado>
 {
     public string Nombre { get; set; } = null!;
     public string Apellidos { get; set; } = null!;
     public Dni DNI { get; set; }
     public bool Activo { get; set; }
+
+    public int EmpresaId { get; set; }
+    public Empresa Empresa { get; set; } = null!;
 
     public int SeccionId { get; set; }
     public Seccion Seccion { get; set; } = null!;

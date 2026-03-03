@@ -93,8 +93,9 @@ public class ControlAccesoMiddleware(RequestDelegate next)
             return;
         }
 
-        // Dejar el Alcance resuelto para que los repositorios lo consuman
+        // Dejar el Alcance y EmpresaId resueltos para que los repositorios los consuman
         context.Items["Alcance"] = permiso.Alcance;
+        context.Items["EmpresaId"] = usuarioContext.EmpresaId;
 
         await next(context);
     }

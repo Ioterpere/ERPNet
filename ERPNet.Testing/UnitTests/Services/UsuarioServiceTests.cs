@@ -279,33 +279,6 @@ public class UsuarioServiceTests
 
     #endregion
 
-    #region GetRolesAsync
-
-    [Fact(DisplayName = "GetRoles: usuario existente devuelve rolIds")]
-    public async Task GetRoles_Existente_DevuelveRolIds()
-    {
-        _repo.GetByIdAsync(1).Returns(CrearUsuario());
-        _repo.GetRolIdsAsync(1).Returns([1, 3]);
-
-        var result = await _sut.GetRolesAsync(1);
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal(2, result.Value!.Count);
-    }
-
-    [Fact(DisplayName = "GetRoles: usuario inexistente devuelve NotFound")]
-    public async Task GetRoles_Inexistente_DevuelveNotFound()
-    {
-        _repo.GetByIdAsync(99).Returns((Usuario?)null);
-
-        var result = await _sut.GetRolesAsync(99);
-
-        Assert.False(result.IsSuccess);
-        Assert.Equal(ErrorType.NotFound, result.ErrorType);
-    }
-
-    #endregion
-
     #region AsignarRolesAsync
 
     [Fact(DisplayName = "AsignarRoles: usuario existente sincroniza roles")]
@@ -342,7 +315,7 @@ public class UsuarioServiceTests
 
         await _sut.UpdateAsync(1, new UpdateUsuarioRequest { Activo = false });
 
-        _cache.Received(1).Remove("usuario:1");
+        _cache.Received(1).RemoveByPrefix("usuario:1:");
     }
 
     [Fact(DisplayName = "Delete: invalida cache del usuario")]
@@ -352,7 +325,7 @@ public class UsuarioServiceTests
 
         await _sut.DeleteAsync(1);
 
-        _cache.Received(1).Remove("usuario:1");
+        _cache.Received(1).RemoveByPrefix("usuario:1:");
     }
 
     [Fact(DisplayName = "CambiarContrasena: invalida cache del usuario")]
@@ -367,7 +340,7 @@ public class UsuarioServiceTests
             ConfirmarContrasena = "NuevaPass1!"
         });
 
-        _cache.Received(1).Remove("usuario:1");
+        _cache.Received(1).RemoveByPrefix("usuario:1:");
     }
 
     [Fact(DisplayName = "ResetearContrasena: invalida cache del usuario")]
@@ -377,7 +350,7 @@ public class UsuarioServiceTests
 
         await _sut.ResetearContrasenaAsync(1);
 
-        _cache.Received(1).Remove("usuario:1");
+        _cache.Received(1).RemoveByPrefix("usuario:1:");
     }
 
     [Fact(DisplayName = "AsignarRoles: invalida cache del usuario")]
@@ -387,7 +360,7 @@ public class UsuarioServiceTests
 
         await _sut.AsignarRolesAsync(1, new AsignarRolesRequest { RolIds = [1, 2] });
 
-        _cache.Received(1).Remove("usuario:1");
+        _cache.Received(1).RemoveByPrefix("usuario:1:");
     }
 
     [Fact(DisplayName = "Create: no invalida cache")]

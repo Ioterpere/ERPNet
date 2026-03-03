@@ -8,6 +8,12 @@ builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddAuthenticationStateDeserialization();
 
+// HttpClient por defecto (para llamadas genéricas al BFF/proxy como el company switcher)
+builder.Services.AddScoped(sp => new HttpClient
+{
+    BaseAddress = new Uri(builder.HostEnvironment.BaseAddress)
+});
+
 // Cliente interno para llamadas BFF (refresh, etc.) — sin BffAuthRetryHandler para evitar recursión.
 builder.Services.AddHttpClient("BffInternal",
     c => c.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress));

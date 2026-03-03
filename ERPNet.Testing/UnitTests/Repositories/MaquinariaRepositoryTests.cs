@@ -12,15 +12,15 @@ public class MaquinariaRepositoryTests : RepositoryTestBase
 
     public MaquinariaRepositoryTests()
     {
-        _sut = new MaquinariaRepository(Context);
+        _sut = new MaquinariaRepository(Context, CurrentUser);
         SeedSecciones();
     }
 
     private void SeedSecciones()
     {
         Context.Secciones.AddRange(
-            new Seccion { Id = 1, Nombre = "Producción" },
-            new Seccion { Id = 2, Nombre = "Logística" });
+            new Seccion { Id = 1, Nombre = "Producción", EmpresaId = 1 },
+            new Seccion { Id = 2, Nombre = "Logística", EmpresaId = 1 });
         Context.SaveChanges();
         Context.ChangeTracker.Clear();
     }
@@ -32,6 +32,7 @@ public class MaquinariaRepositoryTests : RepositoryTestBase
         Codigo = codigo,
         Activa = true,
         SeccionId = seccionId,
+        EmpresaId = 1,
         IsDeleted = deleted
     };
 

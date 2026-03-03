@@ -45,12 +45,12 @@ public class ControlAccesoMiddlewareTests
 
     private static UsuarioContext CrearUsuarioContext(params PermisoUsuario[] permisos)
     {
-        return new UsuarioContext(1, "test@erpnet.com", 1, 1, permisos.ToList(), [], false);
+        return new UsuarioContext { Id = 1, Email = "test@erpnet.com", EmpleadoId = 1, SeccionId = 1, Permisos = permisos.ToList() };
     }
 
     private static PermisoUsuario Permiso(RecursoCodigo codigo, bool create, bool edit, bool delete, Alcance alcance)
     {
-        return new PermisoUsuario(codigo, create, edit, delete, alcance);
+        return new PermisoUsuario { Codigo = codigo, CanCreate = create, CanEdit = edit, CanDelete = delete, Alcance = alcance };
     }
 
     #region Sin control de acceso (pasa libre)
@@ -305,8 +305,12 @@ public class ControlAccesoMiddlewareTests
     public async Task ContrasenaCaducada_EndpointNormal_403()
     {
         var endpoint = CrearEndpoint(recurso: new RecursoAttribute(RecursoCodigo.Aplicacion));
-        var usuarioCtx = new UsuarioContext(1, "test@erpnet.com", 1, 1,
-            [Permiso(RecursoCodigo.Aplicacion, true, true, true, Alcance.Global)], [], true);
+        var usuarioCtx = new UsuarioContext
+        {
+            Id = 1, Email = "test@erpnet.com", EmpleadoId = 1, SeccionId = 1,
+            Permisos = [Permiso(RecursoCodigo.Aplicacion, true, true, true, Alcance.Global)],
+            RequiereCambioContrasena = true
+        };
         var context = CrearHttpContext("GET", endpoint, usuarioCtx);
         var middleware = CrearMiddleware();
 
@@ -323,7 +327,7 @@ public class ControlAccesoMiddlewareTests
             recurso: new RecursoAttribute(RecursoCodigo.Aplicacion),
             sinPermiso: new SinPermisoAttribute(),
             permitirCaducada: new PermitirContrasenaCaducadaAttribute());
-        var usuarioCtx = new UsuarioContext(1, "test@erpnet.com", 1, 1, [], [], true);
+        var usuarioCtx = new UsuarioContext { Id = 1, Email = "test@erpnet.com", EmpleadoId = 1, SeccionId = 1, RequiereCambioContrasena = true };
         var context = CrearHttpContext("PUT", endpoint, usuarioCtx);
         var middleware = CrearMiddleware();
 
@@ -338,7 +342,7 @@ public class ControlAccesoMiddlewareTests
         var endpoint = CrearEndpoint(
             recurso: new RecursoAttribute(RecursoCodigo.Aplicacion),
             sinPermiso: new SinPermisoAttribute());
-        var usuarioCtx = new UsuarioContext(1, "test@erpnet.com", 1, 1, [], [], true);
+        var usuarioCtx = new UsuarioContext { Id = 1, Email = "test@erpnet.com", EmpleadoId = 1, SeccionId = 1, RequiereCambioContrasena = true };
         var context = CrearHttpContext("GET", endpoint, usuarioCtx);
         var middleware = CrearMiddleware();
 

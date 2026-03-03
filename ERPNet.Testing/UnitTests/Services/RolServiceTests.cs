@@ -105,7 +105,7 @@ public class RolServiceTests
     {
         var rol = CrearRol();
         _repo.GetByIdAsync(1).Returns(rol);
-        _repo.GetUsuarioIdsPorRol(1).Returns([10, 20]);
+        _repo.GetUsuarioIdsPorRolAsync(1).Returns([10, 20]);
 
         var result = await _sut.UpdateAsync(1, new UpdateRolRequest { Nombre = "SuperAdmin" });
 
@@ -146,7 +146,7 @@ public class RolServiceTests
     {
         var rol = CrearRol();
         _repo.GetByIdAsync(1).Returns(rol);
-        _repo.GetUsuarioIdsPorRol(1).Returns([10]);
+        _repo.GetUsuarioIdsPorRolAsync(1).Returns([10]);
 
         var result = await _sut.DeleteAsync(1);
 
@@ -173,25 +173,25 @@ public class RolServiceTests
     public async Task Update_InvalidaCacheUsuarios()
     {
         _repo.GetByIdAsync(1).Returns(CrearRol());
-        _repo.GetUsuarioIdsPorRol(1).Returns([10, 20, 30]);
+        _repo.GetUsuarioIdsPorRolAsync(1).Returns([10, 20, 30]);
 
         await _sut.UpdateAsync(1, new UpdateRolRequest { Descripcion = "Nueva desc" });
 
-        _cache.Received(1).Remove("usuario:10");
-        _cache.Received(1).Remove("usuario:20");
-        _cache.Received(1).Remove("usuario:30");
+        _cache.Received(1).RemoveByPrefix("usuario:10:");
+        _cache.Received(1).RemoveByPrefix("usuario:20:");
+        _cache.Received(1).RemoveByPrefix("usuario:30:");
     }
 
     [Fact(DisplayName = "Delete: invalida cache de todos los usuarios del rol")]
     public async Task Delete_InvalidaCacheUsuarios()
     {
         _repo.GetByIdAsync(1).Returns(CrearRol());
-        _repo.GetUsuarioIdsPorRol(1).Returns([5, 15]);
+        _repo.GetUsuarioIdsPorRolAsync(1).Returns([5, 15]);
 
         await _sut.DeleteAsync(1);
 
-        _cache.Received(1).Remove("usuario:5");
-        _cache.Received(1).Remove("usuario:15");
+        _cache.Received(1).RemoveByPrefix("usuario:5:");
+        _cache.Received(1).RemoveByPrefix("usuario:15:");
     }
 
     [Fact(DisplayName = "Create: no invalida cache (no hay usuarios asignados)")]

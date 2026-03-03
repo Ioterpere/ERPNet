@@ -1,3 +1,4 @@
+using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Domain.Repositories;
 using ERPNet.Infrastructure.Database.Context;
 using ERPNet.Domain.Entities;
@@ -5,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ERPNet.Infrastructure.Database.Repositories;
 
-public class UsuarioRepository(ERPNetDbContext context) : Repository<Usuario>(context), IUsuarioRepository
+public class UsuarioRepository(ERPNetDbContext context, ICurrentUserProvider currentUser) : Repository<Usuario>(context, currentUser), IUsuarioRepository
 {
     public async Task<Usuario?> GetByIdConPermisosAsync(int id)
     {
@@ -14,6 +15,8 @@ public class UsuarioRepository(ERPNetDbContext context) : Repository<Usuario>(co
             .Include(u => u.RolesUsuarios)
                 .ThenInclude(ru => ru.Rol)
                     .ThenInclude(r => r.PermisosRolRecurso)
+            .Include(u => u.UsuarioEmpresas.Where(ue => !ue.IsDeleted))
+                .ThenInclude(ue => ue.Empresa)
             .FirstOrDefaultAsync(u => u.Id == id);
     }
 
@@ -51,12 +54,29 @@ public class UsuarioRepository(ERPNetDbContext context) : Repository<Usuario>(co
             .ToListAsync();
     }
 
-    public async Task<List<int>> GetRolIdsAsync(int usuarioId)
+    public async Task<List<(int RolId, int? EmpresaId)>> GetTodasAsignacionesRolAsync(int usuarioId)
     {
-        return await Context.RolesUsuarios
+        var rows = await Context.RolesUsuarios
             .Where(ru => ru.UsuarioId == usuarioId)
-            .Select(ru => ru.RolId)
+            .Select(ru => new { ru.RolId, ru.EmpresaId })
             .ToListAsync();
+        return rows.Select(r => (r.RolId, r.EmpresaId)).ToList();
+    }
+
+    public async Task SincronizarTodasAsignacionesRolAsync(int usuarioId, List<(int RolId, int? EmpresaId)> asignaciones)
+    {
+        var actuales = await Context.RolesUsuarios
+            .Where(ru => ru.UsuarioId == usuarioId)
+            .ToListAsync();
+        Context.RolesUsuarios.RemoveRange(actuales);
+
+        var nuevas = asignaciones.Select(a => new RolUsuario
+        {
+            UsuarioId = usuarioId,
+            RolId = a.RolId,
+            EmpresaId = a.EmpresaId
+        });
+        Context.RolesUsuarios.AddRange(nuevas);
     }
 
     public async Task<List<Rol>> GetRolesConNombreAsync(int usuarioId)
@@ -65,10 +85,10 @@ public class UsuarioRepository(ERPNetDbContext context) : Repository<Usuario>(co
             .Select(ru => ru.Rol)
             .ToListAsync();
 
-    public async Task SincronizarRolesAsync(int usuarioId, List<int> rolIds)
+    public async Task SincronizarRolesAsync(int usuarioId, List<int> rolIds, int? empresaId = null)
     {
         var actuales = await Context.RolesUsuarios
-            .Where(ru => ru.UsuarioId == usuarioId)
+            .Where(ru => ru.UsuarioId == usuarioId && ru.EmpresaId == empresaId)
             .ToListAsync();
 
         var aEliminar = actuales.Where(ru => !rolIds.Contains(ru.RolId));
@@ -76,7 +96,7 @@ public class UsuarioRepository(ERPNetDbContext context) : Repository<Usuario>(co
 
         var existentes = actuales.Select(ru => ru.RolId).ToHashSet();
         var aCrear = rolIds.Where(id => !existentes.Contains(id))
-            .Select(id => new RolUsuario { UsuarioId = usuarioId, RolId = id });
+            .Select(id => new RolUsuario { UsuarioId = usuarioId, RolId = id, EmpresaId = empresaId });
         Context.RolesUsuarios.AddRange(aCrear);
     }
 }

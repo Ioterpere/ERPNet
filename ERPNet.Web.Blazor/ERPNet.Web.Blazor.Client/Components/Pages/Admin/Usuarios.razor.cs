@@ -1,5 +1,6 @@
 using ERPNet.ApiClient;
 using Microsoft.AspNetCore.Components;
+using System.Net.Http.Json;
 
 namespace ERPNet.Web.Blazor.Client.Components.Pages.Admin;
 
@@ -8,6 +9,8 @@ public partial class Usuarios
     [Inject] private IUsuariosClient UsuariosClient { get; set; } = default!;
     [Inject] private IEmpleadosClient EmpleadosClient { get; set; } = default!;
     [Inject] private IRolesClient RolesClient { get; set; } = default!;
+    [Inject] private IEmpresasClient EmpresasClient { get; set; } = default!;
+    [Inject] private HttpClient Http { get; set; } = default!;
 
     // ── Paginación ─────────────────────────────────────────────
     protected override int? TotalPaginas => _paginado?.TotalPaginas;
@@ -21,13 +24,16 @@ public partial class Usuarios
     // ── Roles (todos) ──────────────────────────────────────────
     private List<RolResponse> _todosRoles = [];
 
+    // ── Empresas (todas) ───────────────────────────────────────
+    private List<EmpresaResponse> _todasEmpresas = [];
+
     // ── Estado de selección ────────────────────────────────────
     private string _tabActiva = "datos";
 
     // ── Detalle ────────────────────────────────────────────────
     private UsuarioResponse? _usuarioDetalle;
     private EmpleadoResponse? _empleadoDetalle;
-    private HashSet<int> _rolesUsuario = [];
+    private HashSet<int> _empresasUsuario = [];
     private bool _cargandoDetalle;
     private string? _errorDetalle;
 
@@ -39,8 +45,20 @@ public partial class Usuarios
     private string? _errorDatos;
 
     // ── Roles edición ──────────────────────────────────────────
+    private List<AsignacionRol> _asignaciones = [];
+    private string _addContexto = "";   // "" = Global, "123" = empresa ID
+    private string _addRolStr = "";     // "" = sin selección, "123" = rol ID
+    private ElementReference _refAddRol;
     private bool _guardandoRoles;
     private string? _errorRoles;
+
+    private int? AddEmpresaId => string.IsNullOrEmpty(_addContexto) ? null
+        : int.TryParse(_addContexto, out var id) ? id : null;
+    private int? AddRolId => int.TryParse(_addRolStr, out var id) ? id : null;
+
+    // ── Empresas edición ───────────────────────────────────────
+    private bool _guardandoEmpresas;
+    private string? _errorEmpresas;
 
     // ── Reset contraseña ───────────────────────────────────────
     private bool _reseteandoContrasena;
@@ -78,7 +96,7 @@ public partial class Usuarios
     // ── Ciclo de vida ──────────────────────────────────────────
     protected override async Task OnInitializedAsync()
     {
-        await Task.WhenAll(CargarListaAsync(), CargarTodosRolesAsync());
+        await Task.WhenAll(CargarListaAsync(), CargarTodosRolesAsync(), CargarTodasEmpresasAsync());
     }
 
     // ── Implementación de abstracts ────────────────────────────
@@ -113,12 +131,14 @@ public partial class Usuarios
 
         try
         {
-            var usuarioTask = UsuariosClient.UsuariosGET2Async(id);
-            var rolesTask = UsuariosClient.RolesAll2Async(id);
-            await Task.WhenAll(usuarioTask, rolesTask);
+            var usuarioTask     = UsuariosClient.UsuariosGET2Async(id);
+            var asignacionesTask = Http.GetFromJsonAsync<List<AsignacionRol>>($"api/usuarios/{id}/roles/todas");
+            var empresasTask    = UsuariosClient.EmpresasAllAsync(id);
+            await Task.WhenAll(usuarioTask, asignacionesTask, empresasTask);
 
-            _usuarioDetalle = await usuarioTask;
-            _rolesUsuario = (await rolesTask).ToHashSet();
+            _usuarioDetalle  = await usuarioTask;
+            _asignaciones    = (await asignacionesTask) ?? [];
+            _empresasUsuario = ((await empresasTask) ?? []).ToHashSet();
 
             _empleadoDetalle = await EmpleadosClient.EmpleadosGET2Async(_usuarioDetalle.EmpleadoId);
 
@@ -166,9 +186,10 @@ public partial class Usuarios
         if (_esNuevo) return CrearUsuarioAsync();
         return _tabActiva switch
         {
-            "datos" => GuardarDatosAsync(),
-            "roles" => GuardarRolesAsync(),
-            _       => Task.CompletedTask
+            "datos"    => GuardarDatosAsync(),
+            "roles"    => GuardarRolesAsync(),
+            "empresas" => GuardarEmpresasAsync(),
+            _          => Task.CompletedTask
         };
     }
 
@@ -198,12 +219,25 @@ public partial class Usuarios
         catch { /* sin roles disponibles */ }
     }
 
+    private async Task CargarTodasEmpresasAsync()
+    {
+        try
+        {
+            var resultado = await EmpresasClient.EmpresasGETAsync(1, 200);
+            _todasEmpresas = resultado.Items.ToList();
+        }
+        catch { /* sin empresas disponibles */ }
+    }
+
     // ── Helpers ────────────────────────────────────────────────
     private void LimpiarDetalle()
     {
         _usuarioDetalle = null;
         _empleadoDetalle = null;
-        _rolesUsuario.Clear();
+        _asignaciones.Clear();
+        _empresasUsuario.Clear();
+        _addRolStr = "";
+        _addContexto = "";
         LimpiarFeedbackDetalle();
     }
 
@@ -212,18 +246,19 @@ public partial class Usuarios
         _errorDatos = null;
         _errorRoles = null;
         _errorReset = null;
-    }
-
-    private void ToggleRol(int rolId, bool valor)
-    {
-        if (valor) _rolesUsuario.Add(rolId);
-        else _rolesUsuario.Remove(rolId);
+        _errorEmpresas = null;
     }
 
     private void ToggleRolNuevo(int rolId, bool valor)
     {
         if (valor) _rolesNuevo.Add(rolId);
         else _rolesNuevo.Remove(rolId);
+    }
+
+    private void ToggleEmpresa(int empresaId, bool valor)
+    {
+        if (valor) _empresasUsuario.Add(empresaId);
+        else _empresasUsuario.Remove(empresaId);
     }
 
     // ── Acciones ───────────────────────────────────────────────
@@ -261,6 +296,45 @@ public partial class Usuarios
         }
     }
 
+    private async Task GuardarEmpresasAsync()
+    {
+        if (!Id.HasValue) return;
+
+        _errorEmpresas = null;
+        _guardandoEmpresas = true;
+        try
+        {
+            await UsuariosClient.EmpresasAsync(Id.Value, new AsignarEmpresasRequest
+            {
+                EmpresaIds = _empresasUsuario.ToList()
+            });
+
+            Toast.Exito("Empresas actualizadas correctamente.");
+        }
+        catch
+        {
+            _errorEmpresas = "No se pudieron actualizar las empresas.";
+        }
+        finally
+        {
+            _guardandoEmpresas = false;
+        }
+    }
+
+    private async Task AñadirAsignacion()
+    {
+        if (AddRolId is null) return;
+        var empresaId = AddEmpresaId;
+        if (_asignaciones.Any(a => a.RolId == AddRolId && a.EmpresaId == empresaId)) return;
+
+        _asignaciones.Add(new AsignacionRol { RolId = AddRolId.Value, EmpresaId = empresaId });
+        _addRolStr = "";
+        await _refAddRol.FocusAsync();
+    }
+
+    private void EliminarAsignacion(int rolId, int? empresaId)
+        => _asignaciones.RemoveAll(a => a.RolId == rolId && a.EmpresaId == empresaId);
+
     private async Task GuardarRolesAsync()
     {
         if (!Id.HasValue) return;
@@ -269,10 +343,15 @@ public partial class Usuarios
         _guardandoRoles = true;
         try
         {
-            await UsuariosClient.Roles2Async(Id.Value, new AsignarRolesRequest
+            var response = await Http.PutAsJsonAsync(
+                $"api/usuarios/{Id.Value}/roles/todas",
+                _asignaciones.Select(a => new { a.RolId, a.EmpresaId }).ToList());
+
+            if (!response.IsSuccessStatusCode)
             {
-                RolIds = _rolesUsuario.ToList()
-            });
+                _errorRoles = "No se pudieron actualizar los roles.";
+                return;
+            }
             Toast.Exito("Roles actualizados correctamente.");
         }
         catch
@@ -361,7 +440,7 @@ public partial class Usuarios
 
             if (_rolesNuevo.Count > 0)
             {
-                await UsuariosClient.Roles2Async(creado.Id, new AsignarRolesRequest
+                await UsuariosClient.Roles2Async(creado.Id, null, new AsignarRolesRequest
                 {
                     RolIds = _rolesNuevo.ToList()
                 });
@@ -388,4 +467,12 @@ public partial class Usuarios
             _creando = false;
         }
     }
+
+    // ── Modelos locales ────────────────────────────────────────
+    private record AsignacionRol
+    {
+        public int RolId { get; init; }
+        public int? EmpresaId { get; init; }
+    }
+
 }

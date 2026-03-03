@@ -1,22 +1,25 @@
 @using ERPNet.Web.Blazor.Client.Components.Common
 @inherits LayoutComponentBase
+@implements IAsyncDisposable
 @inject IJSRuntime JS
+@inject NavigationManager Nav
 
 
 <div class="page">
-    <div class="sidebar @(_sidebarCollapsed ? "sidebar-collapsed" : "") offcanvas-md offcanvas-start" tabindex="-1" id="sidebar">
+    <div class="sidebar @(_sidebarCollapsed ? "sidebar-collapsed" : "") offcanvas-md offcanvas-start" tabindex="-1"
+         id="sidebar">
         <NavMenu />
     </div>
 
     <main>
         <div class="top-row px-4">
+            @* icono del sidebar en la versión movil *@
             <button class="btn btn-link text-white p-0 d-md-none" type="button" data-bs-toggle="offcanvas"
                     data-bs-target="#sidebar">
                 <i class="bi bi-list fs-4"></i>
             </button>
 
-            <button class="btn btn-link text-white p-0 d-none d-md-flex align-items-center me-auto"
-                    @onclick="ToggleSidebar">
+            <button class="btn btn-link text-white p-0 d-none d-md-flex align-items-center" @onclick="ToggleSidebar">
                 <i class="bi bi-list fs-4"></i>
             </button>
 
@@ -24,9 +27,26 @@
                 <i class="bi bi-box-seam-fill me-2"></i>ERP<span>Net</span>
             </a>
 
-            <div class="dropdown">
-                <button class="btn btn-link text-white text-decoration-none dropdown-toggle p-0 d-flex align-items-center gap-2" type="button"
-                        data-bs-toggle="dropdown" aria-expanded="false">
+            <div class="top-row-details d-none d-sm-flex align-items-center gap-2">
+                @if (_empresaNombre is not null)
+                {
+                    <span class="vr opacity-25 my-1"></span>
+                    <div class="top-row-empresa d-flex gap-2">
+                        <i class="bi bi-building-fill"></i>
+                        <span>@_empresaNombre</span>
+                    </div>
+                }
+                <span class="vr opacity-25 my-1"></span>
+                <div class="top-row-search flex-grow-1">
+                    <MenuSearch />
+                </div>
+            </div>
+
+
+            <div class="dropdown ms-auto">
+                <button
+                    class="btn btn-link text-white text-decoration-none dropdown-toggle p-0 d-flex align-items-center gap-2"
+                    type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="bi bi-person-circle fs-5"></i>
                     @if (_email is not null)
                     {
@@ -64,13 +84,16 @@
     private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
 
     private string? _email;
+    private string? _empresaNombre;
     private bool _sidebarCollapsed;
     private bool _cleanupPending;
+    private DotNetObjectReference<MainLayout>? _dotNetRef;
 
     protected override async Task OnInitializedAsync()
     {
         var state = await AuthStateTask;
         _email = state.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+        _empresaNombre = state.User.FindFirst("empresa_nombre")?.Value;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -83,6 +106,9 @@
                 _sidebarCollapsed = val == "true";
             }
             catch { /* localStorage no disponible (modo privado, storage desactivado) */ }
+
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("sidebar.registerShortcut", _dotNetRef);
 
             _cleanupPending = true;
             StateHasChanged();
@@ -104,6 +130,20 @@
         }
         catch { /* localStorage no disponible */ }
     }
+
+    [JSInvokable]
+    public async Task ToggleSidebarFromJs()
+    {
+        await ToggleSidebar();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try { await JS.InvokeVoidAsync("sidebar.unregisterShortcut"); } catch { }
+        _dotNetRef?.Dispose();
+    }
+
 }
 
 <div id="blazor-error-ui" data-nosnippet>
