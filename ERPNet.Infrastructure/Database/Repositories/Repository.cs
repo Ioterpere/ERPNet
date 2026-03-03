@@ -32,11 +32,11 @@ public abstract class Repository<T>(ERPNetDbContext context, ICurrentUserProvide
         => await Query.FirstOrDefaultAsync(e => e.Id == id);
 
     public virtual async Task<List<T>> GetAllAsync()
-        => await Query.ToListAsync();
+        => await Query.AsNoTracking().ToListAsync();
 
     public virtual async Task<(List<T> Items, int TotalRegistros)> GetPaginatedAsync(PaginacionFilter filtro)
     {
-        var query = Query;
+        var query = Query.AsNoTracking();
         var total = await query.CountAsync();
         var items = await query
             .OrderByDescending(e => e.Id)
