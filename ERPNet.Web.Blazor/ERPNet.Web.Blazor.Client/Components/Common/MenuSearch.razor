@@ -54,8 +54,8 @@
     private Task<IEnumerable<MenuItem>> BuscarAsync(string query, CancellationToken _)
     {
         IEnumerable<MenuItem> resultados = _todosItems
-            .Where(m => TextHelper.ContieneBusqueda(m.Nombre, query)
-                     || TextHelper.ContieneBusqueda(m.Padre, query))
+            .Where(m => m.Nombre.Contains(query, StringComparison.OrdinalIgnoreCase)
+                     || (m.Padre?.Contains(query, StringComparison.OrdinalIgnoreCase) ?? false))
             .Take(8);
         return Task.FromResult(resultados);
     }

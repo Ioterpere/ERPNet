@@ -36,8 +36,14 @@ public class EmpleadoRepository(ERPNetDbContext context, ICurrentUserProvider cu
             _               => Query
         };
 
+        if (!string.IsNullOrWhiteSpace(filtro.Busqueda))
+            query = query.Where(e =>
+                (e.Nombre + " " + e.Apellidos).Contains(filtro.Busqueda) ||
+                ((string)e.DNI).Contains(filtro.Busqueda));
+
         var total = await query.CountAsync();
         var items = await query
+            .AsNoTracking()
             .OrderByDescending(e => e.Id)
             .Skip((filtro.Pagina - 1) * filtro.PorPagina)
             .Take(filtro.PorPagina)

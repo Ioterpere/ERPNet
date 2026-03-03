@@ -57,13 +57,6 @@ public partial class Empleados
     // ── Computed ───────────────────────────────────────────────
     private string InputFotoId => $"input-foto-{Id}";
 
-    private List<EmpleadoResponse> _empleadosFiltrados =>
-        string.IsNullOrWhiteSpace(_busqueda)
-            ? _empleados
-            : _empleados.Where(e =>
-                TextHelper.ContieneBusqueda($"{e.Nombre} {e.Apellidos}", _busqueda) ||
-                TextHelper.ContieneBusqueda(e.Dni, _busqueda)).ToList();
-
     private string PaginacionTexto
     {
         get
@@ -87,7 +80,7 @@ public partial class Empleados
         _cargandoLista = true;
         try
         {
-            _paginado = await EmpleadosClient.EmpleadosGETAsync(_pagina, PorPagina);
+            _paginado = await EmpleadosClient.EmpleadosGETAsync(_pagina, PorPagina, string.IsNullOrWhiteSpace(_busqueda) ? null : _busqueda);
             _empleados = _paginado.Items.ToList();
         }
         catch { /* lista queda vacía */ }
@@ -177,10 +170,8 @@ public partial class Empleados
 
     private async Task<IEnumerable<EmpleadoResponse>> BuscarEmpleadosAsync(string query, CancellationToken ct)
     {
-        var resultado = await EmpleadosClient.EmpleadosGETAsync(1, 100, ct);
-        return resultado.Items.Where(e =>
-            TextHelper.ContieneBusqueda($"{e.Nombre} {e.Apellidos}", query) ||
-            TextHelper.ContieneBusqueda(e.Dni, query));
+        var resultado = await EmpleadosClient.EmpleadosGETAsync(1, 50, string.IsNullOrWhiteSpace(query) ? null : query, ct);
+        return resultado.Items;
     }
 
     // ── Helpers ────────────────────────────────────────────────

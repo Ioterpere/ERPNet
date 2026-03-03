@@ -76,12 +76,6 @@ public partial class Usuarios
     private bool _creando;
     private string? _errorCrear;
 
-    // ── Computed ───────────────────────────────────────────────
-    private List<UsuarioResponse> _usuariosFiltrados =>
-        string.IsNullOrWhiteSpace(_busqueda)
-            ? _usuarios
-            : _usuarios.Where(u => u.Email.Contains(_busqueda, StringComparison.OrdinalIgnoreCase)).ToList();
-
     private string PaginacionTexto
     {
         get
@@ -105,7 +99,7 @@ public partial class Usuarios
         _cargandoLista = true;
         try
         {
-            _paginado = await UsuariosClient.UsuariosGETAsync(_pagina, PorPagina);
+            _paginado = await UsuariosClient.UsuariosGETAsync(_pagina, PorPagina, string.IsNullOrWhiteSpace(_busqueda) ? null : _busqueda);
             _usuarios = _paginado.Items.ToList();
 
             var ids = _usuarios.Select(u => u.EmpleadoId).Distinct().ToList();
@@ -203,17 +197,15 @@ public partial class Usuarios
     // ── Carga auxiliar ─────────────────────────────────────────
     private async Task<IEnumerable<EmpleadoResponse>> BuscarEmpleadosAsync(string query, CancellationToken ct)
     {
-        var resultado = await EmpleadosClient.EmpleadosGETAsync(1, 100, ct);
-        return resultado.Items.Where(e =>
-            TextHelper.ContieneBusqueda($"{e.Nombre} {e.Apellidos}", query) ||
-            TextHelper.ContieneBusqueda(e.Dni, query));
+        var resultado = await EmpleadosClient.EmpleadosGETAsync(1, 50, string.IsNullOrWhiteSpace(query) ? null : query, ct);
+        return resultado.Items;
     }
 
     private async Task CargarTodosRolesAsync()
     {
         try
         {
-            var resultado = await RolesClient.RolesGETAsync(1, 200);
+            var resultado = await RolesClient.RolesGETAsync(1, 200, null);
             _todosRoles = resultado.Items.ToList();
         }
         catch { /* sin roles disponibles */ }
@@ -223,7 +215,7 @@ public partial class Usuarios
     {
         try
         {
-            var resultado = await EmpresasClient.EmpresasGETAsync(1, 200);
+            var resultado = await EmpresasClient.EmpresasGETAsync(1, 200, null);
             _todasEmpresas = resultado.Items.ToList();
         }
         catch { /* sin empresas disponibles */ }

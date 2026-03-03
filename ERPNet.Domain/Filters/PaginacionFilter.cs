@@ -9,4 +9,6 @@ public class PaginacionFilter
 
     [Range(1, int.MaxValue)]
     public int PorPagina { get; init; } = 50;
+
+    public string? Busqueda { get; init; }
 }

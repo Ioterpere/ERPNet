@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Domain.Common;
 using ERPNet.Domain.Filters;
@@ -34,9 +35,13 @@ public abstract class Repository<T>(ERPNetDbContext context, ICurrentUserProvide
     public virtual async Task<List<T>> GetAllAsync()
         => await Query.AsNoTracking().ToListAsync();
 
+    protected virtual Expression<Func<T, bool>>? GetBusquedaPredicate(string busqueda) => null;
+
     public virtual async Task<(List<T> Items, int TotalRegistros)> GetPaginatedAsync(PaginacionFilter filtro)
     {
         var query = Query.AsNoTracking();
+        if (!string.IsNullOrWhiteSpace(filtro.Busqueda) && GetBusquedaPredicate(filtro.Busqueda) is { } pred)
+            query = query.Where(pred);
         var total = await query.CountAsync();
         var items = await query
             .OrderByDescending(e => e.Id)

@@ -74,11 +74,6 @@ public partial class Roles
     private string? _errorCrear;
 
     // ── Computed ───────────────────────────────────────────────
-    private List<RolResponse> _rolesFiltrados =>
-        string.IsNullOrWhiteSpace(_busqueda)
-            ? _roles
-            : _roles.Where(r => r.Nombre.Contains(_busqueda, StringComparison.OrdinalIgnoreCase)).ToList();
-
     private string PaginacionTexto
     {
         get
@@ -102,7 +97,7 @@ public partial class Roles
         _cargandoLista = true;
         try
         {
-            _paginado = await RolesClient.RolesGETAsync(_pagina, PorPagina);
+            _paginado = await RolesClient.RolesGETAsync(_pagina, PorPagina, string.IsNullOrWhiteSpace(_busqueda) ? null : _busqueda);
             _roles = _paginado.Items.ToList();
         }
         catch { /* lista queda vacía */ }
@@ -227,7 +222,7 @@ public partial class Roles
     {
         try
         {
-            var resultado = await UsuariosClient.UsuariosGETAsync(1, 500);
+            var resultado = await UsuariosClient.UsuariosGETAsync(1, 500, null);
             _usuariosPorId = resultado.Items.ToDictionary(u => u.Id);
         }
         catch { /* sin usuarios */ }
@@ -237,7 +232,7 @@ public partial class Roles
     {
         try
         {
-            var resultado = await EmpresasClient.EmpresasGETAsync(1, 200);
+            var resultado = await EmpresasClient.EmpresasGETAsync(1, 200, null);
             _todasEmpresas = resultado.Items.ToList();
         }
         catch { /* sin empresas */ }
@@ -245,12 +240,9 @@ public partial class Roles
 
     private async Task<IEnumerable<UsuarioResponse>> BuscarUsuariosAsync(string query, CancellationToken ct)
     {
-        var resultado = await UsuariosClient.UsuariosGETAsync(1, 100, ct);
-        var filtrados = resultado.Items
-            .Where(u => TextHelper.ContieneBusqueda(u.Email, query))
-            .ToList();
-        _cacheBusquedaUsuarios = filtrados.ToDictionary(u => u.Id);
-        return filtrados;
+        var resultado = await UsuariosClient.UsuariosGETAsync(1, 50, string.IsNullOrWhiteSpace(query) ? null : query, ct);
+        _cacheBusquedaUsuarios = resultado.Items.ToDictionary(u => u.Id);
+        return resultado.Items;
     }
 
     // ── Helpers ────────────────────────────────────────────────

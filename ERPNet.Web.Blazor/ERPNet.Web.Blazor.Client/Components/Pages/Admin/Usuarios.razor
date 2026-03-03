@@ -23,7 +23,7 @@
                     <i class="bi bi-search text-muted"></i>
                 </span>
                 <input type="search" class="form-control border-start-0 ps-0" placeholder="Buscar por email..."
-                       @bind-value="_busqueda" @bind-value:event="oninput" />
+                       value="@_busqueda" @oninput="OnBusquedaInputAsync" />
             </div>
         </div>
 
@@ -39,7 +39,7 @@
                     </div>
                 }
             }
-            else if (_usuariosFiltrados.Count == 0)
+            else if (_usuarios.Count == 0)
             {
                 <div class="text-center text-muted py-5 small">
                     <i class="bi bi-person-x fs-3 d-block mb-2"></i>
@@ -48,7 +48,7 @@
             }
             else
             {
-                @foreach (var u in _usuariosFiltrados)
+                @foreach (var u in _usuarios)
                 {
                     <button type="button" class="user-row  w-100 text-start @(Id == u.Id ? "active" : "")"
                             @onclick="() => SeleccionarItem(u.Id)">

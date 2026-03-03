@@ -1,4 +1,5 @@
 using ERPNet.Application.Auth.Interfaces;
+using ERPNet.Domain.Filters;
 using ERPNet.Domain.Repositories;
 using ERPNet.Infrastructure.Database.Context;
 using ERPNet.Domain.Entities;
@@ -25,6 +26,23 @@ public class UsuarioRepository(ERPNetDbContext context, ICurrentUserProvider cur
         return await Context.Usuarios
             .Include(u => u.Empleado)
             .FirstOrDefaultAsync(u => u.Email == email);
+    }
+
+    public override async Task<(List<Usuario> Items, int TotalRegistros)> GetPaginatedAsync(PaginacionFilter filtro)
+    {
+        IQueryable<Usuario> query = Query.AsNoTracking().Include(u => u.Empleado);
+        if (!string.IsNullOrWhiteSpace(filtro.Busqueda))
+            query = query.Where(u =>
+                ((string)u.Email).Contains(filtro.Busqueda) ||
+                u.Empleado.Nombre.Contains(filtro.Busqueda) ||
+                u.Empleado.Apellidos.Contains(filtro.Busqueda));
+        var total = await query.CountAsync();
+        var items = await query
+            .OrderByDescending(u => u.Id)
+            .Skip((filtro.Pagina - 1) * filtro.PorPagina)
+            .Take(filtro.PorPagina)
+            .ToListAsync();
+        return (items, total);
     }
 
     public async Task<bool> ExisteEmailAsync(string email, int? excluirId = null)

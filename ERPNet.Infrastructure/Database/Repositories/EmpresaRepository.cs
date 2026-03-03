@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Domain.Entities;
 using ERPNet.Domain.Repositories;
@@ -8,6 +9,9 @@ namespace ERPNet.Infrastructure.Database.Repositories;
 
 public class EmpresaRepository(ERPNetDbContext context, ICurrentUserProvider currentUser) : Repository<Empresa>(context, currentUser), IEmpresaRepository
 {
+    protected override Expression<Func<Empresa, bool>>? GetBusquedaPredicate(string busqueda)
+        => e => e.Nombre.Contains(busqueda);
+
     public async Task<List<Empresa>> GetEmpresasDeUsuarioAsync(int usuarioId)
     {
         return await Context.UsuarioEmpresas

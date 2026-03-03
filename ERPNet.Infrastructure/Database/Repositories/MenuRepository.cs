@@ -1,14 +1,18 @@
+using System.Linq.Expressions;
 using ERPNet.Application.Auth.Interfaces;
+using ERPNet.Domain.Entities;
+using ERPNet.Domain.Enums;
 using ERPNet.Domain.Repositories;
 using ERPNet.Infrastructure.Database.Context;
-using ERPNet.Domain.Enums;
-using ERPNet.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ERPNet.Infrastructure.Database.Repositories;
 
 public class MenuRepository(ERPNetDbContext context, ICurrentUserProvider currentUser) : Repository<Menu>(context, currentUser), IMenuRepository
 {
+    protected override Expression<Func<Menu, bool>>? GetBusquedaPredicate(string busqueda)
+        => m => m.Nombre.Contains(busqueda);
+
     public async Task<List<Menu>> GetMenusVisiblesAsync(Plataforma plataforma, List<int> rolIds)
     {
         return await Context.Menus

@@ -39,12 +39,6 @@ public partial class Empresas
     private bool _eliminando;
     private string? _errorEliminar;
 
-    // ── Computed ───────────────────────────────────────────────
-    private List<EmpresaResponse> _empresasFiltradas =>
-        string.IsNullOrWhiteSpace(_busqueda)
-            ? _empresas
-            : _empresas.Where(e => e.Nombre.Contains(_busqueda, StringComparison.OrdinalIgnoreCase)).ToList();
-
     private string PaginacionTexto
     {
         get
@@ -68,7 +62,7 @@ public partial class Empresas
         _cargandoLista = true;
         try
         {
-            _paginado = await EmpresasClient.EmpresasGETAsync(_pagina, PorPagina);
+            _paginado = await EmpresasClient.EmpresasGETAsync(_pagina, PorPagina, string.IsNullOrWhiteSpace(_busqueda) ? null : _busqueda);
             _empresas = _paginado?.Items?.ToList() ?? [];
         }
         catch { /* lista queda vacía */ }

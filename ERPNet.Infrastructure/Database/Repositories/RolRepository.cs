@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Domain.Entities;
 using ERPNet.Domain.Repositories;
@@ -8,6 +9,9 @@ namespace ERPNet.Infrastructure.Database.Repositories;
 
 public class RolRepository(ERPNetDbContext context, ICurrentUserProvider currentUser) : Repository<Rol>(context, currentUser), IRolRepository
 {
+    protected override Expression<Func<Rol, bool>>? GetBusquedaPredicate(string busqueda)
+        => r => r.Nombre.Contains(busqueda);
+
     public async Task<bool> ExisteNombreAsync(string nombre, int? excludeId = null)
     {
         return await Context.Roles

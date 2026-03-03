@@ -44,7 +44,7 @@
                 </span>
                 <input type="search" class="form-control border-start-0 ps-0"
                        placeholder="Buscar por nombre o DNI..."
-                       @bind-value="_busqueda" @bind-value:event="oninput" />
+                       value="@_busqueda" @oninput="OnBusquedaInputAsync" />
             </div>
         </div>
 
@@ -63,7 +63,7 @@
                     </div>
                 }
             }
-            else if (_empleadosFiltrados.Count == 0)
+            else if (_empleados.Count == 0)
             {
                 <div class="text-center text-muted py-5 small">
                     <i class="bi bi-person-x fs-3 d-block mb-2"></i>
@@ -72,7 +72,7 @@
             }
             else
             {
-                @foreach (var e in _empleadosFiltrados)
+                @foreach (var e in _empleados)
                 {
                     <button type="button"
                             class="emp-row w-100 d-flex align-items-center gap-3 @(Id == e.Id ? "active" : "")"

@@ -253,7 +253,7 @@
 
         try
         {
-            var items = await SearchAsync(TextHelper.Normalizar(_query), token);
+            var items = await SearchAsync(_query, token);
             if (token.IsCancellationRequested) return;
             _resultados = items.ToList();
             _sinResultados = _resultados.Count == 0;

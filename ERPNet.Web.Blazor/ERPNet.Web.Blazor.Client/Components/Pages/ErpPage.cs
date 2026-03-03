@@ -24,6 +24,22 @@ public abstract class ErpPage : ComponentBase, IAsyncDisposable
     protected int _pagina = 1;
     protected string _busqueda = string.Empty;
 
+    private CancellationTokenSource? _ctsBusqueda;
+
+    protected async Task OnBusquedaInputAsync(ChangeEventArgs e)
+    {
+        _busqueda = e.Value?.ToString() ?? string.Empty;
+        _pagina = 1;
+        _ctsBusqueda?.Cancel();
+        _ctsBusqueda = new CancellationTokenSource();
+        try
+        {
+            await Task.Delay(300, _ctsBusqueda.Token);
+            await CargarListaAsync();
+        }
+        catch (OperationCanceledException) { }
+    }
+
     protected virtual int PorPagina => 15;
 
     // ── Modal de eliminación ───────────────────────────────────
@@ -143,6 +159,8 @@ public abstract class ErpPage : ComponentBase, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        _ctsBusqueda?.Cancel();
+        _ctsBusqueda?.Dispose();
         if (_jsModule is not null)
         {
             try { await _jsModule.InvokeVoidAsync("unregisterShortcuts"); }
