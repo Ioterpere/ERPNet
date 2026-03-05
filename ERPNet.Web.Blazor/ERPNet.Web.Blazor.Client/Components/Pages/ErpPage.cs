@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 
 namespace ERPNet.Web.Blazor.Client.Components.Pages;
@@ -15,6 +16,13 @@ public abstract class ErpPage : ComponentBase, IAsyncDisposable
     [Inject] protected IJSRuntime JS { get; set; } = default!;
     [Inject] protected NavigationManager Nav { get; set; } = default!;
     [Inject] protected ToastService Toast { get; set; } = default!;
+
+    [CascadingParameter] private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    protected string NombreEmpresa =>
+        AuthStateTask?.IsCompletedSuccessfully == true
+            ? AuthStateTask.Result.User.FindFirst("empresa_nombre")?.Value ?? "ERPNet"
+            : "ERPNet";
 
     [SupplyParameterFromQuery(Name = "id")]
     public int? Id { get; set; }
