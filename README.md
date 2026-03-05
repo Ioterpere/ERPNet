@@ -31,27 +31,27 @@ El proyecto sigue **Clean Architecture** con dependencias estrictamente unidirec
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  ERPNet.Web.Blazor  (BFF :7100)  +  ERPNet.Web.Blazor.Client│
-│                   Blazor InteractiveAuto                      │
+│                   Blazor InteractiveAuto                    │
 └────────────────────────┬────────────────────────────────────┘
                          │ HTTP (ApiClient tipado / NSwag)
 ┌────────────────────────▼────────────────────────────────────┐
-│                    ERPNet.Api  (:7268)                        │
-│   Controllers · Middleware · JWT · Rate Limiting · MinIO      │
+│                    ERPNet.Api  (:7268)                      │
+│   Controllers · Middleware · JWT · Rate Limiting · MinIO    │
 └────────────────────────┬────────────────────────────────────┘
                          │
 ┌────────────────────────▼────────────────────────────────────┐
-│                 ERPNet.Application                            │
-│   Interfaces · Services · FluentValidation · Mailing         │
+│                 ERPNet.Application                          │
+│   Interfaces · Services · FluentValidation · Mailing        │
 └────────────────────────┬────────────────────────────────────┘
                          │
 ┌────────────────────────▼────────────────────────────────────┐
-│                  ERPNet.Domain                                │
-│      Entities · Value Objects · Repository Interfaces         │
+│                  ERPNet.Domain                              │
+│      Entities · Value Objects · Repository Interfaces       │
 └────────────────────────┬────────────────────────────────────┘
                          │
 ┌────────────────────────▼────────────────────────────────────┐
-│               ERPNet.Infrastructure                           │
-│   EF Core · Repositories · RabbitMQ · MinIO · SMTP           │
+│               ERPNet.Infrastructure                         │
+│   EF Core · Repositories · RabbitMQ · MinIO · SMTP          │
 └─────────────────────────────────────────────────────────────┘
 
 ERPNet.ApiClient  ←  cliente HTTP generado por NSwag desde OpenAPI
@@ -106,7 +106,7 @@ Documentación interactiva: `https://localhost:7268/scalar`
 ### 5. Ejecutar la aplicación Blazor
 
 ```bash
-dotnet run --project ERPNet.Web.Blazor
+dotnet run --project ERPNet.Web.Blazor/ERPNet.Web.Blazor
 ```
 
 Abre `https://localhost:7100` en el navegador.
