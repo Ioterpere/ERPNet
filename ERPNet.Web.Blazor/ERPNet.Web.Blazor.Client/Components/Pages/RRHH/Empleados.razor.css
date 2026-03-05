@@ -23,12 +23,6 @@
     flex-direction: column;
 }
 
-/* ── Panel detalle: flex column ──────────────────── */
-.panel-detalle {
-    display: flex;
-    flex-direction: column;
-}
-
 /* ── Área scrollable del detalle ─────────────────── */
 .detail-content {
     flex: 1 1 0;
