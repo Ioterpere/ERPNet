@@ -54,7 +54,7 @@ main .content {
         height: 100vh;
         position: sticky;
         top: 0;
-        overflow: hidden;
+        overflow-x: hidden;
         transition: width 0.25s ease;
         flex-shrink: 0;
     }
