@@ -1,8 +1,9 @@
 using ERPNet.ApiClient;
+using ERPNet.Web.Blazor.Client.Components.Common;
+using ERPNet.Web.Blazor.Client.Components.Common.Tabs;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web.Virtualization;
 using System.Net.Http.Json;
-using ERPNet.Web.Blazor.Client.Components.Common;
 
 namespace ERPNet.Web.Blazor.Client.Components.Pages.Admin;
 
@@ -14,14 +15,20 @@ public partial class Roles
     [Inject] private HttpClient Http { get; set; } = default!;
 
     // ── Lista ──────────────────────────────────────────────────
-    private ListaPanel<RolResponse>? _refLista;
+    private VirtualList<RolResponse>? _refLista;
     private int? _totalItems;
 
+    // ── Tabs ───────────────────────────────────────────────────
+    private static readonly TabItem[] _tabsRol =
+    [
+        new("usuarios", "Usuarios", "bi-people"),
+        new("permisos", "Permisos", "bi-shield"),
+    ];
+
     // ── Estado ─────────────────────────────────────────────────
-    private string _tabActiva = "usuarios";
     private bool _mostrarModalEditar;
     private bool _eliminando;
-    private string? _errorEliminar;
+    private string? _errorEliminar { get; set; }
 
     // ── Recursos (cargados una vez) ────────────────────────────
     private List<RecursoResponse> _todosRecursos = [];
@@ -180,7 +187,7 @@ public partial class Roles
     {
         if (_mostrarModalEditar) return GuardarDatosAsync();
         if (_esNuevo) return CrearRolAsync();
-        return _tabActiva switch
+        return (Tab ?? "usuarios") switch
         {
             "usuarios" => GuardarUsuariosAsync(),
             "permisos" => GuardarPermisosAsync(),

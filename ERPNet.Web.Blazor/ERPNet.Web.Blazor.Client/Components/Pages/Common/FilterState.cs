@@ -2,7 +2,7 @@ using System.Collections.Frozen;
 using System.Reflection;
 using ERPNet.ApiClient;
 
-namespace ERPNet.Web.Blazor.Client.Components.Common;
+namespace ERPNet.Web.Blazor.Client.Components.Pages.Common;
 
 public class FilterState<T> where T : class, new()
 {

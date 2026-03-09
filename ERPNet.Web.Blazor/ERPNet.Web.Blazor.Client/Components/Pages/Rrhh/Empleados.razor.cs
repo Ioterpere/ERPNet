@@ -1,10 +1,11 @@
 using ERPNet.ApiClient;
+using ERPNet.Web.Blazor.Client.Components.Common;
+using ERPNet.Web.Blazor.Client.Components.Pages.Common;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web.Virtualization;
-using ERPNet.Web.Blazor.Client.Components.Common;
 
-namespace ERPNet.Web.Blazor.Client.Components.Pages.RRHH;
+namespace ERPNet.Web.Blazor.Client.Components.Pages.Rrhh;
 
 public partial class Empleados
 {
@@ -12,7 +13,7 @@ public partial class Empleados
     [Inject] private ISeccionesClient SeccionesClient { get; set; } = default!;
 
     // ── Lista ──────────────────────────────────────────────────
-    private ListaPanel<EmpleadoResponse>? _refLista;
+    private VirtualList<EmpleadoResponse>? _refLista;
     private int? _totalItems;
     private string _ordenarPor = nameof(EmpleadoResponse.Nombre);
     private bool _ordenDesc;
@@ -58,7 +59,7 @@ public partial class Empleados
 
     // ── Eliminar empleado ──────────────────────────────────────────
     private bool _eliminando;
-    private string? _errorEliminar;
+    private string? _errorEliminar { get; set; }
 
     // ── Formulario creación ────────────────────────────────────
     private ElementReference _refNuevoNombre;

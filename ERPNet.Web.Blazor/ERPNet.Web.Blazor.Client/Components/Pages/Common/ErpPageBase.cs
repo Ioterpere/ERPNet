@@ -1,9 +1,9 @@
+using ERPNet.Web.Blazor.Client.Components.Common.Toast;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 
-namespace ERPNet.Web.Blazor.Client.Components.Pages;
+namespace ERPNet.Web.Blazor.Client.Components.Pages.Common;
 
 /// <summary>
 /// Clase base para páginas del Erp.
@@ -11,26 +11,27 @@ namespace ERPNet.Web.Blazor.Client.Components.Pages;
 /// navegación entre registros y atajos de teclado.
 /// </summary>
 [Authorize]
-public abstract class ErpPage : ComponentBase, IAsyncDisposable
+public abstract class ErpPageBase : PageBase, IAsyncDisposable
 {
     [Inject] protected IJSRuntime JS { get; set; } = default!;
     [Inject] protected NavigationManager Nav { get; set; } = default!;
     [Inject] protected ToastService Toast { get; set; } = default!;
 
-    [CascadingParameter] private Task<AuthenticationState>? AuthStateTask { get; set; }
-
-    protected string NombreEmpresa =>
-        AuthStateTask?.IsCompletedSuccessfully == true
-            ? AuthStateTask.Result.User.FindFirst("empresa_nombre")?.Value ?? "ERPNet"
-            : "ERPNet";
-
     [SupplyParameterFromQuery(Name = "id")]
     public int? Id { get; set; }
+
+    [SupplyParameterFromQuery(Name = "tab")]
+    public string? Tab { get; set; }
+
+    protected void CambiarTab(string tabId)
+        => Nav.NavigateTo(Nav.GetUriWithQueryParameter("tab", tabId));
+
+    // ── Layout ref ────────────────────────────────────────────
+    protected ErpPage? _refLayout;
 
     // ── Estado compartido ──────────────────────────────────────
     protected bool _esNuevo;
     protected string _busqueda = string.Empty;
-    protected ElementReference _refBusqueda;
     private bool _enfocarBusqueda;
 
     private CancellationTokenSource? _ctsBusqueda;
@@ -50,7 +51,6 @@ public abstract class ErpPage : ComponentBase, IAsyncDisposable
 
     // ── Modal de eliminación ───────────────────────────────────
     protected bool _mostrarModalEliminar;
-    protected ElementReference _refBtnEliminar;
     private bool _enfocarEliminar;
 
     protected void AbrirModalEliminar()
@@ -58,6 +58,8 @@ public abstract class ErpPage : ComponentBase, IAsyncDisposable
         _mostrarModalEliminar = true;
         _enfocarEliminar      = true;
     }
+
+    protected Task EnfocarBtnEliminarAsync() => _refLayout?.FocusBtnEliminarAsync() ?? Task.CompletedTask;
 
     // ── Foco en formulario de creación ─────────────────────────
     protected bool _enfocarNuevo;
@@ -106,7 +108,7 @@ public abstract class ErpPage : ComponentBase, IAsyncDisposable
     }
 
     private IJSObjectReference? _jsModule;
-    private DotNetObjectReference<ErpPage>? _dotNetRef;
+    private DotNetObjectReference<ErpPageBase>? _dotNetRef;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -132,13 +134,13 @@ public abstract class ErpPage : ComponentBase, IAsyncDisposable
         if (_enfocarBusqueda)
         {
             _enfocarBusqueda = false;
-            await _refBusqueda.FocusAsync();
+            if (_refLayout is not null) await _refLayout.FocusSearchAsync();
         }
 
         if (_enfocarEliminar)
         {
             _enfocarEliminar = false;
-            await _refBtnEliminar.FocusAsync();
+            await EnfocarBtnEliminarAsync();
         }
     }
 

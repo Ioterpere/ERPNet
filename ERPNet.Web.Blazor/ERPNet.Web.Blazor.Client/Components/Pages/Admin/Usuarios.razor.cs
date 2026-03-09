@@ -1,8 +1,9 @@
 using ERPNet.ApiClient;
+using ERPNet.Web.Blazor.Client.Components.Common;
+using ERPNet.Web.Blazor.Client.Components.Common.Tabs;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web.Virtualization;
 using System.Net.Http.Json;
-using ERPNet.Web.Blazor.Client.Components.Common;
 
 namespace ERPNet.Web.Blazor.Client.Components.Pages.Admin;
 
@@ -15,7 +16,7 @@ public partial class Usuarios
     [Inject] private HttpClient Http { get; set; } = default!;
 
     // ── Lista ──────────────────────────────────────────────────
-    private ListaPanel<UsuarioResponse>? _refLista;
+    private VirtualList<UsuarioResponse>? _refLista;
     private int? _totalItems;
     private Dictionary<int, EmpleadoResponse> _empleadosPorId = [];
 
@@ -25,8 +26,13 @@ public partial class Usuarios
     // ── Empresas (todas) ───────────────────────────────────────
     private List<EmpresaResponse> _todasEmpresas = [];
 
-    // ── Estado de selección ────────────────────────────────────
-    private string _tabActiva = "datos";
+    // ── Tabs ───────────────────────────────────────────────────
+    private static readonly TabItem[] _tabsUsuario =
+    [
+        new("datos",    "Datos",    "bi-person-circle"),
+        new("empresas", "Empresas", "bi-building"),
+        new("roles",    "Roles",    "bi-shield"),
+    ];
 
     // ── Detalle ────────────────────────────────────────────────
     private UsuarioResponse? _usuarioDetalle;
@@ -64,7 +70,7 @@ public partial class Usuarios
 
     // ── Eliminar usuario ───────────────────────────────────────
     private bool _eliminando;
-    private string? _errorEliminar;
+    private string? _errorEliminar { get; set; }
 
     // ── Formulario creación ────────────────────────────────────
     private ElementReference _refNuevoEmail;
@@ -178,7 +184,7 @@ public partial class Usuarios
     protected override Task OnGuardar()
     {
         if (_esNuevo) return CrearUsuarioAsync();
-        return _tabActiva switch
+        return (Tab ?? "datos") switch
         {
             "datos"    => GuardarDatosAsync(),
             "roles"    => GuardarRolesAsync(),

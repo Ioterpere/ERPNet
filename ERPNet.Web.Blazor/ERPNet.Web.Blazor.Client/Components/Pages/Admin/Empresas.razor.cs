@@ -1,7 +1,7 @@
 using ERPNet.ApiClient;
+using ERPNet.Web.Blazor.Client.Components.Common;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web.Virtualization;
-using ERPNet.Web.Blazor.Client.Components.Common;
 
 namespace ERPNet.Web.Blazor.Client.Components.Pages.Admin;
 
@@ -10,7 +10,7 @@ public partial class Empresas
     [Inject] private IEmpresasClient EmpresasClient { get; set; } = default!;
 
     // ── Lista ──────────────────────────────────────────────────
-    private ListaPanel<EmpresaResponse>? _refLista;
+    private VirtualList<EmpresaResponse>? _refLista;
     private int? _totalItems;
 
     // ── Detalle ────────────────────────────────────────────────
@@ -35,7 +35,7 @@ public partial class Empresas
 
     // ── Eliminar ───────────────────────────────────────────────
     private bool _eliminando;
-    private string? _errorEliminar;
+    private string? _errorEliminar { get; set; }
 
     // ── Implementación de abstracts ────────────────────────────
     protected override async Task CargarListaAsync()

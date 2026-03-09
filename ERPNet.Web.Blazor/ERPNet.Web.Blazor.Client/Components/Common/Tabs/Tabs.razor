@@ -1,0 +1,39 @@
+<div class="tabs-container">
+
+    <ul class="nav nav-tabs tabs-nav px-3" role="tablist">
+        @foreach (var tab in Items)
+        {
+            var esActiva = tab.Id == _tabEfectiva;
+            var tieneError = TabsConError?.Contains(tab.Id) == true;
+            <li class="nav-item" role="presentation">
+                <button type="button"
+                        class="nav-link @(esActiva ? "active" : "") @(tieneError ? "tab-con-error" : "")"
+                        role="tab"
+                        aria-selected="@(esActiva ? "true" : "false")"
+                        @onclick="() => ActiveTabChanged.InvokeAsync(tab.Id)">
+                    @if (tab.Icono is not null) { <i class="bi @tab.Icono me-1"></i> }@tab.Label
+                    @if (tieneError)
+                    {
+                        <span class="tab-error-dot" aria-hidden="true"></span>
+                    }
+                </button>
+            </li>
+        }
+    </ul>
+
+    <div class="tabs-content">
+        @ChildContent
+    </div>
+
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<TabItem> Items { get; set; } = [];
+    [Parameter] public string? ActiveTab { get; set; }
+    [Parameter] public EventCallback<string> ActiveTabChanged { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public IReadOnlyCollection<string>? TabsConError { get; set; }
+
+    private string _tabEfectiva =>
+        Items.Any(t => t.Id == ActiveTab) ? ActiveTab! : Items.FirstOrDefault()?.Id ?? string.Empty;
+}

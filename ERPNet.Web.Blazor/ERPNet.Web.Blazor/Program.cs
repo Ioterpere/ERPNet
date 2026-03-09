@@ -1,6 +1,6 @@
 using ERPNet.ApiClient;
 using ERPNet.Web.Blazor.Bff;
-using ERPNet.Web.Blazor.Client;
+using ERPNet.Web.Blazor.Client.Components.Common.Toast;
 using ERPNet.Web.Blazor.Components;
 using Microsoft.AspNetCore.Authentication.Cookies;
 

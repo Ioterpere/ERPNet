@@ -1,0 +1,171 @@
+@* Componente de layout para páginas master-detail del ERP. *@
+
+<PageTitle>@Titulo | @_empresaNombre</PageTitle>
+
+<div class="row g-0 erp-panel-container">
+
+    <!-- ── Panel lista ──────────────────────────────────────────── -->
+    <div class="col-12 col-lg-@ColLista border-end erp-panel-lista @(MostrarLista ? "d-flex" : "d-none d-lg-flex")">
+
+        <!-- Header -->
+        <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom flex-shrink-0">
+            <h5 class="mb-0 fw-semibold">@Titulo</h5>
+            <div class="d-flex gap-2">
+                @AccionesHeader
+                <button class="btn btn-sm btn-primary" @onclick="OnNuevo" type="button">
+                    <i class="bi bi-plus-lg me-1"></i>Nuevo
+                </button>
+            </div>
+        </div>
+
+        <!-- Buscador -->
+        <div class="px-3 py-2 border-bottom flex-shrink-0 d-flex align-items-center gap-2">
+            <div class="input-group input-group-sm flex-grow-1">
+                <span class="input-group-text bg-transparent border-end-0">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+                <input type="search" class="form-control border-start-0 ps-0"
+                       placeholder="@SearchPlaceholder"
+                       @ref="_refSearch"
+                       value="@Busqueda"
+                       @oninput="OnBusquedaInput" />
+            </div>
+            @SearchExtras
+        </div>
+
+        <!-- Lista body -->
+        @ListaBody
+
+        <!-- Footer -->
+        <div class="px-3 py-1 border-top flex-shrink-0 d-flex align-items-center @(ListaFooterExtra is not null ? "justify-content-between" : "justify-content-end")">
+            @ListaFooterExtra
+            @if (TotalItems.HasValue)
+            {
+                <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill">@TotalItems</span>
+            }
+        </div>
+    </div>
+
+    <!-- ── Panel detalle ─────────────────────────────────────────── -->
+    <div class="col-12 col-lg-@(12 - ColLista) erp-panel-detalle @(MostrarLista ? "d-none d-lg-flex" : "")">
+        @if (!EsNuevo && !TieneDetalle)
+        {
+            <div class="erp-panel-placeholder">
+                <i class="bi @PlaceholderIcono text-muted" style="font-size:3rem"></i>
+                <p class="text-muted mt-3 mb-1">@PlaceholderTexto</p>
+                @if (PlaceholderSubTexto is not null)
+                {
+                    <p class="text-muted small mb-0">@PlaceholderSubTexto</p>
+                }
+            </div>
+        }
+        else if (EsNuevo)
+        {
+            <div class="erp-detail-content">
+                <div class="px-4 py-4">
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <button class="btn btn-sm btn-light d-lg-none" type="button" @onclick="OnVolverALista">
+                            <i class="bi bi-arrow-left"></i>
+                        </button>
+                        <h5 class="mb-0 fw-semibold">@(TituloNuevo ?? Titulo)</h5>
+                    </div>
+                    @FormNuevo
+                </div>
+            </div>
+        }
+        else if (TieneDetalle)
+        {
+            <div class="erp-detail-content @(ConTabs ? "erp-detail-tabs" : "")">
+                @FormEdicion
+            </div>
+            @if (DetailToolbar is not null)
+            {
+                <div class="erp-detail-toolbar">
+                    @DetailToolbar
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@ModalesExtra
+
+<!-- Modal: confirmar eliminación -->
+@if (OnEliminar.HasDelegate)
+{
+    <Modal Title="Confirmar eliminación" IsVisible="MostrarModalEliminar" IsVisibleChanged="MostrarModalEliminarChanged">
+        <ChildContent>
+            <p class="mb-1">¿Seguro que quieres eliminar <strong>@TextoEliminar</strong>?</p>
+            <p class="text-muted small mb-0">Esta acción no se puede deshacer.</p>
+            @if (ErrorEliminar is not null)
+            {
+                <div class="alert alert-danger d-flex align-items-center gap-2 mt-3 py-2 mb-0">
+                    <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                    <span>@ErrorEliminar</span>
+                </div>
+            }
+        </ChildContent>
+        <Footer>
+            <button class="btn btn-outline-secondary" @onclick="() => MostrarModalEliminarChanged.InvokeAsync(false)">Cancelar</button>
+            <button class="btn btn-danger" @ref="_refBtnEliminar" @onclick="OnEliminar" disabled="@Eliminando">
+                @if (Eliminando) { <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span> }
+                Eliminar
+            </button>
+        </Footer>
+    </Modal>
+}
+
+@code {
+    // ── Obligatorios ──────────────────────────────────────────────
+    [Parameter, EditorRequired] public string Titulo { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public bool EsNuevo { get; set; }
+    [Parameter, EditorRequired] public bool TieneDetalle { get; set; }
+    [Parameter, EditorRequired] public string Busqueda { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public EventCallback<ChangeEventArgs> OnBusquedaInput { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnNuevo { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnVolverALista { get; set; }
+    [Parameter, EditorRequired] public RenderFragment ListaBody { get; set; } = default!;
+
+    // ── Opcionales con default ────────────────────────────────────
+    [Parameter] public bool ConTabs { get; set; }
+    [Parameter] public int ColLista { get; set; } = 4;
+    [Parameter] public string SearchPlaceholder { get; set; } = "Buscar...";
+    [Parameter] public string? TituloNuevo { get; set; }
+    [Parameter] public string PlaceholderIcono { get; set; } = "bi-inbox";
+    [Parameter] public string PlaceholderTexto { get; set; } = "Selecciona un elemento de la lista";
+    [Parameter] public string? PlaceholderSubTexto { get; set; }
+    [Parameter] public int? TotalItems { get; set; }
+
+    // ── Modal eliminar ────────────────────────────────────────────
+    [Parameter] public bool MostrarModalEliminar { get; set; }
+    [Parameter] public EventCallback<bool> MostrarModalEliminarChanged { get; set; }
+    [Parameter] public string? TextoEliminar { get; set; }
+    [Parameter] public string? ErrorEliminar { get; set; }
+    [Parameter] public bool Eliminando { get; set; }
+    [Parameter] public EventCallback OnEliminar { get; set; }
+
+    // ── Slots opcionales ──────────────────────────────────────────
+    [Parameter] public RenderFragment? AccionesHeader { get; set; }
+    [Parameter] public RenderFragment? SearchExtras { get; set; }
+    [Parameter] public RenderFragment? ListaFooterExtra { get; set; }
+    [Parameter] public RenderFragment? FormNuevo { get; set; }
+    [Parameter] public RenderFragment? FormEdicion { get; set; }
+    [Parameter] public RenderFragment? DetailToolbar { get; set; }
+    [Parameter] public RenderFragment? ModalesExtra { get; set; }
+
+    // ── NombreEmpresa ─────────────────────────────────────────────
+    [CascadingParameter] private Task<AuthenticationState>? _authState { get; set; }
+    private string _empresaNombre =>
+        _authState?.IsCompletedSuccessfully == true
+            ? _authState.Result.User.FindFirst("empresa_nombre")?.Value ?? "ERPNet"
+            : "ERPNet";
+
+    // ── Referencias internas ──────────────────────────────────────
+    private ElementReference _refSearch;
+    private ElementReference _refBtnEliminar;
+
+    private bool MostrarLista => !EsNuevo && !TieneDetalle;
+
+    public Task FocusSearchAsync()      => _refSearch.FocusAsync().AsTask();
+    public Task FocusBtnEliminarAsync() => _refBtnEliminar.FocusAsync().AsTask();
+}

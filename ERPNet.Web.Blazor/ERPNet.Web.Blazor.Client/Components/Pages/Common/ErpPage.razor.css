@@ -1,0 +1,64 @@
+/* ── Panel container ─────────────────────────────── */
+/* Cancela el py-4 px-4 del article.content del layout */
+.erp-panel-container {
+    margin: -1.5rem -1.5rem;
+}
+
+/* ── Panel lista: columna flex ───────────────────── */
+.erp-panel-lista {
+    flex-direction: column;
+    height: calc(100svh - 3.5rem);
+    overflow-y: auto;
+}
+
+/* ── Paneles (desktop) ───────────────────────────── */
+@media (min-width: 992px) {
+    .erp-panel-lista {
+        height: calc(100vh - 3.5rem);
+        overflow-y: auto;
+    }
+
+    .erp-panel-detalle {
+        height: calc(100vh - 3.5rem);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+/* ── Placeholder vacío ───────────────────────────── */
+.erp-panel-placeholder {
+    height: 100%;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    flex: 1;
+}
+
+/* ── Área scrollable del detalle ─────────────────── */
+.erp-detail-content {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* ── Detalle con tabs (overflow gestionado por Tabs) ── */
+.erp-detail-tabs {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Toolbar inferior del detalle ────────────────── */
+.erp-detail-toolbar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .75rem 1.5rem;
+    background-color: var(--bs-body-bg);
+    border-top: 1px solid var(--bs-border-color);
+}

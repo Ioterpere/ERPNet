@@ -1,34 +1,29 @@
 @page "/empresas"
-@inherits ErpPage
+@inherits ErpPageBase
 
-<PageTitle>Empresas — @NombreEmpresa</PageTitle>
+<ErpPage @ref="_refLayout"
+               Titulo="Empresas"
+               TituloNuevo="Nueva empresa"
+               EsNuevo="_esNuevo"
+               TieneDetalle="Id.HasValue"
+               Busqueda="@_busqueda"
+               OnBusquedaInput="OnBusquedaInputAsync"
+               OnNuevo="OnNuevo"
+               OnVolverALista="VolverALista"
+               ColLista="3"
+               SearchPlaceholder="Buscar por nombre..."
+               PlaceholderIcono="bi-building"
+               PlaceholderTexto="Selecciona una empresa de la lista"
+               PlaceholderSubTexto='@("o crea una nueva con el botón &quot;+ Nuevo&quot;")'
+               TotalItems="_totalItems"
+               @bind-MostrarModalEliminar="_mostrarModalEliminar"
+               TextoEliminar="@($"la empresa {_empresaDetalle?.Nombre}")"
+               ErrorEliminar="@_errorEliminar"
+               Eliminando="_eliminando"
+               OnEliminar="EliminarEmpresaAsync">
 
-<div class="row g-0 panel-container">
-
-    <!-- ── Panel izquierdo: Lista ─────────────────────────────── -->
-    <div class="col-12 col-lg-3 border-end panel-lista @((!_esNuevo && !Id.HasValue) ? "d-flex" : "d-none d-lg-flex")">
-
-        <!-- Header -->
-        <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom flex-shrink-0">
-            <h5 class="mb-0 fw-semibold">Empresas</h5>
-            <button class="btn btn-sm btn-primary" @onclick="OnNuevo">
-                <i class="bi bi-plus-lg me-1"></i>Nueva
-            </button>
-        </div>
-
-        <!-- Buscador -->
-        <div class="px-3 py-2 border-bottom flex-shrink-0">
-            <div class="input-group input-group-sm">
-                <span class="input-group-text bg-transparent border-end-0">
-                    <i class="bi bi-search text-muted"></i>
-                </span>
-                <input type="search" class="form-control border-start-0 ps-0"
-                       placeholder="Buscar por nombre..."
-                       value="@_busqueda" @oninput="OnBusquedaInputAsync" />
-            </div>
-        </div>
-
-        <ListaPanel @ref="_refLista" TItem="EmpresaResponse"
+    <ListaBody>
+        <VirtualList @ref="_refLista" TItem="EmpresaResponse"
                     IconoVacio="bi-building-x"
                     ItemsProvider="CargarItemsAsync"
                     OnTotalChanged="t => _totalItems = t">
@@ -55,216 +50,158 @@
                     }
                 </button>
             </ItemTemplate>
-        </ListaPanel>
+        </VirtualList>
+    </ListaBody>
 
-        @if (_totalItems.HasValue)
+    <FormNuevo>
+        @if (_errorCrear is not null)
         {
-            <div class="px-3 py-1 border-top flex-shrink-0 d-flex align-items-center justify-content-end">
-                <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill">@_totalItems</span>
+            <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+                <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                <span>@_errorCrear</span>
             </div>
         }
 
-    </div>
-
-    <!-- ── Panel derecho: Detalle ─────────────────────────────── -->
-    <div class="col-12 col-lg-9 panel-detalle @((!_esNuevo && !Id.HasValue) ? "d-none d-lg-flex" : "")">
-
-        @if (!_esNuevo && !Id.HasValue)
-        {
-            <div class="panel-placeholder">
-                <i class="bi bi-building text-muted" style="font-size:3rem"></i>
-                <p class="text-muted mt-3 mb-1">Selecciona una empresa de la lista</p>
-                <p class="text-muted small mb-0">o crea una nueva con el botón "+ Nueva"</p>
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-building-add text-primary"></i>
+                <span class="fw-semibold">Datos de la empresa</span>
             </div>
-        }
-        else if (_esNuevo)
-        {
-            <div class="detail-content">
-            <div class="px-4 py-4">
-                <div class="d-flex align-items-center gap-3 mb-4">
-                    <button class="btn btn-sm btn-light d-lg-none" @onclick="VolverALista">
-                        <i class="bi bi-arrow-left"></i>
-                    </button>
-                    <h5 class="mb-0 fw-semibold">Nueva empresa</h5>
+            <div class="card-body py-4">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" @ref="_refNuevoNombre" @bind="_nuevoNombre"
+                               placeholder="Nombre de la empresa" autocomplete="off" />
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">CIF</label>
+                        <input type="text" class="form-control" @bind="_nuevoCif"
+                               placeholder="Ej: A12345678" autocomplete="off" />
+                    </div>
+                    <div class="col-12 col-md-6 d-flex align-items-end">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="nuevoActivo" @bind="_nuevoActivo" />
+                            <label class="form-check-label" for="nuevoActivo">Activa</label>
+                        </div>
+                    </div>
                 </div>
+            </div>
+        </div>
 
-                @if (_errorCrear is not null)
+        <div class="d-flex justify-content-between align-items-center">
+            <button class="btn btn-outline-secondary btn-sm" @onclick="VolverALista">Cancelar</button>
+            <button class="btn btn-primary" @onclick="CrearEmpresaAsync" disabled="@_creando">
+                @if (_creando)
                 {
-                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
-                        <i class="bi bi-x-circle-fill flex-shrink-0"></i>
-                        <span>@_errorCrear</span>
+                    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                }
+                else
+                {
+                    <i class="bi bi-building-check me-1"></i>
+                }
+                Crear empresa
+            </button>
+        </div>
+    </FormNuevo>
+
+    <FormEdicion>
+        <div class="px-4 py-4">
+
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <button class="btn btn-sm btn-light d-lg-none" @onclick="VolverALista">
+                    <i class="bi bi-arrow-left"></i>
+                </button>
+
+                @if (_cargandoDetalle)
+                {
+                    <div class="d-flex align-items-center gap-3 placeholder-glow flex-grow-1">
+                        <div>
+                            <span class="placeholder d-block mb-1" style="height:14px;width:160px"></span>
+                            <span class="placeholder" style="height:11px;width:100px"></span>
+                        </div>
                     </div>
                 }
+                else if (_empresaDetalle is not null)
+                {
+                    <div class="flex-grow-1 overflow-hidden">
+                        <h5 class="mb-0 fw-semibold text-truncate">@_empresaDetalle.Nombre</h5>
+                        @if (!string.IsNullOrWhiteSpace(_empresaDetalle.Cif))
+                        {
+                            <p class="text-muted small mb-0">@_empresaDetalle.Cif</p>
+                        }
+                    </div>
+                    @if (!_empresaDetalle.Activo)
+                    {
+                        <span class="badge bg-secondary">Inactiva</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success-subtle text-success-emphasis">Activa</span>
+                    }
+                }
+            </div>
 
-                <div class="card mb-3">
+            @if (_errorDetalle is not null)
+            {
+                <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                    <span>@_errorDetalle</span>
+                </div>
+            }
+
+            @if (!_cargandoDetalle && _empresaDetalle is not null)
+            {
+                <div class="card mb-4">
                     <div class="card-header d-flex align-items-center gap-2">
-                        <i class="bi bi-building-add text-primary"></i>
+                        <i class="bi bi-pencil text-primary"></i>
                         <span class="fw-semibold">Datos de la empresa</span>
                     </div>
                     <div class="card-body py-4">
                         <div class="row g-3">
                             <div class="col-12">
                                 <label class="form-label">Nombre <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" @ref="_refNuevoNombre" @bind="_nuevoNombre"
-                                       placeholder="Nombre de la empresa" autocomplete="off" />
+                                <input type="text" class="form-control" @bind="_editNombre" autocomplete="off" />
                             </div>
                             <div class="col-12 col-md-6">
                                 <label class="form-label">CIF</label>
-                                <input type="text" class="form-control" @bind="_nuevoCif"
-                                       placeholder="Ej: A12345678" autocomplete="off" />
+                                <input type="text" class="form-control" @bind="_editCif" autocomplete="off" />
                             </div>
                             <div class="col-12 col-md-6 d-flex align-items-end">
                                 <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="nuevoActivo" @bind="_nuevoActivo" />
-                                    <label class="form-check-label" for="nuevoActivo">Activa</label>
+                                    <input class="form-check-input" type="checkbox" id="editActivo" @bind="_editActivo" />
+                                    <label class="form-check-label" for="editActivo">Activa</label>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center">
-                    <button class="btn btn-outline-secondary btn-sm" @onclick="VolverALista">Cancelar</button>
-                    <button class="btn btn-primary" @onclick="CrearEmpresaAsync" disabled="@_creando">
-                        @if (_creando)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
-                        }
-                        else
-                        {
-                            <i class="bi bi-building-check me-1"></i>
-                        }
-                        Crear empresa
-                    </button>
-                </div>
-            </div>
-            </div>
-        }
-        else if (Id.HasValue)
-        {
-            <div class="detail-content">
-            <div class="px-4 py-4">
-
-                <div class="d-flex align-items-center gap-3 mb-4">
-                    <button class="btn btn-sm btn-light d-lg-none" @onclick="VolverALista">
-                        <i class="bi bi-arrow-left"></i>
-                    </button>
-
-                    @if (_cargandoDetalle)
-                    {
-                        <div class="d-flex align-items-center gap-3 placeholder-glow flex-grow-1">
-                            <div>
-                                <span class="placeholder d-block mb-1" style="height:14px;width:160px"></span>
-                                <span class="placeholder" style="height:11px;width:100px"></span>
-                            </div>
-                        </div>
-                    }
-                    else if (_empresaDetalle is not null)
-                    {
-                        <div class="flex-grow-1 overflow-hidden">
-                            <h5 class="mb-0 fw-semibold text-truncate">@_empresaDetalle.Nombre</h5>
-                            @if (!string.IsNullOrWhiteSpace(_empresaDetalle.Cif))
-                            {
-                                <p class="text-muted small mb-0">@_empresaDetalle.Cif</p>
-                            }
-                        </div>
-                        @if (!_empresaDetalle.Activo)
-                        {
-                            <span class="badge bg-secondary">Inactiva</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-success-subtle text-success-emphasis">Activa</span>
-                        }
-                    }
-                </div>
-
-                @if (_errorDetalle is not null)
-                {
-                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
-                        <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
-                        <span>@_errorDetalle</span>
-                    </div>
-                }
-
-                @if (!_cargandoDetalle && _empresaDetalle is not null)
-                {
-                    <div class="card mb-4">
-                        <div class="card-header d-flex align-items-center gap-2">
-                            <i class="bi bi-pencil text-primary"></i>
-                            <span class="fw-semibold">Datos de la empresa</span>
-                        </div>
-                        <div class="card-body py-4">
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <label class="form-label">Nombre <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" @bind="_editNombre" autocomplete="off" />
-                                </div>
-                                <div class="col-12 col-md-6">
-                                    <label class="form-label">CIF</label>
-                                    <input type="text" class="form-control" @bind="_editCif" autocomplete="off" />
-                                </div>
-                                <div class="col-12 col-md-6 d-flex align-items-end">
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input" type="checkbox" id="editActivo" @bind="_editActivo" />
-                                        <label class="form-check-label" for="editActivo">Activa</label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-            </div>
-
-            @if (!_cargandoDetalle && _empresaDetalle is not null)
-            {
-                <div class="detail-toolbar">
-                    <button class="btn btn-outline-danger me-auto"
-                            @onclick="AbrirModalEliminar">
-                        <i class="bi bi-trash3 me-1"></i>Eliminar empresa
-                    </button>
-                    @if (_errorGuardar is not null)
-                    {
-                        <span class="text-danger small me-2 d-flex align-items-center gap-1">
-                            <i class="bi bi-x-circle-fill"></i>@_errorGuardar
-                        </span>
-                    }
-                    <button class="btn btn-primary" @onclick="OnGuardar" disabled="@_guardando">
-                        @if (_guardando)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
-                        }
-                        Guardar cambios
-                    </button>
                 </div>
             }
-        }
-    </div>
-</div>
+        </div>
+    </FormEdicion>
 
-<!-- Modal: confirmar eliminación -->
-<Modal Title="Eliminar empresa" @bind-IsVisible="_mostrarModalEliminar">
-    <ChildContent>
-        <p class="mb-1">¿Seguro que quieres eliminar la empresa <strong>@_empresaDetalle?.Nombre</strong>?</p>
-        <p class="text-muted small mb-0">Esta acción no se puede deshacer.</p>
-        @if (_errorEliminar is not null)
+    <DetailToolbar>
+        @if (!_cargandoDetalle && _empresaDetalle is not null)
         {
-            <div class="alert alert-danger d-flex align-items-center gap-2 mt-3 py-2 mb-0">
-                <i class="bi bi-x-circle-fill flex-shrink-0"></i>
-                <span>@_errorEliminar</span>
-            </div>
-        }
-    </ChildContent>
-    <Footer>
-        <button class="btn btn-outline-secondary"
-                @onclick='() => _mostrarModalEliminar = false'>Cancelar</button>
-        <button class="btn btn-danger" @ref="_refBtnEliminar" @onclick="EliminarEmpresaAsync" disabled="@_eliminando">
-            @if (_eliminando)
+            <button class="btn btn-outline-danger me-auto"
+                    @onclick="AbrirModalEliminar">
+                <i class="bi bi-trash3 me-1"></i>Eliminar empresa
+            </button>
+            @if (_errorGuardar is not null)
             {
-                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                <span class="text-danger small me-2 d-flex align-items-center gap-1">
+                    <i class="bi bi-x-circle-fill"></i>@_errorGuardar
+                </span>
             }
-            Eliminar
-        </button>
-    </Footer>
-</Modal>
+            <button class="btn btn-primary" @onclick="OnGuardar" disabled="@_guardando">
+                @if (_guardando)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                }
+                Guardar cambios
+            </button>
+        }
+    </DetailToolbar>
+
+</ErpPage>
+

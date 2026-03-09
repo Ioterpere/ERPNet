@@ -1,5 +1,6 @@
 using ERPNet.ApiClient;
 using ERPNet.Web.Blazor.Client;
+using ERPNet.Web.Blazor.Client.Components.Common.Toast;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);

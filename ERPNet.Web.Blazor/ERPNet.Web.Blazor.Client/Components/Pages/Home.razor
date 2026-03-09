@@ -1,8 +1,9 @@
 @page "/"
 @attribute [Authorize]
+@inherits PageBase
 @using System.Globalization
 
-<PageTitle>Inicio — ERPNet</PageTitle>
+<PageTitle>Inicio | @NombreEmpresa</PageTitle>
 
 <!-- ── Saludo ────────────────────────────────────────── -->
 <div class="d-flex align-items-start justify-content-between mb-4 flex-wrap gap-2">
@@ -175,16 +176,13 @@
 </div>
 
 @code {
-    [CascadingParameter]
-    private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
-
     private string _nombre = string.Empty;
     private string _saludo = string.Empty;
     private string _fecha = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
-        var state = await AuthStateTask;
+        var state = await AuthStateTask!;
         _nombre = state.User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "Usuario";
 
         var hora = DateTime.Now.Hour;

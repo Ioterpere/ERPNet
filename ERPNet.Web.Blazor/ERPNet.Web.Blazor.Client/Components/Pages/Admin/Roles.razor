@@ -1,34 +1,30 @@
 @page "/roles"
-@inherits ErpPage
+@inherits ErpPageBase
 
-<PageTitle>Roles — @NombreEmpresa</PageTitle>
+<ErpPage @ref="_refLayout"
+               ConTabs="true"
+               Titulo="Roles"
+               TituloNuevo="Nuevo rol"
+               EsNuevo="_esNuevo"
+               TieneDetalle="Id.HasValue"
+               Busqueda="@_busqueda"
+               OnBusquedaInput="OnBusquedaInputAsync"
+               OnNuevo="OnNuevo"
+               OnVolverALista="VolverALista"
+               ColLista="3"
+               SearchPlaceholder="Buscar por nombre..."
+               PlaceholderIcono="bi-shield-lock"
+               PlaceholderTexto="Selecciona un rol de la lista"
+               PlaceholderSubTexto='@("o crea uno nuevo con el botón &quot;+ Nuevo&quot;")'
+               TotalItems="_totalItems"
+               @bind-MostrarModalEliminar="_mostrarModalEliminar"
+               TextoEliminar="@($"el rol {_rolDetalle?.Nombre}")"
+               ErrorEliminar="@_errorEliminar"
+               Eliminando="_eliminando"
+               OnEliminar="EliminarRolAsync">
 
-<div class="row g-0 panel-container">
-
-    <!-- ── Panel izquierdo: Lista ─────────────────────────────── -->
-    <div class="col-12 col-lg-3 border-end panel-lista @((!_esNuevo && !Id.HasValue) ? "d-flex" : "d-none d-lg-flex")">
-
-        <!-- Header -->
-        <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom flex-shrink-0">
-            <h5 class="mb-0 fw-semibold">Roles</h5>
-            <button class="btn btn-sm btn-primary" @onclick="OnNuevo">
-                <i class="bi bi-plus-lg me-1"></i>Nuevo
-            </button>
-        </div>
-
-        <!-- Buscador -->
-        <div class="px-3 py-2 border-bottom flex-shrink-0">
-            <div class="input-group input-group-sm">
-                <span class="input-group-text bg-transparent border-end-0">
-                    <i class="bi bi-search text-muted"></i>
-                </span>
-                <input type="search" class="form-control border-start-0 ps-0"
-                       placeholder="Buscar por nombre..."
-                       value="@_busqueda" @oninput="OnBusquedaInputAsync" />
-            </div>
-        </div>
-
-        <ListaPanel @ref="_refLista" TItem="RolResponse"
+    <ListaBody>
+        <VirtualList @ref="_refLista" TItem="RolResponse"
                     IconoVacio="bi-shield-x"
                     ItemsProvider="CargarItemsAsync"
                     OnTotalChanged="t => _totalItems = t">
@@ -49,458 +45,387 @@
                     }
                 </button>
             </ItemTemplate>
-        </ListaPanel>
+        </VirtualList>
+    </ListaBody>
 
-        @if (_totalItems.HasValue)
+    <FormNuevo>
+        @if (_errorCrear is not null)
         {
-            <div class="px-3 py-1 border-top flex-shrink-0 d-flex align-items-center justify-content-end">
-                <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill">@_totalItems</span>
-            </div>
-        }
-
-    </div>
-
-    <!-- ── Panel derecho: Detalle ─────────────────────────────── -->
-    <div class="col-12 col-lg-9 panel-detalle @((!_esNuevo && !Id.HasValue) ? "d-none d-lg-flex" : "")">
-
-        @if (!_esNuevo && !Id.HasValue)
-        {
-            <!-- Estado vacío -->
-            <div class="panel-placeholder">
-                <i class="bi bi-shield-lock text-muted" style="font-size:3rem"></i>
-                <p class="text-muted mt-3 mb-1">Selecciona un rol de la lista</p>
-                <p class="text-muted small mb-0">o crea uno nuevo con el botón "+ Nuevo"</p>
-            </div>
-        }
-        else if (_esNuevo)
-        {
-            <!-- Formulario de creación -->
-            <div class="detail-content">
-            <div class="px-4 py-4">
-                <div class="d-flex align-items-center gap-3 mb-4">
-                    <button class="btn btn-sm btn-light d-lg-none" @onclick="VolverALista">
-                        <i class="bi bi-arrow-left"></i>
-                    </button>
-                    <h5 class="mb-0 fw-semibold">Nuevo rol</h5>
-                </div>
-
-                @if (_errorCrear is not null)
-                {
-                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
-                        <i class="bi bi-x-circle-fill flex-shrink-0"></i>
-                        <span>@_errorCrear</span>
-                    </div>
-                }
-
-                <div class="card mb-3">
-                    <div class="card-header d-flex align-items-center gap-2">
-                        <i class="bi bi-shield-plus text-primary"></i>
-                        <span class="fw-semibold">Datos del rol</span>
-                    </div>
-                    <div class="card-body py-4">
-                        <div class="row g-3">
-                            <div class="col-12">
-                                <label class="form-label">Nombre <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" @ref="_refNuevoNombre" @bind="_nuevoNombre"
-                                       placeholder="Nombre del rol" autocomplete="off" />
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Descripción</label>
-                                <input type="text" class="form-control" @bind="_nuevoDescripcion"
-                                       placeholder="Descripción opcional" autocomplete="off" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center">
-                    <button class="btn btn-outline-secondary btn-sm" @onclick="VolverALista">Cancelar</button>
-                    <button class="btn btn-primary" @onclick="CrearRolAsync" disabled="@_creando">
-                        @if (_creando)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
-                        }
-                        else
-                        {
-                            <i class="bi bi-shield-check me-1"></i>
-                        }
-                        Crear rol
-                    </button>
-                </div>
-            </div>
-            </div>
-        }
-        else if (Id.HasValue)
-        {
-            <!-- Formulario de edición -->
-            <div class="detail-content">
-            <div class="px-4 py-4">
-
-                <!-- Header de detalle -->
-                <div class="d-flex align-items-center gap-3 mb-4">
-                    <button class="btn btn-sm btn-light d-lg-none" @onclick="VolverALista">
-                        <i class="bi bi-arrow-left"></i>
-                    </button>
-
-                    @if (_cargandoDetalle)
-                    {
-                        <div class="d-flex align-items-center gap-3 placeholder-glow flex-grow-1">
-                            <div>
-                                <span class="placeholder d-block mb-1" style="height:14px;width:160px"></span>
-                                <span class="placeholder" style="height:11px;width:100px"></span>
-                            </div>
-                        </div>
-                    }
-                    else if (_rolDetalle is not null)
-                    {
-                        <div class="flex-grow-1 overflow-hidden">
-                                <h5 class="mb-0 fw-semibold text-truncate">@_rolDetalle.Nombre</h5>
-                                @if (!string.IsNullOrWhiteSpace(_rolDetalle.Descripcion))
-                                {
-                                    <p class="text-muted small mb-0 text-truncate">@_rolDetalle.Descripcion</p>
-                                }
-                        </div>
-                        <button class="btn btn-sm btn-primary flex-shrink-0"
-                            @onclick="AbrirModalEditar">
-                            <i class="bi bi-pencil"></i>
-                        </button> 
-                    }
-                </div>
-
-                @if (_errorDetalle is not null)
-                {
-                    <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
-                        <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
-                        <span>@_errorDetalle</span>
-                    </div>
-                }
-
-                @if (!_cargandoDetalle && _rolDetalle is not null)
-                {
-                    <!-- Nav tabs -->
-                    <ul class="nav nav-tabs mb-3">
-                        <li class="nav-item">
-                            <button class="nav-link @(_tabActiva == "usuarios" ? "active" : "")"
-                                    @onclick='() => _tabActiva = "usuarios"'>
-                                <i class="bi bi-people me-1"></i>Usuarios
-                            </button>
-                        </li>
-                        <li class="nav-item">
-                            <button class="nav-link @(_tabActiva == "permisos" ? "active" : "")"
-                                    @onclick='() => _tabActiva = "permisos"'>
-                                <i class="bi bi-shield me-1"></i>Permisos
-                            </button>
-                        </li>
-                    </ul>
-                    <!-- ── Tab: Usuarios ───────────────────────────── -->
-                    @if (_tabActiva == "usuarios")
-                    {
-                        <div class="card mb-4">
-                            <div class="card-header d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center gap-2">
-                                    <i class="bi bi-people text-primary"></i>
-                                    <span class="fw-semibold">Usuarios del rol</span>
-                                </div>
-                                @if (_asignacionesUsuario.Count > 0)
-                                {
-                                    <span class="badge bg-primary-subtle text-primary-emphasis">@_asignacionesUsuario.Count</span>
-                                }
-                            </div>
-                            <div class="card-body p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-sm align-middle mb-0">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th class="small ps-3">Usuario</th>
-                                                <th class="small">Empresa</th>
-                                                <th style="width:40px"></th>
-                                                <th style="width:40px"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @if (_asignacionesUsuario.Count == 0)
-                                            {
-                                                <tr>
-                                                    <td colspan="4" class="text-center text-muted py-4 small">
-                                                        <i class="bi bi-person-x d-block fs-4 mb-1"></i>
-                                                        Sin usuarios asignados
-                                                    </td>
-                                                </tr>
-                                            }
-                                            else
-                                            {
-                                                @foreach (var a in _asignacionesUsuario)
-                                                {
-                                                    var email = _usuariosPorId.TryGetValue(a.UsuarioId, out var u) ? u.Email : a.UsuarioId.ToString();
-                                                    var empresa = a.EmpresaId is null
-                                                        ? "Global"
-                                                        : (_todasEmpresas.FirstOrDefault(e => e.Id == a.EmpresaId)?.Nombre ?? a.EmpresaId.ToString());
-                                                    <tr>
-                                                        <td class="ps-3 small fw-semibold">@email</td>
-                                                        <td class="small text-muted">
-                                                            @if (a.EmpresaId is null)
-                                                            {
-                                                                <span class="badge bg-secondary-subtle text-secondary-emphasis">Global</span>
-                                                            }
-                                                            else
-                                                            {
-                                                                @empresa
-                                                            }
-                                                        </td>
-                                                        <td>
-                                                            <a href="/usuarios?id=@a.UsuarioId" class="btn btn-sm btn-outline-secondary p-1 lh-1">
-                                                                <i class="bi bi-arrow-up-right-square"></i>
-                                                            </a>
-                                                        </td>
-                                                        <td>
-                                                            <button type="button" class="btn btn-sm btn-outline-danger p-1 lh-1"
-                                                                    @onclick="() => EliminarAsignacionUsuario(a.UsuarioId, a.EmpresaId)">
-                                                                <i class="bi bi-x-lg"></i>
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                }
-                                            }
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <!-- Fila de añadir fuera del table-responsive para que el dropdown no quede recortado -->
-                                <div class="d-flex align-items-center gap-2 px-3 py-2 border-top bg-light">
-                                    <div class="flex-grow-1" style="min-width:0">
-                                        <ItemSelector TItem="UsuarioResponse"
-                                                      @key="_selectorKeyUsuario"
-                                                      SearchAsync="BuscarUsuariosAsync"
-                                                      GetId="u => u.Id"
-                                                      GetLabel="u => u.Email"
-                                                      GetSubLabel='u => u.Activo ? "Activo" : "Inactivo"'
-                                                      Value="_addUsuarioId"
-                                                      ValueChanged="id => _addUsuarioId = id"
-                                                      Placeholder="Buscar usuario..." />
-                                    </div>
-                                    <select class="form-select form-select-sm flex-shrink-0" style="width:160px" @bind="_addEmpresaStr">
-                                        <option value="">Global</option>
-                                        @foreach (var e in _todasEmpresas)
-                                        {
-                                            <option value="@e.Id">@e.Nombre</option>
-                                        }
-                                    </select>
-                                    <button type="button" class="btn btn-sm btn-outline-primary flex-shrink-0 p-1 lh-1"
-                                            @onclick="AñadirAsignacionUsuario"
-                                            disabled="@(_addUsuarioId is null)">
-                                        <i class="bi bi-plus-lg"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    }
-
-                    <!-- ── Tab: Permisos ───────────────────────────── -->
-                    else if (_tabActiva == "permisos")
-                    {
-                        <div class="card mb-4">
-                            <div class="card-header d-flex align-items-center justify-content-between">
-                                <div class="d-flex align-items-center gap-2">
-                                    <i class="bi bi-shield-check text-primary"></i>
-                                    <span class="fw-semibold">Permisos del rol</span>
-                                </div>
-                                @if (_permisosEdit.Count > 0)
-                                {
-                                    <span class="badge bg-primary-subtle text-primary-emphasis">@_permisosEdit.Count</span>
-                                }
-                            </div>
-                            <div class="card-body">
-
-                                <!-- Añadir permiso -->
-                                <div class="d-flex gap-2 mb-3">
-                                    <select class="form-select form-select-sm" style="max-width:280px"
-                                            @bind="_recursoSeleccionadoId">
-                                        <option value="0">— Seleccionar recurso —</option>
-                                        @foreach (var rec in _recursosDisponibles)
-                                        {
-                                            <option value="@rec.Id">@rec.Codigo</option>
-                                        }
-                                    </select>
-                                    <button class="btn btn-sm btn-outline-primary" @onclick="AñadirPermiso"
-                                            disabled="@(_recursoSeleccionadoId == 0)">
-                                        <i class="bi bi-plus-lg me-1"></i>Añadir
-                                    </button>
-                                </div>
-
-                                <!-- Tabla de permisos -->
-                                <div class="table-responsive">
-                                    <table class="table table-sm align-middle mb-0">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Recurso</th>
-                                                <th class="text-center" style="width:70px">Crear</th>
-                                                <th class="text-center" style="width:70px">Editar</th>
-                                                <th class="text-center" style="width:80px">Eliminar</th>
-                                                <th style="width:140px">Alcance</th>
-                                                <th style="width:50px"></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @if (_permisosEdit.Count == 0)
-                                            {
-                                                <tr>
-                                                    <td colspan="6" class="text-center text-muted py-4 small">
-                                                        <i class="bi bi-shield-slash d-block fs-4 mb-1"></i>
-                                                        Sin permisos configurados
-                                                    </td>
-                                                </tr>
-                                            }
-                                            else
-                                            {
-                                                @foreach (var permiso in _permisosEdit)
-                                                {
-                                                    <tr>
-                                                        <td class="fw-semibold small">@permiso.Codigo</td>
-                                                        <td class="text-center perm-cell" @onclick="() => permiso.CanCreate = !permiso.CanCreate">
-                                                            <input type="checkbox" class="form-check-input"
-                                                                   @bind="permiso.CanCreate" @onclick:stopPropagation="true" />
-                                                        </td>
-                                                        <td class="text-center perm-cell" @onclick="() => permiso.CanEdit = !permiso.CanEdit">
-                                                            <input type="checkbox" class="form-check-input"
-                                                                   @bind="permiso.CanEdit" @onclick:stopPropagation="true" />
-                                                        </td>
-                                                        <td class="text-center perm-cell" @onclick="() => permiso.CanDelete = !permiso.CanDelete">
-                                                            <input type="checkbox" class="form-check-input"
-                                                                   @bind="permiso.CanDelete" @onclick:stopPropagation="true" />
-                                                        </td>
-                                                        <td>
-                                                            <select class="form-select form-select-sm"
-                                                                    @bind="permiso.Alcance">
-                                                                <option value="0">Propio</option>
-                                                                <option value="1">Sección</option>
-                                                                <option value="2">Global</option>
-                                                            </select>
-                                                        </td>
-                                                        <td>
-                                                            <button type="button"
-                                                                    class="btn btn-sm btn-outline-danger"
-                                                                    @onclick="() => QuitarPermiso(permiso)">
-                                                                <i class="bi bi-x-lg"></i>
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                }
-                                            }
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    }
-
-                }
-            </div>
-            </div>
-
-            <!-- ── Toolbar de acciones ─────────────────────────── -->
-            @if (!_cargandoDetalle && _rolDetalle is not null)
-            {
-                <div class="detail-toolbar">
-                    <button class="btn btn-outline-danger me-auto"
-                            @onclick="AbrirModalEliminar">
-                        <i class="bi bi-trash3 me-1"></i>Eliminar rol
-                    </button>
-                    @if (_tabActiva == "usuarios")
-                    {
-                        @if (_errorUsuarios is not null)
-                        {
-                            <span class="text-danger small me-auto d-flex align-items-center gap-1">
-                                <i class="bi bi-x-circle-fill"></i>@_errorUsuarios
-                            </span>
-                        }
-                        <button class="btn btn-primary" @onclick="GuardarUsuariosAsync"
-                                disabled="@_guardandoUsuarios">
-                            @if (_guardandoUsuarios)
-                            {
-                                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
-                            }
-                            Guardar usuarios
-                        </button>
-                    }
-                    else if (_tabActiva == "permisos")
-                    {
-                        @if (_errorPermisos is not null)
-                        {
-                            <span class="text-danger small me-auto d-flex align-items-center gap-1">
-                                <i class="bi bi-x-circle-fill"></i>@_errorPermisos
-                            </span>
-                        }
-                        <button class="btn btn-primary" @onclick="GuardarPermisosAsync"
-                                disabled="@_guardandoPermisos">
-                            @if (_guardandoPermisos)
-                            {
-                                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
-                            }
-                            Guardar permisos
-                        </button>
-                    }
-                </div>
-            }
-        }
-    </div>
-</div>
-
-<!-- Modal: editar nombre y descripción del rol -->
-<Modal Title="Editar rol" @bind-IsVisible="_mostrarModalEditar" CloseOnBackdrop="false">
-    <ChildContent>
-        @if (_errorDatos is not null)
-        {
-            <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-3">
+            <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
                 <i class="bi bi-x-circle-fill flex-shrink-0"></i>
-                <span>@_errorDatos</span>
+                <span>@_errorCrear</span>
             </div>
         }
-        <div class="row g-3">
-            <div class="col-12">
-                <label class="form-label">Nombre <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" @ref="_refEditNombre" @bind="_editNombre" autocomplete="off" />
+
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-shield-plus text-primary"></i>
+                <span class="fw-semibold">Datos del rol</span>
             </div>
-            <div class="col-12">
-                <label class="form-label">Descripción</label>
-                <input type="text" class="form-control" @bind="_editDescripcion"
-                       placeholder="Descripción opcional" autocomplete="off" />
+            <div class="card-body py-4">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" @ref="_refNuevoNombre" @bind="_nuevoNombre"
+                               placeholder="Nombre del rol" autocomplete="off" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Descripción</label>
+                        <input type="text" class="form-control" @bind="_nuevoDescripcion"
+                               placeholder="Descripción opcional" autocomplete="off" />
+                    </div>
+                </div>
             </div>
         </div>
-    </ChildContent>
-    <Footer>
-        <button class="btn btn-outline-secondary"
-                @onclick='() => _mostrarModalEditar = false'>Cancelar</button>
-        <button class="btn btn-primary" @onclick="GuardarDatosAsync" disabled="@_guardandoDatos">
-            @if (_guardandoDatos)
-            {
-                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
-            }
-            Guardar cambios
-        </button>
-    </Footer>
-</Modal>
 
-<!-- Modal: confirmar eliminación del rol -->
-<Modal Title="Eliminar rol" @bind-IsVisible="_mostrarModalEliminar">
-    <ChildContent>
-        <p class="mb-1">¿Seguro que quieres eliminar el rol <strong>@_rolDetalle?.Nombre</strong>?</p>
-        <p class="text-muted small mb-0">Esta acción no se puede deshacer.</p>
-        @if (_errorEliminar is not null)
-        {
-            <div class="alert alert-danger d-flex align-items-center gap-2 mt-3 py-2 mb-0">
-                <i class="bi bi-x-circle-fill flex-shrink-0"></i>
-                <span>@_errorEliminar</span>
+        <div class="d-flex justify-content-between align-items-center">
+            <button class="btn btn-outline-secondary btn-sm" @onclick="VolverALista">Cancelar</button>
+            <button class="btn btn-primary" @onclick="CrearRolAsync" disabled="@_creando">
+                @if (_creando)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                }
+                else
+                {
+                    <i class="bi bi-shield-check me-1"></i>
+                }
+                Crear rol
+            </button>
+        </div>
+    </FormNuevo>
+
+    <FormEdicion>
+        <div class="px-4 pt-4 flex-shrink-0">
+
+            <!-- Header de detalle -->
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <button class="btn btn-sm btn-light d-lg-none" @onclick="VolverALista">
+                    <i class="bi bi-arrow-left"></i>
+                </button>
+
+                @if (_cargandoDetalle)
+                {
+                    <div class="d-flex align-items-center gap-3 placeholder-glow flex-grow-1">
+                        <div>
+                            <span class="placeholder d-block mb-1" style="height:14px;width:160px"></span>
+                            <span class="placeholder" style="height:11px;width:100px"></span>
+                        </div>
+                    </div>
+                }
+                else if (_rolDetalle is not null)
+                {
+                    <div class="flex-grow-1 overflow-hidden">
+                        <h5 class="mb-0 fw-semibold text-truncate">@_rolDetalle.Nombre</h5>
+                        @if (!string.IsNullOrWhiteSpace(_rolDetalle.Descripcion))
+                        {
+                            <p class="text-muted small mb-0 text-truncate">@_rolDetalle.Descripcion</p>
+                        }
+                    </div>
+                    <button class="btn btn-sm btn-primary flex-shrink-0"
+                        @onclick="AbrirModalEditar">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                }
             </div>
-        }
-    </ChildContent>
-    <Footer>
-        <button class="btn btn-outline-secondary"
-                @onclick='() => _mostrarModalEliminar = false'>Cancelar</button>
-        <button class="btn btn-danger" @ref="_refBtnEliminar" @onclick="EliminarRolAsync" disabled="@_eliminando">
-            @if (_eliminando)
+
+            @if (_errorDetalle is not null)
             {
-                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                    <span>@_errorDetalle</span>
+                </div>
             }
-            Eliminar
-        </button>
-    </Footer>
-</Modal>
+
+        </div>
+
+        @if (!_cargandoDetalle && _rolDetalle is not null)
+        {
+            <Tabs Items="_tabsRol" ActiveTab="@Tab" ActiveTabChanged="CambiarTab">
+
+                <!-- ── Tab: Usuarios ───────────────────────────── -->
+                @if ((Tab ?? "usuarios") == "usuarios")
+                {
+                    <div class="card mb-4">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-people text-primary"></i>
+                                <span class="fw-semibold">Usuarios del rol</span>
+                            </div>
+                            @if (_asignacionesUsuario.Count > 0)
+                            {
+                                <span class="badge bg-primary-subtle text-primary-emphasis">@_asignacionesUsuario.Count</span>
+                            }
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="small ps-3">Usuario</th>
+                                            <th class="small">Empresa</th>
+                                            <th style="width:40px"></th>
+                                            <th style="width:40px"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (_asignacionesUsuario.Count == 0)
+                                        {
+                                            <tr>
+                                                <td colspan="4" class="text-center text-muted py-4 small">
+                                                    <i class="bi bi-person-x d-block fs-4 mb-1"></i>
+                                                    Sin usuarios asignados
+                                                </td>
+                                            </tr>
+                                        }
+                                        else
+                                        {
+                                            @foreach (var a in _asignacionesUsuario)
+                                            {
+                                                var email = _usuariosPorId.TryGetValue(a.UsuarioId, out var u) ? u.Email : a.UsuarioId.ToString();
+                                                var empresa = a.EmpresaId is null
+                                                    ? "Global"
+                                                    : (_todasEmpresas.FirstOrDefault(e => e.Id == a.EmpresaId)?.Nombre ?? a.EmpresaId.ToString());
+                                                <tr>
+                                                    <td class="ps-3 small fw-semibold">@email</td>
+                                                    <td class="small text-muted">
+                                                        @if (a.EmpresaId is null)
+                                                        {
+                                                            <span class="badge bg-secondary-subtle text-secondary-emphasis">Global</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            @empresa
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        <a href="/usuarios?id=@a.UsuarioId" class="btn btn-sm btn-outline-secondary p-1 lh-1">
+                                                            <i class="bi bi-arrow-up-right-square"></i>
+                                                        </a>
+                                                    </td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger p-1 lh-1"
+                                                                @onclick="() => EliminarAsignacionUsuario(a.UsuarioId, a.EmpresaId)">
+                                                            <i class="bi bi-x-lg"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- Fila de añadir fuera del table-responsive para que el dropdown no quede recortado -->
+                            <div class="d-flex align-items-center gap-2 px-3 py-2 border-top bg-light">
+                                <div class="flex-grow-1" style="min-width:0">
+                                    <ItemSelector TItem="UsuarioResponse"
+                                                  @key="_selectorKeyUsuario"
+                                                  SearchAsync="BuscarUsuariosAsync"
+                                                  GetId="u => u.Id"
+                                                  GetLabel="u => u.Email"
+                                                  GetSubLabel='u => u.Activo ? "Activo" : "Inactivo"'
+                                                  Value="_addUsuarioId"
+                                                  ValueChanged="id => _addUsuarioId = id"
+                                                  Placeholder="Buscar usuario..." />
+                                </div>
+                                <select class="form-select form-select-sm flex-shrink-0" style="width:160px" @bind="_addEmpresaStr">
+                                    <option value="">Global</option>
+                                    @foreach (var e in _todasEmpresas)
+                                    {
+                                        <option value="@e.Id">@e.Nombre</option>
+                                    }
+                                </select>
+                                <button type="button" class="btn btn-sm btn-outline-primary flex-shrink-0 p-1 lh-1"
+                                        @onclick="AñadirAsignacionUsuario"
+                                        disabled="@(_addUsuarioId is null)">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- ── Tab: Permisos ───────────────────────────── -->
+                else if ((Tab ?? "usuarios") == "permisos")
+                {
+                    <div class="card mb-4">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-shield-check text-primary"></i>
+                                <span class="fw-semibold">Permisos del rol</span>
+                            </div>
+                            @if (_permisosEdit.Count > 0)
+                            {
+                                <span class="badge bg-primary-subtle text-primary-emphasis">@_permisosEdit.Count</span>
+                            }
+                        </div>
+                        <div class="card-body">
+
+                            <!-- Añadir permiso -->
+                            <div class="d-flex gap-2 mb-3">
+                                <select class="form-select form-select-sm" style="max-width:280px"
+                                        @bind="_recursoSeleccionadoId">
+                                    <option value="0">— Seleccionar recurso —</option>
+                                    @foreach (var rec in _recursosDisponibles)
+                                    {
+                                        <option value="@rec.Id">@rec.Codigo</option>
+                                    }
+                                </select>
+                                <button class="btn btn-sm btn-outline-primary" @onclick="AñadirPermiso"
+                                        disabled="@(_recursoSeleccionadoId == 0)">
+                                    <i class="bi bi-plus-lg me-1"></i>Añadir
+                                </button>
+                            </div>
+
+                            <!-- Tabla de permisos -->
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Recurso</th>
+                                            <th class="text-center" style="width:70px">Crear</th>
+                                            <th class="text-center" style="width:70px">Editar</th>
+                                            <th class="text-center" style="width:80px">Eliminar</th>
+                                            <th style="width:140px">Alcance</th>
+                                            <th style="width:50px"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (_permisosEdit.Count == 0)
+                                        {
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted py-4 small">
+                                                    <i class="bi bi-shield-slash d-block fs-4 mb-1"></i>
+                                                    Sin permisos configurados
+                                                </td>
+                                            </tr>
+                                        }
+                                        else
+                                        {
+                                            @foreach (var permiso in _permisosEdit)
+                                            {
+                                                <tr>
+                                                    <td class="fw-semibold small">@permiso.Codigo</td>
+                                                    <td class="text-center perm-cell" @onclick="() => permiso.CanCreate = !permiso.CanCreate">
+                                                        <input type="checkbox" class="form-check-input"
+                                                               @bind="permiso.CanCreate" @onclick:stopPropagation="true" />
+                                                    </td>
+                                                    <td class="text-center perm-cell" @onclick="() => permiso.CanEdit = !permiso.CanEdit">
+                                                        <input type="checkbox" class="form-check-input"
+                                                               @bind="permiso.CanEdit" @onclick:stopPropagation="true" />
+                                                    </td>
+                                                    <td class="text-center perm-cell" @onclick="() => permiso.CanDelete = !permiso.CanDelete">
+                                                        <input type="checkbox" class="form-check-input"
+                                                               @bind="permiso.CanDelete" @onclick:stopPropagation="true" />
+                                                    </td>
+                                                    <td>
+                                                        <select class="form-select form-select-sm"
+                                                                @bind="permiso.Alcance">
+                                                            <option value="0">Propio</option>
+                                                            <option value="1">Sección</option>
+                                                            <option value="2">Global</option>
+                                                        </select>
+                                                    </td>
+                                                    <td>
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-outline-danger"
+                                                                @onclick="() => QuitarPermiso(permiso)">
+                                                            <i class="bi bi-x-lg"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+            </Tabs>
+        }
+    </FormEdicion>
+
+    <DetailToolbar>
+        @if (!_cargandoDetalle && _rolDetalle is not null)
+        {
+            <button class="btn btn-outline-danger me-auto"
+                    @onclick="AbrirModalEliminar">
+                <i class="bi bi-trash3 me-1"></i>Eliminar rol
+            </button>
+            @if ((Tab ?? "usuarios") == "usuarios")
+            {
+                @if (_errorUsuarios is not null)
+                {
+                    <span class="text-danger small me-auto d-flex align-items-center gap-1">
+                        <i class="bi bi-x-circle-fill"></i>@_errorUsuarios
+                    </span>
+                }
+                <button class="btn btn-primary" @onclick="GuardarUsuariosAsync"
+                        disabled="@_guardandoUsuarios">
+                    @if (_guardandoUsuarios)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                    }
+                    Guardar usuarios
+                </button>
+            }
+            else if ((Tab ?? "usuarios") == "permisos")
+            {
+                @if (_errorPermisos is not null)
+                {
+                    <span class="text-danger small me-auto d-flex align-items-center gap-1">
+                        <i class="bi bi-x-circle-fill"></i>@_errorPermisos
+                    </span>
+                }
+                <button class="btn btn-primary" @onclick="GuardarPermisosAsync"
+                        disabled="@_guardandoPermisos">
+                    @if (_guardandoPermisos)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                    }
+                    Guardar permisos
+                </button>
+            }
+        }
+    </DetailToolbar>
+
+    <ModalesExtra>
+        <!-- Modal: editar nombre y descripción del rol -->
+        <Modal Title="Editar rol" @bind-IsVisible="_mostrarModalEditar" CloseOnBackdrop="false">
+            <ChildContent>
+                @if (_errorDatos is not null)
+                {
+                    <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-3">
+                        <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                        <span>@_errorDatos</span>
+                    </div>
+                }
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" @ref="_refEditNombre" @bind="_editNombre" autocomplete="off" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Descripción</label>
+                        <input type="text" class="form-control" @bind="_editDescripcion"
+                               placeholder="Descripción opcional" autocomplete="off" />
+                    </div>
+                </div>
+            </ChildContent>
+            <Footer>
+                <button class="btn btn-outline-secondary"
+                        @onclick='() => _mostrarModalEditar = false'>Cancelar</button>
+                <button class="btn btn-primary" @onclick="GuardarDatosAsync" disabled="@_guardandoDatos">
+                    @if (_guardandoDatos)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                    }
+                    Guardar cambios
+                </button>
+            </Footer>
+        </Modal>
+    </ModalesExtra>
+
+</ErpPage>
+

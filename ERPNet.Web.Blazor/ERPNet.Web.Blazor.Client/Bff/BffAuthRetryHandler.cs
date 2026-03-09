@@ -1,3 +1,4 @@
+using ERPNet.Web.Blazor.Client.Components.Common.Toast;
 using Microsoft.AspNetCore.Components;
 
 namespace ERPNet.Web.Blazor.Client;

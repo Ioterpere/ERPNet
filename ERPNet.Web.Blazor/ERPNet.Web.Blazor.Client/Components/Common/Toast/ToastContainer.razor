@@ -21,9 +21,9 @@
     private readonly List<ToastItem> _items = [];
 
     protected override void OnInitialized()
-        => Toast.OnToastAdded += HandleToast;
+        => Toast.OnToastAdded += HandleToastAsync;
 
-    private async void HandleToast(ToastItem item)
+    private async Task HandleToastAsync(ToastItem item)
     {
         await InvokeAsync(() => { _items.Add(item); StateHasChanged(); });
         await Task.Delay(item.DuracionMs);
@@ -53,5 +53,5 @@
     };
 
     public void Dispose()
-        => Toast.OnToastAdded -= HandleToast;
+        => Toast.OnToastAdded -= HandleToastAsync;
 }

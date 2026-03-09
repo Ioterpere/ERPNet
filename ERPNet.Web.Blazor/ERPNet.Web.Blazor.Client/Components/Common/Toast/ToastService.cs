@@ -1,4 +1,4 @@
-namespace ERPNet.Web.Blazor.Client;
+namespace ERPNet.Web.Blazor.Client.Components.Common.Toast;
 
 public enum ToastTipo { Exito, Error, Aviso, Info }
 
@@ -10,7 +10,7 @@ public record ToastItem(Guid Id, string Mensaje, ToastTipo Tipo, int DuracionMs)
 /// </summary>
 public class ToastService
 {
-    public event Action<ToastItem>? OnToastAdded;
+    public event Func<ToastItem, Task>? OnToastAdded;
 
     public void Mostrar(string mensaje, ToastTipo tipo = ToastTipo.Info, int duracionMs = 4000)
         => OnToastAdded?.Invoke(new ToastItem(Guid.NewGuid(), mensaje, tipo, duracionMs));

@@ -1,0 +1,487 @@
+@page "/empleados"
+@inherits ErpPageBase
+
+<ErpPage @ref="_refLayout"
+               Titulo="Empleados"
+               TituloNuevo="Nuevo empleado"
+               EsNuevo="_esNuevo"
+               TieneDetalle="Id.HasValue"
+               Busqueda="@_busqueda"
+               OnBusquedaInput="OnBusquedaInputAsync"
+               OnNuevo="OnNuevo"
+               OnVolverALista="VolverALista"
+               ColLista="4"
+               SearchPlaceholder="Nombre, DNI"
+               PlaceholderIcono="bi-person-badge"
+               PlaceholderTexto="Selecciona un empleado de la lista"
+               PlaceholderSubTexto='@("o crea uno nuevo con el botón &quot;+ Nuevo&quot;")'
+               TotalItems="_totalItems"
+               @bind-MostrarModalEliminar="_mostrarModalEliminar"
+               TextoEliminar="@($"{_empleadoDetalle?.Nombre} {_empleadoDetalle?.Apellidos}")"
+               ErrorEliminar="@_errorEliminar"
+               Eliminando="_eliminando"
+               OnEliminar="EliminarEmpleadoAsync">
+
+    <AccionesHeader>
+        <div class="dropdown">
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-download me-1"></i>Reporte
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <a class="dropdown-item" href="/api/empleados/reporte?formato=0" target="_blank">
+                        <i class="bi bi-file-earmark-pdf me-2 text-danger"></i>PDF
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="/api/empleados/reporte?formato=1" target="_blank">
+                        <i class="bi bi-file-earmark-excel me-2 text-success"></i>Excel
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </AccionesHeader>
+
+    <SearchExtras>
+        <button class="btn btn-sm btn-outline-secondary position-relative flex-shrink-0"
+                type="button" @onclick="_filtro.Abrir" title="Filtros"
+                style="width:31px;padding-inline:0">
+            <i class="bi bi-funnel@(_filtro.HayFiltros ? "-fill text-primary" : "")"></i>
+            @if (_filtro.HayFiltros)
+            {
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary"
+                      style="font-size:.55rem;padding:2px 4px;min-width:14px">
+                    @_filtro.Count
+                </span>
+            }
+        </button>
+    </SearchExtras>
+
+    <ListaBody>
+        <VirtualList @ref="_refLista" TItem="EmpleadoResponse"
+                    IconoVacio="bi-person-x"
+                    ItemsProvider="CargarItemsAsync"
+                    ItemSize="72"
+                    OnTotalChanged="t => _totalItems = t">
+            <SkeletonItem>
+                <div class="emp-row d-flex align-items-center gap-3 placeholder-glow">
+                    <span class="emp-avatar placeholder flex-shrink-0"></span>
+                    <div class="flex-grow-1">
+                        <span class="placeholder col-7 d-block mb-1" style="height:13px"></span>
+                        <span class="placeholder col-5" style="height:11px"></span>
+                    </div>
+                </div>
+            </SkeletonItem>
+            <ItemTemplate Context="e">
+                <button type="button"
+                        class="emp-row w-100 d-flex align-items-center gap-3 @(Id == e.Id ? "active" : "")"
+                        @onclick="() => SeleccionarItem(e.Id)">
+                    @if (e.FotoId != null)
+                    {
+                        <img src="/api/empleados/@e.Id/archivos/foto?thumbnail=true"
+                             class="emp-avatar"
+                             alt="Foto de @e.Nombre" />
+                    }
+                    else
+                    {
+                        <div class="emp-avatar">@e.Nombre[0]</div>
+                    }
+                    <div class="flex-grow-1 text-start overflow-hidden">
+                        <div class="fw-semibold text-truncate small">@e.Nombre @e.Apellidos</div>
+                        <div class="d-flex align-items-center gap-2 mt-1">
+                            @if (_ordenarPor == nameof(EmpleadoResponse.Dni))
+                            {
+                                <span class="text-muted text-truncate font-monospace" style="font-size:.75rem">@e.Dni</span>
+                            }
+                            else if (_ordenarPor == nameof(EmpleadoResponse.SeccionNombre))
+                            {
+                                <span class="text-muted text-truncate" style="font-size:.75rem">@e.SeccionNombre</span>
+                            }
+                            else
+                            {
+                                <span class="badge rounded-pill @(e.Activo ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")"
+                                      style="font-size:.7rem">
+                                    @(e.Activo ? "Activo" : "Inactivo")
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </button>
+            </ItemTemplate>
+        </VirtualList>
+    </ListaBody>
+
+    <ListaFooterExtra>
+        <div class="d-flex align-items-center gap-1">
+            <button class="btn btn-link btn-sm text-muted p-0" type="button"
+                    @onclick="ToggleOrdenDescAsync" title="@(_ordenDesc ? "Descendente" : "Ascendente")"
+                    style="font-size:.8rem; box-shadow:none">
+                <i class="bi @(_ordenDesc ? "bi-sort-alpha-up" : "bi-sort-alpha-down")"></i>
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-link btn-sm text-muted text-decoration-none dropdown-toggle p-0"
+                        type="button" data-bs-toggle="dropdown" style="font-size:.75rem; box-shadow:none">
+                    @_camposOrden.First(c => c.Valor == _ordenarPor).Label
+                </button>
+                <ul class="dropdown-menu dropdown-menu-start shadow-sm">
+                    @foreach (var campo in _camposOrden)
+                    {
+                        <li>
+                            <button class="dropdown-item small" type="button" @onclick="() => SetOrdenAsync(campo.Valor)">
+                                <i class="bi bi-check me-2 @(_ordenarPor == campo.Valor ? "" : "invisible")"></i>@campo.Label
+                            </button>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </ListaFooterExtra>
+
+    <FormNuevo>
+        @if (_errorCrear is not null)
+        {
+            <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+                <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                <span>@_errorCrear</span>
+            </div>
+        }
+
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-person-vcard text-primary"></i>
+                <span class="fw-semibold">Datos personales</span>
+            </div>
+            <div class="card-body py-4">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" @ref="_refNuevoNombre" @bind="_nuevoNombre"
+                                autocomplete="off" />
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label">Apellidos <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" @bind="_nuevoApellidos"
+                                autocomplete="off" />
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label">DNI <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control font-monospace" @bind="_nuevoDni"
+                               placeholder="12345678Z" autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-diagram-3 text-primary"></i>
+                <span class="fw-semibold">Organización</span>
+            </div>
+            <div class="card-body py-4">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label class="form-label">Sección <span class="text-danger">*</span></label>
+                        <select class="form-select" @bind="_nuevoSeccionId">
+                            <option value="0">-- Selecciona una sección --</option>
+                            @foreach (var s in _secciones)
+                            {
+                                <option value="@s.Id">@s.Nombre</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label">Encargado</label>
+                        <ItemSelector TItem="EmpleadoResponse"
+                                      SearchAsync="BuscarEmpleadosAsync"
+                                      GetId="e => e.Id"
+                                      GetLabel='e => $"{e.Nombre} {e.Apellidos}"'
+                                      GetSubLabel="e => e.Dni"
+                                      Value="_nuevoEncargadoId"
+                                      ValueChanged="id => _nuevoEncargadoId = id"
+                                      Placeholder="Buscar encargado..." />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary px-4" @onclick="CrearEmpleadoAsync" disabled="@_creando">
+                @if (_creando)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                }
+                else
+                {
+                    <i class="bi bi-person-check me-2"></i>
+                }
+                Crear empleado
+            </button>
+            <button class="btn btn-outline-secondary" @onclick="VolverALista">Cancelar</button>
+        </div>
+    </FormNuevo>
+
+    <FormEdicion>
+        <div class="px-4 py-4">
+
+            <!-- Header de detalle -->
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <button class="btn btn-sm btn-light d-lg-none" @onclick="VolverALista">
+                    <i class="bi bi-arrow-left"></i>
+                </button>
+
+                @if (_cargandoDetalle)
+                {
+                    <div class="d-flex align-items-center gap-3 placeholder-glow flex-grow-1">
+                        <span class="placeholder rounded-circle flex-shrink-0" style="width:48px;height:48px"></span>
+                        <div>
+                            <span class="placeholder d-block mb-1" style="height:14px;width:160px"></span>
+                            <span class="placeholder" style="height:11px;width:120px"></span>
+                        </div>
+                    </div>
+                }
+                else if (_empleadoDetalle is not null)
+                {
+                    @if (_empleadoDetalle.FotoId != null)
+                    {
+                        <img src="/api/empleados/@Id/archivos/foto?thumbnail=true&v=@_fotoVersion"
+                             class="emp-avatar-lg border"
+                             alt="Foto de @_empleadoDetalle.Nombre" />
+                    }
+                    else
+                    {
+                        <div class="emp-avatar-lg">@_empleadoDetalle.Nombre[0]</div>
+                    }
+                    <div class="flex-grow-1 overflow-hidden">
+                        <h5 class="mb-0 fw-semibold text-truncate">
+                            @_empleadoDetalle.Nombre @_empleadoDetalle.Apellidos
+                        </h5>
+                        <p class="text-muted small mb-0 text-truncate">@_empleadoDetalle.SeccionNombre</p>
+                    </div>
+                    <span class="badge rounded-pill flex-shrink-0 @(_empleadoDetalle.Activo ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")">
+                        @(_empleadoDetalle.Activo ? "Activo" : "Inactivo")
+                    </span>
+                }
+            </div>
+
+            @if (_errorDetalle is not null)
+            {
+                <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                    <span>@_errorDetalle</span>
+                </div>
+            }
+
+            @if (!_cargandoDetalle && _empleadoDetalle is not null)
+            {
+                <!-- Card datos personales -->
+                <div class="card mb-3">
+                    <div class="card-header d-flex align-items-center gap-2">
+                        <i class="bi bi-person-vcard text-primary"></i>
+                        <span class="fw-semibold">Datos personales</span>
+                    </div>
+                    <div class="card-body py-4">
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <label class="form-label">Nombre</label>
+                                <input type="text" class="form-control" @bind="_editNombre" />
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label">Apellidos</label>
+                                <input type="text" class="form-control" @bind="_editApellidos" />
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label">DNI</label>
+                                <input type="text" class="form-control font-monospace" @bind="_editDni" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card organización -->
+                <div class="card mb-3">
+                    <div class="card-header d-flex align-items-center gap-2">
+                        <i class="bi bi-diagram-3 text-primary"></i>
+                        <span class="fw-semibold">Organización</span>
+                    </div>
+                    <div class="card-body py-4">
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <label class="form-label">Sección</label>
+                                <select class="form-select" @bind="_editSeccionId">
+                                    @foreach (var s in _secciones)
+                                    {
+                                        <option value="@s.Id">@s.Nombre</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label">Encargado</label>
+                                <ItemSelector TItem="EmpleadoResponse"
+                                              SearchAsync="BuscarEmpleadosAsync"
+                                              GetId="e => e.Id"
+                                              GetLabel='e => $"{e.Nombre} {e.Apellidos}"'
+                                              GetSubLabel="e => e.Dni"
+                                              Value="_editEncargadoId"
+                                              ValueChanged="id => _editEncargadoId = id"
+                                              Placeholder="Buscar encargado..." />
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="activo-empleado-switch" @bind="_editActivo" />
+                                    <label class="form-check-label" for="activo-empleado-switch">Empleado activo</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card foto de perfil -->
+                <div class="card mb-3">
+                    <div class="card-header d-flex align-items-center gap-2">
+                        <i class="bi bi-camera-fill text-primary"></i>
+                        <span class="fw-semibold">Foto de perfil</span>
+                    </div>
+                    <div class="card-body py-4">
+                        @if (_errorFoto is not null)
+                        {
+                            <div class="alert alert-danger d-flex align-items-center gap-2 mb-3 py-2">
+                                <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                                <span>@_errorFoto</span>
+                            </div>
+                        }
+                        <div class="d-flex align-items-center gap-4">
+                            @if (_empleadoDetalle.FotoId != null)
+                            {
+                                <img src="/api/empleados/@Id/archivos/foto?thumbnail=true&v=@_fotoVersion"
+                                     class="emp-avatar-xl border"
+                                     alt="Foto de @_empleadoDetalle.Nombre" />
+                            }
+                            else
+                            {
+                                <div class="emp-avatar-xl">@_empleadoDetalle.Nombre[0]</div>
+                            }
+                            <div class="d-flex flex-column gap-2">
+                                <InputFile id="@InputFotoId" class="d-none"
+                                           OnChange="SubirFotoAsync" accept="image/*" />
+                                <label for="@InputFotoId" class="btn btn-sm btn-outline-primary"
+                                       style="cursor:pointer">
+                                    @if (_subiendoFoto)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-upload me-1"></i>
+                                    }
+                                    @(_empleadoDetalle.FotoId != null ? "Cambiar foto" : "Subir foto")
+                                </label>
+                                @if (_empleadoDetalle.FotoId != null)
+                                {
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            @onclick='() => _mostrarModalEliminarFoto = true'
+                                            disabled="@_eliminandoFoto">
+                                        <i class="bi bi-trash3 me-1"></i>Eliminar foto
+                                    </button>
+                                }
+                                <p class="text-muted mb-0" style="font-size:.75rem">
+                                    Formatos: JPG, PNG, WEBP. Máx. 5 MB.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </FormEdicion>
+
+    <DetailToolbar>
+        @if (!_cargandoDetalle && _empleadoDetalle is not null)
+        {
+            <button class="btn btn-outline-danger me-auto"
+                    @onclick="AbrirModalEliminar">
+                <i class="bi bi-trash3 me-1"></i>Eliminar empleado
+            </button>
+            @if (_errorGuardar is not null)
+            {
+                <span class="text-danger small me-auto d-flex align-items-center gap-1">
+                    <i class="bi bi-x-circle-fill"></i>@_errorGuardar
+                </span>
+            }
+            <button class="btn btn-primary" @onclick="GuardarTodoAsync"
+                    disabled="@_guardando">
+                @if (_guardando)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                }
+                Guardar cambios
+            </button>
+        }
+    </DetailToolbar>
+
+    <ModalesExtra>
+        <!-- Modal: filtro de empleados -->
+        <Modal Title="Filtrar empleados" @bind-IsVisible="_filtro.ModalVisible">
+            <ChildContent>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Nombre</label>
+                    <input type="text" class="form-control form-control-sm" @ref="_refFiltroNombre" @bind="_filtro.Editando.Nombre" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Apellidos</label>
+                    <input type="text" class="form-control form-control-sm" @bind="_filtro.Editando.Apellidos" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small d-block mb-2">Activo</label>
+                    <TriEstadoControl @bind-Value="_filtro.Editando.Activo" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Sección</label>
+                    <select class="form-select form-select-sm" @bind="_seccionIdEdit">
+                        <option value="0">Todas</option>
+                        @foreach (var s in _secciones)
+                        {
+                            <option value="@s.Id">@s.Nombre</option>
+                        }
+                    </select>
+                </div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="form-label fw-semibold small">Alta desde</label>
+                        <input type="date" class="form-control form-control-sm" @bind="_filtro.Editando.FechaAltaDesde" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-semibold small">Alta hasta</label>
+                        <input type="date" class="form-control form-control-sm" @bind="_filtro.Editando.FechaAltaHasta" />
+                    </div>
+                </div>
+            </ChildContent>
+            <Footer>
+                <button class="btn btn-outline-secondary btn-sm me-auto" @onclick="LimpiarFiltroAsync">
+                    <i class="bi bi-x-circle me-1"></i>Limpiar
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" @onclick="_filtro.Cancelar">Cancelar</button>
+                <button class="btn btn-primary btn-sm" @onclick="AplicarFiltroAsync">Aplicar</button>
+            </Footer>
+        </Modal>
+
+        <!-- Modal: confirmar eliminación de foto -->
+        <Modal Title="Eliminar foto" @bind-IsVisible="_mostrarModalEliminarFoto" Size="sm">
+            <ChildContent>
+                <p class="mb-0">¿Eliminar la foto de perfil de <strong>@_empleadoDetalle?.Nombre</strong>?</p>
+            </ChildContent>
+            <Footer>
+                <button class="btn btn-outline-secondary"
+                        @onclick='() => _mostrarModalEliminarFoto = false'>Cancelar</button>
+                <button class="btn btn-danger" @onclick="EliminarFotoAsync" disabled="@_eliminandoFoto">
+                    @if (_eliminandoFoto)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                    }
+                    Eliminar
+                </button>
+            </Footer>
+        </Modal>
+    </ModalesExtra>
+
+</ErpPage>
