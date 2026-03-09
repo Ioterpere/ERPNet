@@ -17,7 +17,7 @@ public class EmpresaService(
         var (empresas, total) = await empresaRepository.GetPaginatedAsync(filtro);
         var response = empresas.Select(e => e.ToResponse()).ToList();
         return Result<ListaPaginada<EmpresaResponse>>.Success(
-            ListaPaginada<EmpresaResponse>.Crear(response, total, filtro));
+            ListaPaginada<EmpresaResponse>.Crear(response, total));
     }
 
     public async Task<Result<EmpresaResponse>> GetByIdAsync(int id)

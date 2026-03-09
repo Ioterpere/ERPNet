@@ -21,6 +21,8 @@
 /* ── Panel lista: columna flex ───────────────────── */
 .panel-lista {
     flex-direction: column;
+    height: calc(100svh - 3.5rem);
+    overflow-y: auto;
 }
 
 /* ── Área scrollable del detalle ─────────────────── */

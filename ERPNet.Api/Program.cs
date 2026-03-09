@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
+using ERPNet.Api.OpenApi;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 
@@ -124,8 +125,10 @@ builder.Services.AddControllers(options =>
 });
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
+builder.Services.AddTransient<QueryObjectTransformer>();
 builder.Services.AddOpenApi("v1", options =>
 {
+    options.AddDocumentTransformer<QueryObjectTransformer>();
     options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
         document.Components ??= new();

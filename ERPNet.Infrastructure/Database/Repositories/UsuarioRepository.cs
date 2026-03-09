@@ -28,18 +28,35 @@ public class UsuarioRepository(ERPNetDbContext context, ICurrentUserProvider cur
             .FirstOrDefaultAsync(u => u.Email == email);
     }
 
+    private static readonly Dictionary<string, Func<IQueryable<Usuario>, bool, IOrderedQueryable<Usuario>>> _orden =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Email"]  = (q, d) => d ? q.OrderByDescending(u => (string)u.Email)
+                                      : q.OrderBy(u => (string)u.Email),
+            ["Nombre"] = (q, d) => d ? q.OrderByDescending(u => u.Empleado!.Nombre).ThenByDescending(u => u.Empleado!.Apellidos)
+                                      : q.OrderBy(u => u.Empleado!.Nombre).ThenBy(u => u.Empleado!.Apellidos),
+        };
+
+    protected override IOrderedQueryable<Usuario> AplicarOrden(IQueryable<Usuario> query, string? campo, bool desc)
+        => campo is not null && _orden.TryGetValue(campo, out var ordenar)
+            ? ordenar(query, desc)
+            : query.OrderByDescending(u => u.Id);
+
     public override async Task<(List<Usuario> Items, int TotalRegistros)> GetPaginatedAsync(PaginacionFilter filtro)
     {
         IQueryable<Usuario> query = Query.AsNoTracking().Include(u => u.Empleado);
-        if (!string.IsNullOrWhiteSpace(filtro.Busqueda))
+        foreach (var termino in (filtro.Busqueda ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var t = termino;
             query = query.Where(u =>
-                ((string)u.Email).Contains(filtro.Busqueda) ||
-                u.Empleado.Nombre.Contains(filtro.Busqueda) ||
-                u.Empleado.Apellidos.Contains(filtro.Busqueda));
+                ((string)u.Email).Contains(t) ||
+                u.Empleado.Nombre.Contains(t) ||
+                u.Empleado.Apellidos.Contains(t));
+        }
         var total = await query.CountAsync();
-        var items = await query
-            .OrderByDescending(u => u.Id)
-            .Skip((filtro.Pagina - 1) * filtro.PorPagina)
+        var items = await AplicarOrden(query, filtro.OrdenarPor, filtro.OrdenDesc)
+            .Skip(filtro.Pagina)
             .Take(filtro.PorPagina)
             .ToListAsync();
         return (items, total);

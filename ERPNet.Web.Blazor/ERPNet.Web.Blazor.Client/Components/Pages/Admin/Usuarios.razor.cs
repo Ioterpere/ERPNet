@@ -1,6 +1,8 @@
 using ERPNet.ApiClient;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web.Virtualization;
 using System.Net.Http.Json;
+using ERPNet.Web.Blazor.Client.Components.Common;
 
 namespace ERPNet.Web.Blazor.Client.Components.Pages.Admin;
 
@@ -12,14 +14,10 @@ public partial class Usuarios
     [Inject] private IEmpresasClient EmpresasClient { get; set; } = default!;
     [Inject] private HttpClient Http { get; set; } = default!;
 
-    // ── Paginación ─────────────────────────────────────────────
-    protected override int? TotalPaginas => _paginado?.TotalPaginas;
-
     // ── Lista ──────────────────────────────────────────────────
-    private ListaPaginadaOfUsuarioResponse? _paginado;
-    private List<UsuarioResponse> _usuarios = [];
+    private ListaPanel<UsuarioResponse>? _refLista;
+    private int? _totalItems;
     private Dictionary<int, EmpleadoResponse> _empleadosPorId = [];
-    private bool _cargandoLista = true;
 
     // ── Roles (todos) ──────────────────────────────────────────
     private List<RolResponse> _todosRoles = [];
@@ -76,44 +74,46 @@ public partial class Usuarios
     private bool _creando;
     private string? _errorCrear;
 
-    private string PaginacionTexto
-    {
-        get
-        {
-            if (_paginado is null) return string.Empty;
-            var desde = (_pagina - 1) * PorPagina + 1;
-            var hasta = Math.Min(_pagina * PorPagina, _paginado.TotalRegistros);
-            return $"{desde}–{hasta} de {_paginado.TotalRegistros}";
-        }
-    }
 
     // ── Ciclo de vida ──────────────────────────────────────────
     protected override async Task OnInitializedAsync()
     {
-        await Task.WhenAll(CargarListaAsync(), CargarTodosRolesAsync(), CargarTodasEmpresasAsync());
+        await Task.WhenAll(CargarTodosRolesAsync(), CargarTodasEmpresasAsync());
     }
 
     // ── Implementación de abstracts ────────────────────────────
     protected override async Task CargarListaAsync()
     {
-        _cargandoLista = true;
+        _empleadosPorId = [];
+        if (_refLista is not null)
+            await _refLista.RefreshAsync();
+    }
+
+    internal async ValueTask<ItemsProviderResult<UsuarioResponse>> CargarItemsAsync(ItemsProviderRequest request)
+    {
         try
         {
-            _paginado = await UsuariosClient.UsuariosGETAsync(_pagina, PorPagina, string.IsNullOrWhiteSpace(_busqueda) ? null : _busqueda);
-            _usuarios = _paginado.Items.ToList();
+            var resultado = await UsuariosClient.UsuariosGETAsync(new PaginacionFilter
+            {
+                Pagina    = request.StartIndex,
+                PorPagina = request.Count,
+                Busqueda  = string.IsNullOrWhiteSpace(_busqueda) ? null : _busqueda
+            });
 
-            var ids = _usuarios.Select(u => u.EmpleadoId).Distinct().ToList();
+            var ids = resultado.Items.Select(u => u.EmpleadoId).Distinct();
             var empleados = await Task.WhenAll(ids.Select(async id =>
             {
                 try { return await EmpleadosClient.EmpleadosGET2Async(id); }
                 catch { return null; }
             }));
-            _empleadosPorId = empleados.OfType<EmpleadoResponse>().ToDictionary(e => e.Id);
+            foreach (var emp in empleados.OfType<EmpleadoResponse>())
+                _empleadosPorId[emp.Id] = emp;
+
+            return new(resultado.Items, resultado.TotalRegistros);
         }
-        catch { /* lista queda vacía */ }
-        finally
+        catch
         {
-            _cargandoLista = false;
+            return new([], 0);
         }
     }
 
@@ -197,7 +197,12 @@ public partial class Usuarios
     // ── Carga auxiliar ─────────────────────────────────────────
     private async Task<IEnumerable<EmpleadoResponse>> BuscarEmpleadosAsync(string query, CancellationToken ct)
     {
-        var resultado = await EmpleadosClient.EmpleadosGETAsync(1, 50, string.IsNullOrWhiteSpace(query) ? null : query, ct);
+        var resultado = await EmpleadosClient.EmpleadosGETAsync(new EmpleadoFilter
+        {
+            Pagina    = 0,
+            PorPagina = 50,
+            Busqueda  = string.IsNullOrWhiteSpace(query) ? null : query
+        }, ct);
         return resultado.Items;
     }
 
@@ -205,7 +210,7 @@ public partial class Usuarios
     {
         try
         {
-            var resultado = await RolesClient.RolesGETAsync(1, 200, null);
+            var resultado = await RolesClient.RolesGETAsync(new PaginacionFilter { Pagina = 0, PorPagina = 200 });
             _todosRoles = resultado.Items.ToList();
         }
         catch { /* sin roles disponibles */ }
@@ -215,7 +220,7 @@ public partial class Usuarios
     {
         try
         {
-            var resultado = await EmpresasClient.EmpresasGETAsync(1, 200, null);
+            var resultado = await EmpresasClient.EmpresasGETAsync(new PaginacionFilter { Pagina = 0, PorPagina = 200 });
             _todasEmpresas = resultado.Items.ToList();
         }
         catch { /* sin empresas disponibles */ }
@@ -271,8 +276,6 @@ public partial class Usuarios
 
             Toast.Exito("Datos guardados correctamente.");
             _usuarioDetalle = await UsuariosClient.UsuariosGET2Async(Id.Value);
-            var idx = _usuarios.FindIndex(u => u.Id == Id.Value);
-            if (idx >= 0) _usuarios[idx] = _usuarioDetalle;
         }
         catch (ApiException ex) when (ex.StatusCode == 400)
         {
@@ -371,8 +374,6 @@ public partial class Usuarios
             _editActivo = _usuarioDetalle.Activo;
             _editEmail = _usuarioDetalle.Email;
             _editCaducidadDate = _usuarioDetalle.CaducidadContrasena?.LocalDateTime;
-            var idx = _usuarios.FindIndex(u => u.Id == Id.Value);
-            if (idx >= 0) _usuarios[idx] = _usuarioDetalle;
         }
         catch
         {

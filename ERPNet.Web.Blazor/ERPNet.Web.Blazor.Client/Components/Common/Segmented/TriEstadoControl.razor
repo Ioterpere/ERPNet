@@ -1,0 +1,18 @@
+<SegmentedControl TValue="bool?"
+                  Value="Value"
+                  ValueChanged="ValueChanged"
+                  Options="_opciones"
+                  Class="@Class" />
+
+@code {
+    [Parameter] public bool? Value { get; set; }
+    [Parameter] public EventCallback<bool?> ValueChanged { get; set; }
+    [Parameter] public string? Class { get; set; }
+
+    private static readonly SegmentOption<bool?>[] _opciones =
+    [
+        new(null,  "Todos"),
+        new(true,  "Sí"),
+        new(false, "No"),
+    ];
+}

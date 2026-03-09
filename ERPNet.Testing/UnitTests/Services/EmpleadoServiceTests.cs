@@ -55,10 +55,10 @@ public class EmpleadoServiceTests
     {
         SetupUsuario(alcance: Alcance.Global);
         var empleados = new List<Empleado> { CrearEmpleado(1), CrearEmpleado(2) };
-        _repo.GetPaginatedAsync(Arg.Any<PaginacionFilter>(), Alcance.Global, 1, 1)
+        _repo.GetPaginatedAsync(Arg.Any<EmpleadoFilter>(), Alcance.Global, 1, 1)
             .Returns((empleados, 2));
 
-        var result = await _sut.GetAllAsync(new PaginacionFilter());
+        var result = await _sut.GetAllAsync(new EmpleadoFilter());
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value!.TotalRegistros);
@@ -68,10 +68,10 @@ public class EmpleadoServiceTests
     public async Task GetAll_Seccion_FiltraPorSeccion()
     {
         SetupUsuario(seccionId: 3, alcance: Alcance.Seccion);
-        _repo.GetPaginatedAsync(Arg.Any<PaginacionFilter>(), Alcance.Seccion, 1, 3)
+        _repo.GetPaginatedAsync(Arg.Any<EmpleadoFilter>(), Alcance.Seccion, 1, 3)
             .Returns((new List<Empleado> { CrearEmpleado(1, seccionId: 3) }, 1));
 
-        var result = await _sut.GetAllAsync(new PaginacionFilter());
+        var result = await _sut.GetAllAsync(new EmpleadoFilter());
 
         Assert.True(result.IsSuccess);
         Assert.Equal(1, result.Value!.TotalRegistros);
@@ -81,10 +81,10 @@ public class EmpleadoServiceTests
     public async Task GetAll_Propio_FiltraPorEmpleadoId()
     {
         SetupUsuario(empleadoId: 5, alcance: Alcance.Propio);
-        _repo.GetPaginatedAsync(Arg.Any<PaginacionFilter>(), Alcance.Propio, 5, 1)
+        _repo.GetPaginatedAsync(Arg.Any<EmpleadoFilter>(), Alcance.Propio, 5, 1)
             .Returns((new List<Empleado> { CrearEmpleado(5) }, 1));
 
-        var result = await _sut.GetAllAsync(new PaginacionFilter());
+        var result = await _sut.GetAllAsync(new EmpleadoFilter());
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Value!.Items);

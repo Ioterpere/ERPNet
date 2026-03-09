@@ -43,7 +43,7 @@ public class UsuariosControllerTests
         var lista = new ListaPaginada<UsuarioResponse>
         {
             Items = [new UsuarioResponse { Id = 1, Email = "a@a.com" }],
-            Pagina = 1, PorPagina = 50, TotalRegistros = 1
+            TotalRegistros = 1
         };
         _service.GetAllAsync(Arg.Any<PaginacionFilter>())
             .Returns(Result<ListaPaginada<UsuarioResponse>>.Success(lista));

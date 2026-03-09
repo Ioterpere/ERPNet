@@ -55,5 +55,9 @@ window.itemSelector = {
     /** Desplaza el item activo para que sea visible en el dropdown. */
     scrollIntoView: function (id) {
         document.getElementById(id)?.scrollIntoView({ block: 'nearest' });
+    },
+    /** Quita el foco del input. */
+    blur: function (el) {
+        el?.blur();
     }
 };

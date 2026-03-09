@@ -60,7 +60,7 @@ public class MaquinasControllerTests
         var lista = new ListaPaginada<MaquinariaResponse>
         {
             Items = [new MaquinariaResponse { Id = 1, Nombre = "Torno", Codigo = "T-001" }],
-            Pagina = 1, PorPagina = 50, TotalRegistros = 1
+            TotalRegistros = 1
         };
         _service.GetAllAsync(Arg.Any<PaginacionFilter>())
             .Returns(Result<ListaPaginada<MaquinariaResponse>>.Success(lista));

@@ -19,7 +19,7 @@ public class RolService(
         var (roles, total) = await rolRepository.GetPaginatedAsync(filtro);
         var response = roles.Select(r => r.ToResponse()).ToList();
         return Result<ListaPaginada<RolResponse>>.Success(
-            ListaPaginada<RolResponse>.Crear(response, total, filtro));
+            ListaPaginada<RolResponse>.Crear(response, total));
     }
 
     public async Task<Result<RolResponse>> GetByIdAsync(int id)

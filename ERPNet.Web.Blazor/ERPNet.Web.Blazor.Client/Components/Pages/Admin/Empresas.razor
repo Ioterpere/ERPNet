@@ -28,69 +28,46 @@
             </div>
         </div>
 
-        <!-- Items -->
-        <div class="flex-grow-1 overflow-y-auto">
-            @if (_cargandoLista)
-            {
-                @for (var i = 0; i < 5; i++)
-                {
-                    <div class="rol-row placeholder-glow">
-                        <span class="placeholder col-6 d-block mb-1" style="height:13px"></span>
-                        <span class="placeholder col-4" style="height:11px"></span>
-                    </div>
-                }
-            }
-            else if (_empresas.Count == 0)
-            {
-                <div class="text-center text-muted py-5 small">
-                    <i class="bi bi-building-x fs-3 d-block mb-2"></i>
-                    Sin resultados
+        <ListaPanel @ref="_refLista" TItem="EmpresaResponse"
+                    IconoVacio="bi-building-x"
+                    ItemsProvider="CargarItemsAsync"
+                    OnTotalChanged="t => _totalItems = t">
+            <SkeletonItem>
+                <div class="rol-row placeholder-glow">
+                    <span class="placeholder col-6 d-block mb-1" style="height:13px"></span>
+                    <span class="placeholder col-4" style="height:11px"></span>
                 </div>
-            }
-            else
-            {
-                @foreach (var e in _empresas)
-                {
-                    <button type="button"
-                            class="rol-row w-100 text-start @(Id == e.Id ? "active" : "")"
-                            @onclick="() => SeleccionarItem(e.Id)">
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="fw-semibold text-truncate small flex-grow-1">@e.Nombre</div>
-                            @if (!e.Activo)
-                            {
-                                <span class="badge bg-secondary-subtle text-secondary-emphasis" style="font-size:.65rem">Inactiva</span>
-                            }
-                        </div>
-                        @if (!string.IsNullOrWhiteSpace(e.Cif))
+            </SkeletonItem>
+            <ItemTemplate Context="e">
+                <button type="button"
+                        class="rol-row w-100 text-start @(Id == e.Id ? "active" : "")"
+                        @onclick="() => SeleccionarItem(e.Id)">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="fw-semibold text-truncate small flex-grow-1">@e.Nombre</div>
+                        @if (!e.Activo)
                         {
-                            <div class="text-muted text-truncate" style="font-size:.75rem">@e.Cif</div>
+                            <span class="badge bg-secondary-subtle text-secondary-emphasis" style="font-size:.65rem">Inactiva</span>
                         }
-                    </button>
-                }
-            }
-        </div>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(e.Cif))
+                    {
+                        <div class="text-muted text-truncate" style="font-size:.75rem">@e.Cif</div>
+                    }
+                </button>
+            </ItemTemplate>
+        </ListaPanel>
 
-        <!-- Paginación -->
-        @if (_paginado is not null && !_cargandoLista)
+        @if (_totalItems.HasValue)
         {
-            <div class="px-3 py-2 border-top d-flex align-items-center justify-content-between flex-shrink-0 small text-muted">
-                <span>@PaginacionTexto</span>
-                <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-secondary" @onclick="PaginaAnterior"
-                            disabled="@(_pagina <= 1)">
-                        <i class="bi bi-chevron-left"></i>
-                    </button>
-                    <button class="btn btn-outline-secondary" @onclick="PaginaSiguiente"
-                            disabled="@(_pagina >= _paginado.TotalPaginas)">
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
-                </div>
+            <div class="px-3 py-1 border-top flex-shrink-0 d-flex align-items-center justify-content-end">
+                <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill">@_totalItems</span>
             </div>
         }
+
     </div>
 
     <!-- ── Panel derecho: Detalle ─────────────────────────────── -->
-    <div class="col-12 col-lg-9 panel-detalle">
+    <div class="col-12 col-lg-9 panel-detalle @((!_esNuevo && !Id.HasValue) ? "d-none d-lg-flex" : "")">
 
         @if (!_esNuevo && !Id.HasValue)
         {

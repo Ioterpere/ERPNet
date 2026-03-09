@@ -41,12 +41,12 @@ public class EmpleadosControllerTests
         var lista = new ListaPaginada<EmpleadoResponse>
         {
             Items = [new EmpleadoResponse { Id = 1, Nombre = "Juan", Apellidos = "G", Dni = "12345678Z" }],
-            Pagina = 1, PorPagina = 50, TotalRegistros = 1
+            TotalRegistros = 1
         };
-        _service.GetAllAsync(Arg.Any<PaginacionFilter>())
+        _service.GetAllAsync(Arg.Any<EmpleadoFilter>())
             .Returns(Result<ListaPaginada<EmpleadoResponse>>.Success(lista));
 
-        var result = await _sut.GetAll(new PaginacionFilter());
+        var result = await _sut.GetAll(new EmpleadoFilter());
 
         var okResult = Assert.IsType<OkObjectResult>(result);
         Assert.IsType<ListaPaginada<EmpleadoResponse>>(okResult.Value);

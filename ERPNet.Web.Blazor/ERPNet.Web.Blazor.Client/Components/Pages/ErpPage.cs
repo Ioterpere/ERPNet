@@ -8,7 +8,7 @@ namespace ERPNet.Web.Blazor.Client.Components.Pages;
 /// <summary>
 /// Clase base para páginas del Erp.
 /// Gestiona: parámetro Id, estado de paginación/búsqueda,
-/// navegación entre registros y atajos de teclado (Alt+N, Ctrl+S, Alt+Supr).
+/// navegación entre registros y atajos de teclado.
 /// </summary>
 [Authorize]
 public abstract class ErpPage : ComponentBase, IAsyncDisposable
@@ -29,15 +29,15 @@ public abstract class ErpPage : ComponentBase, IAsyncDisposable
 
     // ── Estado compartido ──────────────────────────────────────
     protected bool _esNuevo;
-    protected int _pagina = 1;
     protected string _busqueda = string.Empty;
+    protected ElementReference _refBusqueda;
+    private bool _enfocarBusqueda;
 
     private CancellationTokenSource? _ctsBusqueda;
 
     protected async Task OnBusquedaInputAsync(ChangeEventArgs e)
     {
         _busqueda = e.Value?.ToString() ?? string.Empty;
-        _pagina = 1;
         _ctsBusqueda?.Cancel();
         _ctsBusqueda = new CancellationTokenSource();
         try
@@ -47,8 +47,6 @@ public abstract class ErpPage : ComponentBase, IAsyncDisposable
         }
         catch (OperationCanceledException) { }
     }
-
-    protected virtual int PorPagina => 15;
 
     // ── Modal de eliminación ───────────────────────────────────
     protected bool _mostrarModalEliminar;
@@ -64,10 +62,8 @@ public abstract class ErpPage : ComponentBase, IAsyncDisposable
     // ── Foco en formulario de creación ─────────────────────────
     protected bool _enfocarNuevo;
 
-    protected virtual Task EnfocarPrimerCampoNuevoAsync() => Task.CompletedTask;
-
-    // ── Abstracts: paginación ──────────────────────────────────
-    protected abstract int? TotalPaginas { get; }
+    protected virtual Task EnfocarPrimerCampoNuevoAsync()  => Task.CompletedTask;
+    protected virtual Task EnfocarPrimerCampoFiltroAsync() => Task.CompletedTask;
 
     // ── Abstracts: ciclo de vida de datos ─────────────────────
     protected abstract Task CargarListaAsync();
@@ -78,6 +74,15 @@ public abstract class ErpPage : ComponentBase, IAsyncDisposable
     protected abstract Task OnNuevo();
     protected abstract Task OnGuardar();
     protected abstract Task OnBorrar();
+    protected bool _enfocarFiltro;
+
+    protected virtual Task OnFiltro()       => Task.CompletedTask;
+    protected virtual Task OnLimpiarFiltro() => Task.CompletedTask;
+    protected virtual Task OnEscape()
+    {
+        _mostrarModalEliminar = false;
+        return Task.CompletedTask;
+    }
 
     // ── Ciclo de vida ──────────────────────────────────────────
     private int? _idActual;
@@ -118,6 +123,18 @@ public abstract class ErpPage : ComponentBase, IAsyncDisposable
             await EnfocarPrimerCampoNuevoAsync();
         }
 
+        if (_enfocarFiltro)
+        {
+            _enfocarFiltro = false;
+            await EnfocarPrimerCampoFiltroAsync();
+        }
+
+        if (_enfocarBusqueda)
+        {
+            _enfocarBusqueda = false;
+            await _refBusqueda.FocusAsync();
+        }
+
         if (_enfocarEliminar)
         {
             _enfocarEliminar = false;
@@ -133,6 +150,10 @@ public abstract class ErpPage : ComponentBase, IAsyncDisposable
             "nuevo"   => OnNuevo(),
             "guardar" => OnGuardar(),
             "borrar"  => OnBorrar(),
+            "filtro"        => OnFiltro(),
+            "limpiarFiltro" => OnLimpiarFiltro(),
+            "escape"   => OnEscape(),
+            "busqueda" => Task.FromResult(_enfocarBusqueda = true),
             _         => Task.CompletedTask
         });
         await InvokeAsync(StateHasChanged);
@@ -149,20 +170,6 @@ public abstract class ErpPage : ComponentBase, IAsyncDisposable
     {
         _esNuevo = false;
         Nav.NavigateTo(Nav.GetUriWithQueryParameter("id", (int?)null));
-    }
-
-    protected async Task PaginaAnterior()
-    {
-        if (_pagina <= 1) return;
-        _pagina--;
-        await CargarListaAsync();
-    }
-
-    protected async Task PaginaSiguiente()
-    {
-        if (TotalPaginas is null || _pagina >= TotalPaginas) return;
-        _pagina++;
-        await CargarListaAsync();
     }
 
     public async ValueTask DisposeAsync()

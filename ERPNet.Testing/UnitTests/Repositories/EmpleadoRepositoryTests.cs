@@ -109,7 +109,7 @@ public class EmpleadoRepositoryTests : RepositoryTestBase
             CrearEmpleado(2, DniValido(2), seccionId: 2));
         await SaveAndClearAsync();
 
-        var (items, total) = await _sut.GetPaginatedAsync(new PaginacionFilter(), Alcance.Global, 1, 1);
+        var (items, total) = await _sut.GetPaginatedAsync(new EmpleadoFilter(), Alcance.Global, 1, 1);
 
         Assert.Equal(2, total);
         Assert.Equal(2, items.Count);
@@ -123,7 +123,7 @@ public class EmpleadoRepositoryTests : RepositoryTestBase
             CrearEmpleado(2, DniValido(2), seccionId: 2));
         await SaveAndClearAsync();
 
-        var (items, total) = await _sut.GetPaginatedAsync(new PaginacionFilter(), Alcance.Seccion, 1, 1);
+        var (items, total) = await _sut.GetPaginatedAsync(new EmpleadoFilter(), Alcance.Seccion, 1, 1);
 
         Assert.Equal(1, total);
         Assert.All(items, e => Assert.Equal(1, e.SeccionId));
@@ -138,7 +138,7 @@ public class EmpleadoRepositoryTests : RepositoryTestBase
             CrearEmpleado(3, DniValido(3), encargadoId: 2));        // subordinado de otro
         await SaveAndClearAsync();
 
-        var (items, total) = await _sut.GetPaginatedAsync(new PaginacionFilter(), Alcance.Propio, 1, 1);
+        var (items, total) = await _sut.GetPaginatedAsync(new EmpleadoFilter(), Alcance.Propio, 1, 1);
 
         Assert.Equal(1, total);
         Assert.Single(items);
@@ -153,7 +153,7 @@ public class EmpleadoRepositoryTests : RepositoryTestBase
         await SaveAndClearAsync();
 
         var (items, total) = await _sut.GetPaginatedAsync(
-            new PaginacionFilter { Pagina = 2, PorPagina = 2 }, Alcance.Global, 1, 1);
+            new EmpleadoFilter { Pagina = 2, PorPagina = 2 }, Alcance.Global, 1, 1);
 
         Assert.Equal(5, total);
         Assert.Equal(2, items.Count);
@@ -167,7 +167,7 @@ public class EmpleadoRepositoryTests : RepositoryTestBase
             CrearEmpleado(2, DniValido(2), deleted: true));
         await SaveAndClearAsync();
 
-        var (_, total) = await _sut.GetPaginatedAsync(new PaginacionFilter(), Alcance.Global, 1, 1);
+        var (_, total) = await _sut.GetPaginatedAsync(new EmpleadoFilter(), Alcance.Global, 1, 1);
 
         Assert.Equal(1, total);
     }

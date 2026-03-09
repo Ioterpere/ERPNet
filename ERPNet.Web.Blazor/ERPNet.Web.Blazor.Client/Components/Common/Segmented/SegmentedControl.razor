@@ -1,0 +1,24 @@
+@typeparam TValue
+
+<div class="segmented-control @Class" role="group">
+    @foreach (var opt in Options)
+    {
+        var active = EqualityComparer<TValue>.Default.Equals(Value, opt.Value);
+        <button type="button"
+                class="segment-btn @(active ? "active" : "")"
+                aria-pressed="@(active ? "true" : "false")"
+                @onclick="() => SelectAsync(opt.Value)">
+            @opt.Label
+        </button>
+    }
+</div>
+
+@code {
+    [Parameter] public TValue Value { get; set; } = default!;
+    [Parameter] public EventCallback<TValue> ValueChanged { get; set; }
+    [Parameter] public IReadOnlyList<SegmentOption<TValue>> Options { get; set; } = [];
+    [Parameter] public string? Class { get; set; }
+
+    private Task SelectAsync(TValue value)
+        => ValueChanged.HasDelegate ? ValueChanged.InvokeAsync(value) : Task.CompletedTask;
+}

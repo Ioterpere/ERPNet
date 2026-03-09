@@ -8,5 +8,5 @@ public interface IEmpleadoRepository : IRepository<Empleado>
 {
     Task<bool> ExisteDniAsync(string dni, int? excludeId = null);
     Task<(List<Empleado> Items, int TotalRegistros)> GetPaginatedAsync(
-        PaginacionFilter filtro, Alcance alcance, int empleadoId, int seccionId);
+        EmpleadoFilter filtro, Alcance alcance, int empleadoId, int seccionId);
 }

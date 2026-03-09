@@ -27,6 +27,34 @@ export function registerShortcuts(dotNet) {
         if (e.altKey && !e.ctrlKey && !e.shiftKey && e.key === 'Delete' && !isEditing) {
             e.preventDefault();
             _dotNet.invokeMethodAsync('HandleShortcutAsync', 'borrar');
+            return;
+        }
+
+        // Alt+X: limpiar filtro (ignorado si el foco está en un campo de texto)
+        if (e.altKey && !e.ctrlKey && !e.shiftKey && e.key === 'x' && !isEditing) {
+            e.preventDefault();
+            _dotNet.invokeMethodAsync('HandleShortcutAsync', 'limpiarFiltro');
+            return;
+        }
+
+        // Alt+F: filtro
+        if (e.altKey && !e.ctrlKey && !e.shiftKey && e.key === 'f') {
+            e.preventDefault();
+            _dotNet.invokeMethodAsync('HandleShortcutAsync', 'filtro');
+            return;
+        }
+
+        // Esc: cerrar modal
+        if (!e.altKey && !e.ctrlKey && !e.shiftKey && e.key === 'Escape') {
+            e.preventDefault();
+            _dotNet.invokeMethodAsync('HandleShortcutAsync', 'escape');
+            return;
+        }
+
+        // /: ir al buscador (ignorado si el foco ya está en un campo de texto)
+        if (!e.altKey && !e.ctrlKey && e.key === '/' && !isEditing) {
+            e.preventDefault();
+            _dotNet.invokeMethodAsync('HandleShortcutAsync', 'busqueda');
         }
     };
     document.addEventListener('keydown', _handler);

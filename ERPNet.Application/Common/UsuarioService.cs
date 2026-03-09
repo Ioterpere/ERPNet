@@ -21,7 +21,7 @@ public class UsuarioService(
         var (usuarios, total) = await usuarioRepository.GetPaginatedAsync(filtro);
         var response = usuarios.Select(u => u.ToResponse()).ToList();
         return Result<ListaPaginada<UsuarioResponse>>.Success(
-            ListaPaginada<UsuarioResponse>.Crear(response, total, filtro));
+            ListaPaginada<UsuarioResponse>.Crear(response, total));
     }
 
     public async Task<Result<UsuarioResponse>> GetByIdAsync(int id)

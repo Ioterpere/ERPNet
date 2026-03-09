@@ -19,6 +19,6 @@ public class LogsController(ILogRepository logRepository) : BaseController
         var (logs, total) = await logRepository.GetFilteredAsync(request);
         var response = logs.Select(l => l.ToResponse()).ToList();
         return FromResult(Result<ListaPaginada<LogResponse>>.Success(
-            ListaPaginada<LogResponse>.Crear(response, total, request)));
+            ListaPaginada<LogResponse>.Crear(response, total)));
     }
 }

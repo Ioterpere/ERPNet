@@ -24,7 +24,7 @@ public class EmpleadosController(
 {
     [HttpGet]
     [ProducesResponseType<ListaPaginada<EmpleadoResponse>>(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll([FromQuery] PaginacionFilter filtro)
+    public async Task<IActionResult> GetAll([FromQuery] EmpleadoFilter filtro)
         => FromResult(await empleadoService.GetAllAsync(filtro));
 
     [HttpGet("{id}")]

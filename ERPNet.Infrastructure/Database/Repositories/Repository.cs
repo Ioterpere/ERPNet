@@ -37,15 +37,19 @@ public abstract class Repository<T>(ERPNetDbContext context, ICurrentUserProvide
 
     protected virtual Expression<Func<T, bool>>? GetBusquedaPredicate(string busqueda) => null;
 
+    protected virtual IOrderedQueryable<T> AplicarOrden(IQueryable<T> query, string? campo, bool desc)
+        => query.OrderByDescending(e => e.Id);
+
     public virtual async Task<(List<T> Items, int TotalRegistros)> GetPaginatedAsync(PaginacionFilter filtro)
     {
         var query = Query.AsNoTracking();
-        if (!string.IsNullOrWhiteSpace(filtro.Busqueda) && GetBusquedaPredicate(filtro.Busqueda) is { } pred)
-            query = query.Where(pred);
+        if (!string.IsNullOrWhiteSpace(filtro.Busqueda))
+            foreach (var termino in filtro.Busqueda.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                if (GetBusquedaPredicate(termino) is { } pred)
+                    query = query.Where(pred);
         var total = await query.CountAsync();
-        var items = await query
-            .OrderByDescending(e => e.Id)
-            .Skip((filtro.Pagina - 1) * filtro.PorPagina)
+        var items = await AplicarOrden(query, filtro.OrdenarPor, filtro.OrdenDesc)
+            .Skip(filtro.Pagina)
             .Take(filtro.PorPagina)
             .ToListAsync();
 

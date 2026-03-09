@@ -26,8 +26,24 @@ public class EmpleadoRepository(ERPNetDbContext context, ICurrentUserProvider cu
             .AnyAsync(e => e.DNI == normalizado && (!excludeId.HasValue || e.Id != excludeId.Value));
     }
 
+    private static readonly Dictionary<string, Func<IQueryable<Empleado>, bool, IOrderedQueryable<Empleado>>> _orden =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Nombre"]       = (q, d) => d ? q.OrderByDescending(e => e.Nombre).ThenByDescending(e => e.Apellidos)
+                                            : q.OrderBy(e => e.Nombre).ThenBy(e => e.Apellidos),
+            ["Dni"]          = (q, d) => d ? q.OrderByDescending(e => (string)e.DNI)
+                                            : q.OrderBy(e => (string)e.DNI),
+            ["SeccionNombre"] = (q, d) => d ? q.OrderByDescending(e => e.Seccion!.Nombre)
+                                             : q.OrderBy(e => e.Seccion!.Nombre),
+        };
+
+    protected override IOrderedQueryable<Empleado> AplicarOrden(IQueryable<Empleado> query, string? campo, bool desc)
+        => campo is not null && _orden.TryGetValue(campo, out var ordenar)
+            ? ordenar(query, desc)
+            : _orden["Nombre"](query, desc);
+
     public async Task<(List<Empleado> Items, int TotalRegistros)> GetPaginatedAsync(
-        PaginacionFilter filtro, Alcance alcance, int empleadoId, int seccionId)
+        EmpleadoFilter filtro, Alcance alcance, int empleadoId, int seccionId)
     {
         var query = alcance switch
         {
@@ -36,16 +52,38 @@ public class EmpleadoRepository(ERPNetDbContext context, ICurrentUserProvider cu
             _               => Query
         };
 
-        if (!string.IsNullOrWhiteSpace(filtro.Busqueda))
+        foreach (var termino in (filtro.Busqueda ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var t = termino;
             query = query.Where(e =>
-                (e.Nombre + " " + e.Apellidos).Contains(filtro.Busqueda) ||
-                ((string)e.DNI).Contains(filtro.Busqueda));
+                (e.Nombre + " " + e.Apellidos).Contains(t) ||
+                ((string)e.DNI).Contains(t));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filtro.Nombre))
+            query = query.Where(e => e.Nombre.Contains(filtro.Nombre));
+
+        if (!string.IsNullOrWhiteSpace(filtro.Apellidos))
+            query = query.Where(e => e.Apellidos.Contains(filtro.Apellidos));
+
+        if (filtro.Activo.HasValue)
+            query = query.Where(e => e.Activo == filtro.Activo.Value);
+
+        if (filtro.SeccionId.HasValue)
+            query = query.Where(e => e.SeccionId == filtro.SeccionId.Value);
+
+        if (filtro.FechaAltaDesde.HasValue)
+            query = query.Where(e => e.CreatedAt >= filtro.FechaAltaDesde.Value.ToDateTime(TimeOnly.MinValue));
+
+        if (filtro.FechaAltaHasta.HasValue)
+            query = query.Where(e => e.CreatedAt <= filtro.FechaAltaHasta.Value.ToDateTime(TimeOnly.MaxValue));
 
         var total = await query.CountAsync();
-        var items = await query
+        var items = await AplicarOrden(query, filtro.OrdenarPor, filtro.OrdenDesc)
+            .Include(e => e.Seccion)
             .AsNoTracking()
-            .OrderByDescending(e => e.Id)
-            .Skip((filtro.Pagina - 1) * filtro.PorPagina)
+            .Skip(filtro.Pagina)
             .Take(filtro.PorPagina)
             .ToListAsync();
 

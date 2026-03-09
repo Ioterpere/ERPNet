@@ -13,6 +13,14 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.*" />
   </ItemGroup>
 
+<!-- FilterExtensions se genera desde el cliente NSwag + spec — debe ir DESPUÉS de NSwagGenerate -->
+  <Target Name="GenerateFilterExtensions" AfterTargets="NSwagGenerate" BeforeTargets="CoreCompile"
+          Inputs="Generated/ErpNetApiClient.g.cs" Outputs="Generated/FilterExtensions.g.cs">
+    <Message Importance="High" Text="→ Generando FilterExtensions desde cliente generado..." />
+    <Exec WorkingDirectory="$(ProjectDir)"
+          Command="powershell -NonInteractive -File &quot;$(ProjectDir)Scripts/GenerateFilterExtensions.ps1&quot; -ClientPath &quot;$(ProjectDir)Generated/ErpNetApiClient.g.cs&quot; -OutputPath &quot;$(ProjectDir)Generated/FilterExtensions.g.cs&quot;" />
+  </Target>
+
 <!-- NSwag corre ANTES de compilar para que el .g.cs esté disponible -->
   <Target Name="NSwagGenerate" BeforeTargets="CoreCompile"
           Inputs="ERPNet.Api.json" Outputs="Generated/ErpNetApiClient.g.cs">

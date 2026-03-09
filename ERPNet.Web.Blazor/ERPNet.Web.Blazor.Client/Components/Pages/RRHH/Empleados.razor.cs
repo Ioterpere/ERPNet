@@ -1,6 +1,8 @@
 using ERPNet.ApiClient;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Components.Web.Virtualization;
+using ERPNet.Web.Blazor.Client.Components.Common;
 
 namespace ERPNet.Web.Blazor.Client.Components.Pages.RRHH;
 
@@ -9,14 +11,28 @@ public partial class Empleados
     [Inject] private IEmpleadosClient EmpleadosClient { get; set; } = default!;
     [Inject] private ISeccionesClient SeccionesClient { get; set; } = default!;
 
-    // ── Paginación ─────────────────────────────────────────────
-    protected override int? TotalPaginas => _paginado?.TotalPaginas;
-
     // ── Lista ──────────────────────────────────────────────────
-    private ListaPaginadaOfEmpleadoResponse? _paginado;
-    private List<EmpleadoResponse> _empleados = [];
+    private ListaPanel<EmpleadoResponse>? _refLista;
+    private int? _totalItems;
+    private string _ordenarPor = nameof(EmpleadoResponse.Nombre);
+    private bool _ordenDesc;
     private List<SeccionResponse> _secciones = [];
-    private bool _cargandoLista = true;
+
+    // ── Filtro ─────────────────────────────────────────────────
+    private FilterState<EmpleadoFilter> _filtro = new();
+
+    private int _seccionIdEdit
+    {
+        get => _filtro.Editando.SeccionId ?? 0;
+        set => _filtro.Editando.SeccionId = value == 0 ? null : value;
+    }
+
+    private static readonly (string Valor, string Label)[] _camposOrden =
+    [
+        (nameof(EmpleadoResponse.Nombre),        "Nombre"),
+        (nameof(EmpleadoResponse.Dni),           "DNI"),
+        (nameof(EmpleadoResponse.SeccionNombre), "Sección"),
+    ];
 
     // ── Detalle ────────────────────────────────────────────────
     private EmpleadoResponse? _empleadoDetalle;
@@ -57,36 +73,37 @@ public partial class Empleados
     // ── Computed ───────────────────────────────────────────────
     private string InputFotoId => $"input-foto-{Id}";
 
-    private string PaginacionTexto
-    {
-        get
-        {
-            if (_paginado is null) return string.Empty;
-            var desde = (_pagina - 1) * PorPagina + 1;
-            var hasta = Math.Min(_pagina * PorPagina, _paginado.TotalRegistros);
-            return $"{desde}–{hasta} de {_paginado.TotalRegistros}";
-        }
-    }
-
     // ── Ciclo de vida ──────────────────────────────────────────
     protected override async Task OnInitializedAsync()
     {
-        await Task.WhenAll(CargarListaAsync(), CargarSeccionesAsync());
+        await CargarSeccionesAsync();
     }
 
     // ── Implementación de abstracts ────────────────────────────
     protected override async Task CargarListaAsync()
     {
-        _cargandoLista = true;
+        if (_refLista is not null)
+            await _refLista.RefreshAsync();
+    }
+
+    internal async ValueTask<ItemsProviderResult<EmpleadoResponse>> CargarItemsAsync(ItemsProviderRequest request)
+    {
         try
         {
-            _paginado = await EmpleadosClient.EmpleadosGETAsync(_pagina, PorPagina, string.IsNullOrWhiteSpace(_busqueda) ? null : _busqueda);
-            _empleados = _paginado.Items.ToList();
+            var resultado = await EmpleadosClient.EmpleadosGETAsync(
+                _filtro.AplicadoCon(f =>
+                {
+                    f.Pagina     = request.StartIndex;
+                    f.PorPagina  = request.Count;
+                    f.Busqueda   = string.IsNullOrWhiteSpace(_busqueda) ? null : _busqueda;
+                    f.OrdenarPor = _ordenarPor;
+                    f.OrdenDesc  = _ordenDesc;
+                }), request.CancellationToken);
+            return new(resultado.Items, resultado.TotalRegistros);
         }
-        catch { /* lista queda vacía */ }
-        finally
+        catch
         {
-            _cargandoLista = false;
+            return new([], 0);
         }
     }
 
@@ -154,6 +171,28 @@ public partial class Empleados
         return Task.CompletedTask;
     }
 
+    private ElementReference _refFiltroNombre;
+
+    protected override Task OnFiltro()
+    {
+        _filtro.Abrir();
+        _enfocarFiltro = true;
+        return Task.CompletedTask;
+    }
+
+    protected override Task OnLimpiarFiltro() => LimpiarFiltroAsync();
+
+    protected override async Task EnfocarPrimerCampoFiltroAsync()
+        => await _refFiltroNombre.FocusAsync();
+
+    protected override Task OnEscape()
+    {
+        if (_filtro.ModalVisible)     { _filtro.Cancelar(); return Task.CompletedTask; }
+        if (_mostrarModalEliminarFoto) { _mostrarModalEliminarFoto = false; return Task.CompletedTask; }
+        if (_esNuevo)                 { _esNuevo = false; LimpiarDetalle(); return Task.CompletedTask; }
+        return base.OnEscape();
+    }
+
     protected override async Task EnfocarPrimerCampoNuevoAsync()
         => await _refNuevoNombre.FocusAsync();
 
@@ -170,8 +209,37 @@ public partial class Empleados
 
     private async Task<IEnumerable<EmpleadoResponse>> BuscarEmpleadosAsync(string query, CancellationToken ct)
     {
-        var resultado = await EmpleadosClient.EmpleadosGETAsync(1, 50, string.IsNullOrWhiteSpace(query) ? null : query, ct);
+        var resultado = await EmpleadosClient.EmpleadosGETAsync(new EmpleadoFilter
+        {
+            Pagina    = 0,
+            PorPagina = 50,
+            Busqueda  = string.IsNullOrWhiteSpace(query) ? null : query
+        }, ct);
         return resultado.Items;
+    }
+
+    private async Task SetOrdenAsync(string campo)
+    {
+        _ordenarPor = campo;
+        await CargarListaAsync();
+    }
+
+    private async Task ToggleOrdenDescAsync()
+    {
+        _ordenDesc = !_ordenDesc;
+        await CargarListaAsync();
+    }
+
+    private async Task AplicarFiltroAsync()
+    {
+        _filtro.Aplicar();
+        await CargarListaAsync();
+    }
+
+    private async Task LimpiarFiltroAsync()
+    {
+        _filtro.Limpiar();
+        await CargarListaAsync();
     }
 
     // ── Helpers ────────────────────────────────────────────────
@@ -186,12 +254,6 @@ public partial class Empleados
         _errorGuardar  = null;
         _errorFoto     = null;
         _errorEliminar = null;
-    }
-
-    private void ActualizarEnLista(EmpleadoResponse empleado)
-    {
-        var idx = _empleados.FindIndex(e => e.Id == empleado.Id);
-        if (idx >= 0) _empleados[idx] = empleado;
     }
 
     // ── Acciones ───────────────────────────────────────────────
@@ -215,7 +277,7 @@ public partial class Empleados
 
             Toast.Exito("Cambios guardados correctamente.");
             _empleadoDetalle = await EmpleadosClient.EmpleadosGET2Async(Id.Value);
-            ActualizarEnLista(_empleadoDetalle);
+            await CargarListaAsync();
         }
         catch (ApiException ex) when (ex.StatusCode == 409)
         {
@@ -251,7 +313,7 @@ public partial class Empleados
             _fotoVersion++;
             Toast.Exito("Foto actualizada correctamente.");
             _empleadoDetalle = await EmpleadosClient.EmpleadosGET2Async(Id.Value);
-            ActualizarEnLista(_empleadoDetalle);
+            await CargarListaAsync();
         }
         catch (ApiException ex) when (ex.StatusCode == 400)
         {
@@ -283,7 +345,7 @@ public partial class Empleados
             _fotoVersion++;
             Toast.Exito("Foto eliminada.");
             _empleadoDetalle = await EmpleadosClient.EmpleadosGET2Async(Id.Value);
-            ActualizarEnLista(_empleadoDetalle);
+            await CargarListaAsync();
         }
         catch
         {

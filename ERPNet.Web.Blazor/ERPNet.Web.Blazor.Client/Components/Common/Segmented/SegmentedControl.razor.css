@@ -1,0 +1,43 @@
+.segmented-control {
+    display: flex;
+    background: var(--bs-tertiary-bg);
+    border-radius: .5rem;
+    padding: 3px;
+    gap: 2px;
+}
+
+.segment-btn {
+    flex: 1;
+    min-width: 0;
+    padding: .3125rem .625rem;
+    border: none;
+    border-radius: calc(.5rem - 3px);
+    background: transparent;
+    color: var(--bs-secondary-color);
+    font-size: .8125rem;
+    font-weight: 500;
+    line-height: 1.4;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.segment-btn:focus-visible {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: 1px;
+    z-index: 1;
+    position: relative;
+}
+
+.segment-btn:hover:not(.active) {
+    background: color-mix(in sRGB, var(--bs-secondary-color) 10%, transparent);
+    color: var(--bs-body-color);
+}
+
+.segment-btn.active {
+    background: var(--bs-body-bg);
+    color: var(--bs-emphasis-color);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .1), 0 0 0 .5px rgba(0, 0, 0, .06);
+}

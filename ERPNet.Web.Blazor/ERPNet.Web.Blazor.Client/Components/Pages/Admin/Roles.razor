@@ -28,63 +28,40 @@
             </div>
         </div>
 
-        <!-- Items -->
-        <div class="flex-grow-1 overflow-y-auto">
-            @if (_cargandoLista)
-            {
-                @for (var i = 0; i < 5; i++)
-                {
-                    <div class="rol-row placeholder-glow">
-                        <span class="placeholder col-6 d-block mb-1" style="height:13px"></span>
-                        <span class="placeholder col-4" style="height:11px"></span>
-                    </div>
-                }
-            }
-            else if (_roles.Count == 0)
-            {
-                <div class="text-center text-muted py-5 small">
-                    <i class="bi bi-shield-x fs-3 d-block mb-2"></i>
-                    Sin resultados
+        <ListaPanel @ref="_refLista" TItem="RolResponse"
+                    IconoVacio="bi-shield-x"
+                    ItemsProvider="CargarItemsAsync"
+                    OnTotalChanged="t => _totalItems = t">
+            <SkeletonItem>
+                <div class="rol-row placeholder-glow">
+                    <span class="placeholder col-6 d-block mb-1" style="height:13px"></span>
+                    <span class="placeholder col-4" style="height:11px"></span>
                 </div>
-            }
-            else
-            {
-                @foreach (var r in _roles)
-                {
-                    <button type="button"
-                            class="rol-row w-100 text-start @(Id == r.Id ? "active" : "")"
-                            @onclick="() => SeleccionarItem(r.Id)">
-                        <div class="fw-semibold text-truncate small">@r.Nombre</div>
-                        @if (!string.IsNullOrWhiteSpace(r.Descripcion))
-                        {
-                            <div class="text-muted text-truncate" style="font-size:.75rem">@r.Descripcion</div>
-                        }
-                    </button>
-                }
-            }
-        </div>
+            </SkeletonItem>
+            <ItemTemplate Context="r">
+                <button type="button"
+                        class="rol-row w-100 text-start @(Id == r.Id ? "active" : "")"
+                        @onclick="() => SeleccionarItem(r.Id)">
+                    <div class="fw-semibold text-truncate small">@r.Nombre</div>
+                    @if (!string.IsNullOrWhiteSpace(r.Descripcion))
+                    {
+                        <div class="text-muted text-truncate" style="font-size:.75rem">@r.Descripcion</div>
+                    }
+                </button>
+            </ItemTemplate>
+        </ListaPanel>
 
-        <!-- Paginación -->
-        @if (_paginado is not null && !_cargandoLista)
+        @if (_totalItems.HasValue)
         {
-            <div class="px-3 py-2 border-top d-flex align-items-center justify-content-between flex-shrink-0 small text-muted">
-                <span>@PaginacionTexto</span>
-                <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-secondary" @onclick="PaginaAnterior"
-                            disabled="@(_pagina <= 1)">
-                        <i class="bi bi-chevron-left"></i>
-                    </button>
-                    <button class="btn btn-outline-secondary" @onclick="PaginaSiguiente"
-                            disabled="@(_pagina >= _paginado.TotalPaginas)">
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
-                </div>
+            <div class="px-3 py-1 border-top flex-shrink-0 d-flex align-items-center justify-content-end">
+                <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill">@_totalItems</span>
             </div>
         }
+
     </div>
 
     <!-- ── Panel derecho: Detalle ─────────────────────────────── -->
-    <div class="col-12 col-lg-9 panel-detalle">
+    <div class="col-12 col-lg-9 panel-detalle @((!_esNuevo && !Id.HasValue) ? "d-none d-lg-flex" : "")">
 
         @if (!_esNuevo && !Id.HasValue)
         {

@@ -327,6 +327,8 @@
         _resultados.Clear();
         _sinResultados = false;
 
+        await JS.InvokeVoidAsync("itemSelector.blur", _inputRef);
+
         if (OnNavigate.HasDelegate)
         {
             await OnNavigate.InvokeAsync(item);

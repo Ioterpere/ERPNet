@@ -5,7 +5,7 @@ namespace ERPNet.Application.Common.Interfaces;
 
 public interface IEmpleadoService
 {
-    Task<Result<ListaPaginada<EmpleadoResponse>>> GetAllAsync(PaginacionFilter filtro);
+    Task<Result<ListaPaginada<EmpleadoResponse>>> GetAllAsync(EmpleadoFilter filtro);
     Task<Result<EmpleadoResponse>> GetByIdAsync(int id);
     Task<Result<EmpleadoResponse>> GetMeAsync();
     Task<Result<EmpleadoResponse>> CreateAsync(CreateEmpleadoRequest request);

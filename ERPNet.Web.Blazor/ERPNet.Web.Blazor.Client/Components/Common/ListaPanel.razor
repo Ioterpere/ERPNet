@@ -1,0 +1,54 @@
+@typeparam TItem
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+
+<div class="flex-grow-1 overflow-y-auto">
+    @if (_totalItems == 0)
+    {
+        <div class="text-center text-muted py-5 small">
+            <i class="bi @IconoVacio fs-3 d-block mb-2"></i>
+            Sin resultados
+        </div>
+    }
+    <Virtualize @ref="_virtualize" ItemsProvider="WrapProvider"
+                ItemSize="@ItemSize" OverscanCount="3">
+        <ItemContent>
+            @ItemTemplate(context)
+        </ItemContent>
+        <Placeholder>
+            @SkeletonItem
+        </Placeholder>
+    </Virtualize>
+</div>
+
+@code {
+    private Virtualize<TItem>? _virtualize;
+    private int? _totalItems;
+
+    [Parameter, EditorRequired]
+    public Func<ItemsProviderRequest, ValueTask<ItemsProviderResult<TItem>>> ItemsProvider { get; set; } = default!;
+
+    [Parameter] public float ItemSize { get; set; } = 56;
+    [Parameter] public string IconoVacio { get; set; } = "bi-inbox";
+
+    [Parameter, EditorRequired] public RenderFragment<TItem> ItemTemplate { get; set; } = default!;
+    [Parameter, EditorRequired] public RenderFragment SkeletonItem { get; set; } = default!;
+
+    [Parameter] public EventCallback<int?> OnTotalChanged { get; set; }
+
+    private async ValueTask<ItemsProviderResult<TItem>> WrapProvider(ItemsProviderRequest request)
+    {
+        var result = await ItemsProvider(request);
+        _totalItems = result.TotalItemCount;
+        StateHasChanged();
+        await OnTotalChanged.InvokeAsync(_totalItems);
+        return result;
+    }
+
+    public async Task RefreshAsync()
+    {
+        _totalItems = null;
+        await OnTotalChanged.InvokeAsync(null);
+        if (_virtualize is not null)
+            await _virtualize.RefreshDataAsync();
+    }
+}

@@ -24,7 +24,7 @@ public class MaquinariaService(
 
         var response = maquinas.Select(m => m.ToResponse()).ToList();
         return Result<ListaPaginada<MaquinariaResponse>>.Success(
-            ListaPaginada<MaquinariaResponse>.Crear(response, total, filtro));
+            ListaPaginada<MaquinariaResponse>.Crear(response, total));
     }
 
     public async Task<Result<MaquinariaResponse>> GetByIdAsync(int id)

@@ -33,7 +33,7 @@ public class EmpresasControllerTests
     [Fact(DisplayName = "GetAll: exitoso devuelve 200")]
     public async Task GetAll_Exitoso_Devuelve200()
     {
-        var paginado = ListaPaginada<EmpresaResponse>.Crear([], 0, new PaginacionFilter());
+        var paginado = ListaPaginada<EmpresaResponse>.Crear([], 0);
         _service.GetAllAsync(Arg.Any<PaginacionFilter>())
             .Returns(Result<ListaPaginada<EmpresaResponse>>.Success(paginado));
 

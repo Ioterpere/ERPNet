@@ -1,5 +1,7 @@
 using ERPNet.ApiClient;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web.Virtualization;
+using ERPNet.Web.Blazor.Client.Components.Common;
 
 namespace ERPNet.Web.Blazor.Client.Components.Pages.Admin;
 
@@ -7,13 +9,9 @@ public partial class Empresas
 {
     [Inject] private IEmpresasClient EmpresasClient { get; set; } = default!;
 
-    // ── Paginación ─────────────────────────────────────────────
-    protected override int? TotalPaginas => _paginado?.TotalPaginas;
-
     // ── Lista ──────────────────────────────────────────────────
-    private ListaPaginadaOfEmpresaResponse? _paginado;
-    private List<EmpresaResponse> _empresas = [];
-    private bool _cargandoLista = true;
+    private ListaPanel<EmpresaResponse>? _refLista;
+    private int? _totalItems;
 
     // ── Detalle ────────────────────────────────────────────────
     private EmpresaResponse? _empresaDetalle;
@@ -39,36 +37,28 @@ public partial class Empresas
     private bool _eliminando;
     private string? _errorEliminar;
 
-    private string PaginacionTexto
-    {
-        get
-        {
-            if (_paginado is null) return string.Empty;
-            var desde = (_pagina - 1) * PorPagina + 1;
-            var hasta = Math.Min(_pagina * PorPagina, _paginado.TotalRegistros);
-            return $"{desde}–{hasta} de {_paginado.TotalRegistros}";
-        }
-    }
-
-    // ── Ciclo de vida ──────────────────────────────────────────
-    protected override async Task OnInitializedAsync()
-    {
-        await CargarListaAsync();
-    }
-
     // ── Implementación de abstracts ────────────────────────────
     protected override async Task CargarListaAsync()
     {
-        _cargandoLista = true;
+        if (_refLista is not null)
+            await _refLista.RefreshAsync();
+    }
+
+    internal async ValueTask<ItemsProviderResult<EmpresaResponse>> CargarItemsAsync(ItemsProviderRequest request)
+    {
         try
         {
-            _paginado = await EmpresasClient.EmpresasGETAsync(_pagina, PorPagina, string.IsNullOrWhiteSpace(_busqueda) ? null : _busqueda);
-            _empresas = _paginado?.Items?.ToList() ?? [];
+            var resultado = await EmpresasClient.EmpresasGETAsync(new PaginacionFilter
+            {
+                Pagina    = request.StartIndex,
+                PorPagina = request.Count,
+                Busqueda  = string.IsNullOrWhiteSpace(_busqueda) ? null : _busqueda
+            });
+            return new(resultado.Items, resultado.TotalRegistros);
         }
-        catch { /* lista queda vacía */ }
-        finally
+        catch
         {
-            _cargandoLista = false;
+            return new([], 0);
         }
     }
 
@@ -193,9 +183,7 @@ public partial class Empresas
             _empresaDetalle.Cif    = string.IsNullOrWhiteSpace(_editCif) ? null : _editCif;
             _empresaDetalle.Activo = _editActivo;
 
-            var idx = _empresas.FindIndex(e => e.Id == Id.Value);
-            if (idx >= 0) _empresas[idx] = _empresaDetalle;
-
+            await CargarListaAsync();
             Toast.Exito("Datos guardados correctamente.");
         }
         catch

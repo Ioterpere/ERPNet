@@ -31,7 +31,7 @@ public class RolesControllerTests
         var lista = new ListaPaginada<RolResponse>
         {
             Items = [new RolResponse { Id = 1, Nombre = "Admin" }],
-            Pagina = 1, PorPagina = 50, TotalRegistros = 1
+            TotalRegistros = 1
         };
         _service.GetAllAsync(Arg.Any<PaginacionFilter>())
             .Returns(Result<ListaPaginada<RolResponse>>.Success(lista));

@@ -15,7 +15,7 @@ public class EmpleadoService(
     IUnitOfWork unitOfWork,
     ICurrentUserProvider currentUser) : IEmpleadoService
 {
-    public async Task<Result<ListaPaginada<EmpleadoResponse>>> GetAllAsync(PaginacionFilter filtro)
+    public async Task<Result<ListaPaginada<EmpleadoResponse>>> GetAllAsync(EmpleadoFilter filtro)
     {
         var usuario = currentUser.Current!;
         var alcance = ObtenerAlcance();
@@ -25,7 +25,7 @@ public class EmpleadoService(
 
         var response = empleados.Select(e => e.ToResponse()).ToList();
         return Result<ListaPaginada<EmpleadoResponse>>.Success(
-            ListaPaginada<EmpleadoResponse>.Crear(response, total, filtro));
+            ListaPaginada<EmpleadoResponse>.Crear(response, total));
     }
 
     public async Task<Result<EmpleadoResponse>> GetByIdAsync(int id)
