@@ -1,0 +1,58 @@
+<div class="icon-picker-wrapper">
+    <div class="icon-picker-trigger @(_abierto ? "open" : "")" @onclick="AbrirAsync">
+        @if (!string.IsNullOrEmpty(Value))
+        {
+            <i class="bi @Value icon-preview"></i>
+            <span class="trigger-label text-truncate">@Value</span>
+            <button type="button" class="btn-close btn-close-sm ms-1"
+                    @onclick="LimpiarAsync" @onclick:stopPropagation="true"
+                    title="Quitar icono"></button>
+        }
+        else
+        {
+            <i class="bi bi-palette text-muted"></i>
+            <span class="trigger-label text-muted">Sin icono</span>
+        }
+        <i class="bi bi-chevron-down ms-auto trigger-chevron"></i>
+    </div>
+
+    @if (_abierto)
+    {
+        <div class="icon-picker-backdrop" @onclick="Cerrar"></div>
+        <div class="icon-picker-dropdown">
+            <div class="icon-picker-search">
+                <input class="form-control form-control-sm"
+                       placeholder="Buscar icono..."
+                       @ref="_refBusqueda"
+                       @bind="_busqueda"
+                       @bind:event="oninput" />
+            </div>
+            @if (_cargando)
+            {
+                <div class="text-center text-muted p-3 small">
+                    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                    Cargando iconos...
+                </div>
+            }
+            else
+            {
+                <div class="icon-picker-grid">
+                    @foreach (var icono in IconosFiltrados)
+                    {
+                        <div class="icon-cell @(("bi-" + icono) == Value ? "selected" : "")"
+                             title="@icono"
+                             @onclick="() => SeleccionarAsync(icono)">
+                            <i class="bi bi-@icono"></i>
+                        </div>
+                    }
+                </div>
+                @if (IconosFiltrados.Count == 0)
+                {
+                    <div class="text-center text-muted p-3 small">
+                        Sin resultados para «@_busqueda»
+                    </div>
+                }
+            }
+        </div>
+    }
+</div>

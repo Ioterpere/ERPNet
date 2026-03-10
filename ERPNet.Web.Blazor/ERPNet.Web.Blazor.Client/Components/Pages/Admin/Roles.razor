@@ -244,8 +244,7 @@
                     </div>
                 }
 
-                <!-- ── Tab: Permisos ───────────────────────────── -->
-                else if ((Tab ?? "usuarios") == "permisos")
+                @if ((Tab ?? "usuarios") == "permisos")
                 {
                     <div class="card mb-4">
                         <div class="card-header d-flex align-items-center justify-content-between">
@@ -370,7 +369,7 @@
                     Guardar usuarios
                 </button>
             }
-            else if ((Tab ?? "usuarios") == "permisos")
+            @if ((Tab ?? "usuarios") == "permisos")
             {
                 @if (_errorPermisos is not null)
                 {

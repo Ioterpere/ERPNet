@@ -1,0 +1,396 @@
+@page "/menus"
+@attribute [Authorize]
+@inherits PageBase
+@implements IAsyncDisposable
+
+<PageTitle>Menús | @NombreEmpresa</PageTitle>
+
+<div class="menus-container">
+
+    <!-- ── Barra superior ──────────────────────────────────────── -->
+    <div class="menus-toolbar">
+        <h5 class="mb-0 fw-semibold">Gestión de Menús</h5>
+        <button class="btn btn-primary btn-sm ms-auto" @onclick="OnNuevo">
+            <i class="bi bi-plus-lg me-1"></i>Nuevo menú
+        </button>
+    </div>
+
+    <!-- ── Banner de movimiento pendiente ──────────────────────── -->
+    @if (_movePendiente is not null)
+    {
+        <div class="menus-move-banner">
+            <i class="bi bi-arrows-move flex-shrink-0"></i>
+            <span class="small">Cambio de posición pendiente de confirmar</span>
+            @if (_errorMover is not null)
+            {
+                <span class="text-danger small ms-2">@_errorMover</span>
+            }
+            <div class="ms-auto d-flex gap-2">
+                <button class="btn btn-sm btn-outline-secondary" @onclick="CancelarMoverAsync"
+                        disabled="@_aplicandoMover">
+                    Descartar
+                </button>
+                <button class="btn btn-sm btn-primary" @onclick="AplicarMoverAsync"
+                        disabled="@_aplicandoMover">
+                    @if (_aplicandoMover)
+                    {
+                        <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                    }
+                    Aplicar
+                </button>
+            </div>
+        </div>
+    }
+
+    <!-- ── Paneles ─────────────────────────────────────────────── -->
+    <div class="menus-panels">
+
+        <!-- ── Panel: Árbol ──────────────────────────────────── -->
+        <div class="menus-panel-arbol @(_tieneFormulario ? "arbol-oculto" : "")">
+            @if (_cargandoArbol)
+            {
+                <div class="p-3 placeholder-glow d-flex flex-column gap-2">
+                    @for (int i = 0; i < 7; i++)
+                    {
+                        <div class="placeholder rounded" style="height:32px;width:@(i % 3 == 0 ? "85%" : i % 3 == 1 ? "70%" : "55%")"></div>
+                    }
+                </div>
+            }
+            else
+            {
+                @if (_errorCarga is not null)
+                {
+                    <div class="p-3">
+                        <div class="alert alert-danger small mb-0">@_errorCarga</div>
+                    </div>
+                }
+
+                <ul class="menu-tree list-unstyled mb-0" @ref="_refArbol">
+                    @if (_arbol.Count == 0 && _errorCarga is null)
+                    {
+                        <li class="text-center text-muted p-4 small">
+                            <i class="bi bi-diagram-3 d-block fs-2 mb-2 opacity-25"></i>
+                            Sin menús configurados
+                        </li>
+                    }
+                    @foreach (var n1 in _arbol)
+                    {
+                        <li class="menu-nodo @(_nodoSeleccionado?.Id == n1.Id ? "nodo-activo" : "")"
+                            data-id="@n1.Id" @key="n1.Id">
+                            <div class="menu-nodo-fila" @onclick="() => SeleccionarNodo(n1)">
+                                <i class="bi bi-grip-vertical drag-handle"></i>
+                                <i class="bi @(string.IsNullOrEmpty(n1.IconClass) ? "bi-dash opacity-25" : n1.IconClass) nodo-icono"></i>
+                                <span class="nodo-nombre">@n1.Nombre</span>
+                                <span class="nodo-orden badge bg-light border text-muted">@n1.Orden</span>
+                            </div>
+                            <!-- nivel 2 -->
+                            <ul class="menu-subtree list-unstyled mb-0" data-parent-id="@n1.Id">
+                                @foreach (var n2 in n1.SubMenus)
+                                {
+                                    <li class="menu-nodo @(_nodoSeleccionado?.Id == n2.Id ? "nodo-activo" : "")"
+                                        data-id="@n2.Id" @key="n2.Id">
+                                        <div class="menu-nodo-fila menu-nodo-fila--l2" @onclick="() => SeleccionarNodo(n2)">
+                                            <i class="bi bi-grip-vertical drag-handle"></i>
+                                            <i class="bi @(string.IsNullOrEmpty(n2.IconClass) ? "bi-dash opacity-25" : n2.IconClass) nodo-icono"></i>
+                                            <span class="nodo-nombre">@n2.Nombre</span>
+                                            <span class="nodo-orden badge bg-light border text-muted">@n2.Orden</span>
+                                        </div>
+                                        <!-- nivel 3 -->
+                                        <ul class="menu-subtree list-unstyled mb-0" data-parent-id="@n2.Id">
+                                            @foreach (var n3 in n2.SubMenus)
+                                            {
+                                                <li class="menu-nodo @(_nodoSeleccionado?.Id == n3.Id ? "nodo-activo" : "")"
+                                                    data-id="@n3.Id" @key="n3.Id">
+                                                    <div class="menu-nodo-fila menu-nodo-fila--l3" @onclick="() => SeleccionarNodo(n3)">
+                                                        <i class="bi bi-grip-vertical drag-handle"></i>
+                                                        <i class="bi @(string.IsNullOrEmpty(n3.IconClass) ? "bi-dash opacity-25" : n3.IconClass) nodo-icono"></i>
+                                                        <span class="nodo-nombre">@n3.Nombre</span>
+                                                        <span class="nodo-orden badge bg-light border text-muted">@n3.Orden</span>
+                                                    </div>
+                                                </li>
+                                            }
+                                        </ul>
+                                    </li>
+                                }
+                            </ul>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+
+        <!-- ── Panel: Formulario ─────────────────────────────── -->
+        <div class="menus-panel-form @(!_tieneFormulario ? "form-oculto" : "")">
+
+            @if (_esNuevo)
+            {
+                <!-- ── Nuevo ─────────────────────────────────── -->
+                <div class="menus-panel-form-content">
+                    <button class="btn btn-sm btn-link text-muted p-0 mb-3 d-lg-none" @onclick="Volver">
+                        <i class="bi bi-arrow-left me-1"></i>Volver al árbol
+                    </button>
+
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <i class="bi bi-diagram-3 text-primary"></i>
+                        <h6 class="mb-0 fw-semibold">Nuevo menú</h6>
+                    </div>
+
+                    @if (_errorCrear is not null)
+                    {
+                        <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-3 small">
+                            <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                            <span>@_errorCrear</span>
+                        </div>
+                    }
+
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small">Nombre <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control form-control-sm" @bind="_nuevoNombre"
+                                           placeholder="Nombre del menú" autocomplete="off" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Ruta</label>
+                                    <input type="text" class="form-control form-control-sm" @bind="_nuevoPath"
+                                           placeholder="/ruta-del-menu" autocomplete="off" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Icono</label>
+                                    <IconPicker Value="@_nuevoIconClass"
+                                                ValueChanged="v => _nuevoIconClass = v" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Menú padre</label>
+                                    <select class="form-select form-select-sm" @bind="_nuevoPadreId">
+                                        <option value="">Raíz (sin padre)</option>
+                                        @foreach (var (nodo, nivel) in AplanarArbol(_arbol))
+                                        {
+                                            var prefijo = nivel == 0 ? "" : new string('\u00A0', nivel * 4) + "└\u00A0";
+                                            <option value="@nodo.Id">@prefijo@nodo.Nombre</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <button class="btn btn-outline-secondary btn-sm" @onclick="Volver">Cancelar</button>
+                        <button class="btn btn-primary btn-sm" @onclick="CrearAsync" disabled="@_creando">
+                            @if (_creando)
+                            {
+                                <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-diagram-3 me-1"></i>
+                            }
+                            Crear menú
+                        </button>
+                    </div>
+                </div>
+            }
+            else if (_nodoSeleccionado is not null)
+            {
+                <!-- ── Edición ────────────────────────────────── -->
+                <div class="menus-panel-form-content">
+                    <button class="btn btn-sm btn-link text-muted p-0 mb-3 d-lg-none" @onclick="Volver">
+                        <i class="bi bi-arrow-left me-1"></i>Volver al árbol
+                    </button>
+
+                    <!-- Header -->
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        @if (!string.IsNullOrEmpty(_nodoSeleccionado.IconClass))
+                        {
+                            <i class="bi @_nodoSeleccionado.IconClass text-primary"></i>
+                        }
+                        <h6 class="mb-0 fw-semibold text-truncate">@_nodoSeleccionado.Nombre</h6>
+                        @if (_nodoSeleccionado.MenuPadreId is not null)
+                        {
+                            var padre = Encontrar(_arbol, _nodoSeleccionado.MenuPadreId.Value).nodo;
+                            if (padre is not null)
+                            {
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis small ms-1 flex-shrink-0">
+                                    <i class="bi bi-arrow-up me-1"></i>@padre.Nombre
+                                </span>
+                            }
+                        }
+                    </div>
+
+                    <!-- Datos del menú -->
+                    <div class="card mb-3">
+                        <div class="card-header d-flex align-items-center gap-2">
+                            <i class="bi bi-pencil text-primary"></i>
+                            <span class="fw-semibold small">Datos del menú</span>
+                        </div>
+                        <div class="card-body">
+                            @if (_errorGuardar is not null)
+                            {
+                                <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-3 small">
+                                    <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                                    <span>@_errorGuardar</span>
+                                </div>
+                            }
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small">Nombre <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control form-control-sm" @bind="_editNombre"
+                                           autocomplete="off" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Ruta</label>
+                                    <input type="text" class="form-control form-control-sm" @bind="_editPath"
+                                           placeholder="/ruta-del-menu" autocomplete="off" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Icono</label>
+                                    <IconPicker Value="@_editIconClass"
+                                                ValueChanged="v => _editIconClass = v" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Acceso por roles -->
+                    <div class="card mb-3">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-shield-check text-primary"></i>
+                                <span class="fw-semibold small">Acceso por roles</span>
+                            </div>
+                            <span class="badge bg-secondary-subtle text-secondary-emphasis small">
+                                @if (_rolesAsignados.Count == 0) { <span>Público</span> }
+                                else { <span>@_rolesAsignados.Count rol@(_rolesAsignados.Count == 1 ? "" : "es")</span> }
+                            </span>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle mb-0">
+                                    <tbody>
+                                        @if (_cargandoRoles)
+                                        {
+                                            <tr>
+                                                <td colspan="3" class="text-center text-muted py-3 small">
+                                                    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                                                    Cargando...
+                                                </td>
+                                            </tr>
+                                        }
+                                        else if (_rolesAsignados.Count == 0)
+                                        {
+                                            <tr>
+                                                <td colspan="3" class="text-center text-muted py-3 small">
+                                                    <i class="bi bi-shield-slash d-block mb-1"></i>
+                                                    Sin roles — visible para todos
+                                                </td>
+                                            </tr>
+                                        }
+                                        else
+                                        {
+                                            @foreach (var rol in _rolesAsignados)
+                                            {
+                                                <tr>
+                                                    <td class="ps-3 small fw-semibold">@rol.Nombre</td>
+                                                    <td style="width:40px">
+                                                        <a href="/roles?id=@rol.Id"
+                                                           class="btn btn-sm btn-outline-secondary p-1 lh-1">
+                                                            <i class="bi bi-arrow-up-right-square"></i>
+                                                        </a>
+                                                    </td>
+                                                    <td style="width:40px">
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-outline-danger p-1 lh-1"
+                                                                @onclick="() => QuitarRol(rol.Id)">
+                                                            <i class="bi bi-x-lg"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 px-3 py-2 border-top bg-light">
+                                <div class="flex-grow-1" style="min-width:0">
+                                    <ItemSelector TItem="RolResponse"
+                                                  @key="_selectorKeyRol"
+                                                  SearchAsync="BuscarRolesAsync"
+                                                  GetId="r => r.Id"
+                                                  GetLabel="r => r.Nombre"
+                                                  GetSubLabel="r => r.Descripcion"
+                                                  Value="_addRolId"
+                                                  ValueChanged="id => _addRolId = id"
+                                                  Placeholder="Buscar rol..." />
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary flex-shrink-0 p-1 lh-1"
+                                        @onclick="AñadirRol"
+                                        disabled="@(_addRolId is null)">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Toolbar inferior -->
+                <div class="menus-panel-toolbar">
+                    <button class="btn btn-outline-danger btn-sm me-auto" @onclick="AbrirModalEliminar">
+                        <i class="bi bi-trash3 me-1"></i>Eliminar
+                    </button>
+                    <button class="btn btn-primary btn-sm" @onclick="GuardarAsync"
+                            disabled="@_guardando">
+                        @if (_guardando)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                        }
+                        Guardar cambios
+                    </button>
+                </div>
+            }
+            else
+            {
+                <!-- ── Placeholder ────────────────────────────── -->
+                <div class="menus-panel-placeholder">
+                    <i class="bi bi-diagram-3 placeholder-icon"></i>
+                    <p class="mb-1 fw-semibold">Selecciona un menú</p>
+                    <p class="text-muted small mb-0">o crea uno nuevo con «+ Nuevo menú»</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- ── Modal: Eliminar ──────────────────────────────────────────── -->
+@if (_mostrarModalEliminar)
+{
+    <Modal Title="Eliminar menú" @bind-IsVisible="_mostrarModalEliminar" CloseOnBackdrop="false">
+        <ChildContent>
+            @if (_errorEliminar is not null)
+            {
+                <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-3 small">
+                    <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                    <span>@_errorEliminar</span>
+                </div>
+            }
+            <p class="mb-0 small">
+                ¿Seguro que quieres eliminar el menú
+                <strong>@_nodoSeleccionado?.Nombre</strong>?
+                Esta acción no se puede deshacer.
+            </p>
+        </ChildContent>
+        <Footer>
+            <button class="btn btn-outline-secondary btn-sm"
+                    @onclick='() => _mostrarModalEliminar = false'
+                    disabled="@_eliminando">Cancelar</button>
+            <button class="btn btn-danger btn-sm" @onclick="EliminarAsync" disabled="@_eliminando">
+                @if (_eliminando)
+                {
+                    <span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                }
+                Eliminar
+            </button>
+        </Footer>
+    </Modal>
+}

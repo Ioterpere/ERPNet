@@ -63,13 +63,43 @@
                             <div class="ps-3 ms-1 border-start border-secondary border-opacity-25">
                                 @foreach (var sub in menu.SubMenus)
                                 {
-                                    <NavLink class="nav-link py-1" href="@sub.Path?.TrimStart('/')">
-                                        @if (!string.IsNullOrEmpty(sub.IconClass))
+                                    @if (sub.SubMenus?.Count > 0)
+                                    {
+                                        <button class="nav-link py-1 w-100 text-start d-flex align-items-center gap-2 border-0 bg-transparent"
+                                                @onclick="() => Toggle(sub.Id)">
+                                            @if (!string.IsNullOrEmpty(sub.IconClass))
+                                            {
+                                                <i class="bi @sub.IconClass me-2 small"></i>
+                                            }
+                                            <span class="small flex-grow-1">@sub.Nombre</span>
+                                            <i class="bi @(_expanded.Contains(sub.Id) ? "bi-chevron-up" : "bi-chevron-down") small opacity-75"></i>
+                                        </button>
+                                        @if (_expanded.Contains(sub.Id))
                                         {
-                                            <i class="bi @sub.IconClass me-2 small"></i>
+                                            <div class="ps-3 ms-1 border-start border-secondary border-opacity-25">
+                                                @foreach (var sub3 in sub.SubMenus)
+                                                {
+                                                    <NavLink class="nav-link py-1" href="@sub3.Path?.TrimStart('/')">
+                                                        @if (!string.IsNullOrEmpty(sub3.IconClass))
+                                                        {
+                                                            <i class="bi @sub3.IconClass me-2 small"></i>
+                                                        }
+                                                        <span class="small">@sub3.Nombre</span>
+                                                    </NavLink>
+                                                }
+                                            </div>
                                         }
-                                        <span class="small">@sub.Nombre</span>
-                                    </NavLink>
+                                    }
+                                    else
+                                    {
+                                        <NavLink class="nav-link py-1" href="@sub.Path?.TrimStart('/')">
+                                            @if (!string.IsNullOrEmpty(sub.IconClass))
+                                            {
+                                                <i class="bi @sub.IconClass me-2 small"></i>
+                                            }
+                                            <span class="small">@sub.Nombre</span>
+                                        </NavLink>
+                                    }
                                 }
                             </div>
                         }
@@ -209,8 +239,21 @@
         var currentPath = "/" + Nav.ToBaseRelativePath(Nav.Uri).Split('?')[0];
         foreach (var menu in _menus.Where(m => m.SubMenus?.Count > 0))
         {
-            if (menu.SubMenus!.Any(s => s.Path == currentPath))
-                _expanded.Add(menu.Id);
+            foreach (var sub in menu.SubMenus!)
+            {
+                if (sub.Path == currentPath)
+                {
+                    _expanded.Add(menu.Id);
+                }
+                else if (sub.SubMenus?.Count > 0)
+                {
+                    if (sub.SubMenus.Any(s => s.Path == currentPath))
+                    {
+                        _expanded.Add(menu.Id);
+                        _expanded.Add(sub.Id);
+                    }
+                }
+            }
         }
     }
 

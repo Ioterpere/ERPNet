@@ -258,8 +258,7 @@
                     </div>
                 }
 
-                <!-- ── Tab: Empresas ───────────────────────────── -->
-                else if ((Tab ?? "datos") == "empresas")
+                @if ((Tab ?? "datos") == "empresas")
                 {
                     <div class="card mb-3">
                         <div class="card-header d-flex align-items-center gap-2">
@@ -297,8 +296,7 @@
                     </div>
                 }
 
-                <!-- ── Tab: Roles ──────────────────────────────── -->
-                else if ((Tab ?? "datos") == "roles")
+                @if ((Tab ?? "datos") == "roles")
                 {
                     <div class="card mb-3">
                         <div class="card-header d-flex align-items-center gap-2">
@@ -398,7 +396,7 @@
                     Guardar datos
                 </button>
             }
-            else if ((Tab ?? "datos") == "roles")
+            @if ((Tab ?? "datos") == "roles")
             {
                 @if (_errorRoles is not null)
                 {
@@ -414,7 +412,7 @@
                     Guardar roles
                 </button>
             }
-            else if ((Tab ?? "datos") == "empresas")
+            @if ((Tab ?? "datos") == "empresas")
             {
                 @if (_errorEmpresas is not null)
                 {

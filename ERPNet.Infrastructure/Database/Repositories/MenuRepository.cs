@@ -13,12 +13,36 @@ public class MenuRepository(ERPNetDbContext context, ICurrentUserProvider curren
     protected override Expression<Func<Menu, bool>>? GetBusquedaPredicate(string busqueda)
         => m => m.Nombre.Contains(busqueda);
 
+    public async Task<List<Menu>> GetAllAdminAsync(Plataforma plataforma)
+    {
+        return await Context.Menus
+            .Include(m => m.SubMenus.OrderBy(s => s.Orden))
+                .ThenInclude(s => s.SubMenus.OrderBy(ss => ss.Orden))
+            .Where(m => m.Plataforma == plataforma && m.MenuPadreId == null)
+            .OrderBy(m => m.Orden)
+            .ToListAsync();
+    }
+
+    public async Task<List<Menu>> GetHermanosAsync(int? padreId, Plataforma plataforma)
+    {
+        return await Context.Menus
+            .Where(m => m.MenuPadreId == padreId && m.Plataforma == plataforma)
+            .OrderBy(m => m.Orden)
+            .ToListAsync();
+    }
+
+    public async Task<bool> TieneSubMenusAsync(int menuId)
+        => await Context.Menus.AnyAsync(m => m.MenuPadreId == menuId);
+
     public async Task<List<Menu>> GetMenusVisiblesAsync(Plataforma plataforma, List<int> rolIds)
     {
         return await Context.Menus
             .Include(m => m.SubMenus
                 .Where(s => !s.MenusRoles.Any() || s.MenusRoles.Any(mr => rolIds.Contains(mr.RolId)))
                 .OrderBy(s => s.Orden))
+                .ThenInclude(s => s.SubMenus
+                    .Where(ss => !ss.MenusRoles.Any() || ss.MenusRoles.Any(mr => rolIds.Contains(mr.RolId)))
+                    .OrderBy(ss => ss.Orden))
             .Where(m => m.Plataforma == plataforma)
             .Where(m => !m.MenusRoles.Any() || m.MenusRoles.Any(mr => rolIds.Contains(mr.RolId)))
             .Where(m => m.MenuPadreId == null)

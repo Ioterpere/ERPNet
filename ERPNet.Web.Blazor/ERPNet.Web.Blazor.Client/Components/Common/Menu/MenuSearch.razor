@@ -39,8 +39,18 @@
             {
                 if (menu.SubMenus?.Count > 0)
                 {
-                    foreach (var sub in menu.SubMenus.Where(s => !string.IsNullOrEmpty(s.Path)))
-                        _todosItems.Add(new(sub.Nombre, sub.Path!, sub.IconClass, menu.Nombre));
+                    foreach (var sub in menu.SubMenus)
+                    {
+                        if (sub.SubMenus?.Count > 0)
+                        {
+                            foreach (var sub3 in sub.SubMenus.Where(s => !string.IsNullOrEmpty(s.Path)))
+                                _todosItems.Add(new(sub3.Nombre, sub3.Path!, sub3.IconClass, $"{menu.Nombre} / {sub.Nombre}"));
+                        }
+                        else if (!string.IsNullOrEmpty(sub.Path))
+                        {
+                            _todosItems.Add(new(sub.Nombre, sub.Path!, sub.IconClass, menu.Nombre));
+                        }
+                    }
                 }
                 else if (!string.IsNullOrEmpty(menu.Path))
                 {

@@ -1,6 +1,7 @@
 using ERPNet.ApiClient;
 using ERPNet.Web.Blazor.Client;
 using ERPNet.Web.Blazor.Client.Components.Common.Toast;
+using ERPNet.Web.Blazor.Client.Services;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -29,5 +30,6 @@ builder.Services.AddApiClients(
     b => b.AddHttpMessageHandler<BffAuthRetryHandler>());
 
 builder.Services.AddScoped<ToastService>();
+builder.Services.AddScoped<BootstrapIconsService>();
 
 await builder.Build().RunAsync();

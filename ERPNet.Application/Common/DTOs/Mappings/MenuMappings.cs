@@ -9,12 +9,22 @@ public static class MenuMappings
     {
         Id = menu.Id,
         Nombre = menu.Nombre,
+        MenuPadreId = menu.MenuPadreId,
         Path = menu.Path,
         IconClass = menu.Icon,
         CustomClass = menu.Tag,
         Orden = menu.Orden,
         SubMenus = menu.SubMenus.Select(s => s.ToResponse()).ToList()
     };
+
+    public static void ApplyTo(this UpdateMenuRequest request, Menu menu)
+    {
+        menu.Nombre = request.Nombre;
+        menu.Path = request.Path;
+        menu.Icon = request.IconClass;
+        menu.Tag = request.CustomClass;
+        menu.Orden = request.Orden;
+    }
 
     public static Menu ToEntity(this CreateMenuRequest request) => new()
     {

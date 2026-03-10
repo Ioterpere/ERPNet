@@ -224,7 +224,7 @@ public partial class Roles
     {
         try
         {
-            var resultado = await UsuariosClient.UsuariosGETAsync(new PaginacionFilter { Pagina = 0, PorPagina = 500 });
+            var resultado = await UsuariosClient.UsuariosGETAsync(new PaginacionFilter { Pagina = 0, PorPagina = 200 });
             _usuariosPorId = resultado.Items.ToDictionary(u => u.Id);
         }
         catch { /* sin usuarios */ }

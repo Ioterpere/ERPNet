@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "build:css": "sass Styles/bootstrap-custom.scss wwwroot/lib/bootstrap/dist/css/bootstrap.min.css --style compressed --no-source-map --load-path=node_modules",
-    "watch:css": "sass Styles/bootstrap-custom.scss wwwroot/lib/bootstrap/dist/css/bootstrap.min.css --style compressed --no-source-map --load-path=node_modules --watch"
+    "watch:css": "sass Styles/bootstrap-custom.scss wwwroot/lib/bootstrap/dist/css/bootstrap.min.css --style compressed --no-source-map --load-path=node_modules --watch",
+    "copy:vendors": "node -e \"const fs=require('fs');fs.mkdirSync('wwwroot/lib/sortablejs',{recursive:true});fs.copyFileSync('node_modules/sortablejs/Sortable.min.js','wwwroot/lib/sortablejs/Sortable.min.js');\""
   },
   "keywords": [],
   "author": "",
@@ -12,6 +13,7 @@
   "devDependencies": {
     "bootstrap": "^5.3.3",
     "bootswatch": "^5.3.3",
-    "sass": "^1.97.3"
+    "sass": "^1.97.3",
+    "sortablejs": "^1.15.2"
   }
 }

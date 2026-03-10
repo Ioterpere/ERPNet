@@ -1,0 +1,205 @@
+/* ── Contenedor principal ────────────────────────────────────────
+   Cancela el py-4 px-4 del article.content, igual que erp-panel-container
+   ──────────────────────────────────────────────────────────────── */
+.menus-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100svh - 3.5rem);
+    overflow: hidden;
+    margin: -1.5rem -1.5rem;
+}
+
+/* ── Barra superior ──────────────────────────────────────────── */
+.menus-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: .625rem 1.25rem;
+    border-bottom: 1px solid var(--bs-border-color);
+    background: var(--bs-body-bg);
+    flex-shrink: 0;
+}
+
+/* ── Banner de movimiento pendiente ──────────────────────────── */
+.menus-move-banner {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .5rem 1.25rem;
+    background: rgba(var(--bs-warning-rgb), .08);
+    border-bottom: 1px solid rgba(var(--bs-warning-rgb), .25);
+    flex-shrink: 0;
+}
+
+/* ── Paneles ─────────────────────────────────────────────────── */
+.menus-panels {
+    flex: 1;
+    min-height: 0; /* crucial: permite que los flex-children se encojan */
+    display: flex;
+    overflow: hidden;
+}
+
+/* ── Panel árbol ─────────────────────────────────────────────── */
+.menus-panel-arbol {
+    width: 380px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--bs-border-color);
+    overflow-y: auto;
+    background: var(--bs-body-bg);
+}
+
+/* ── Panel formulario ────────────────────────────────────────── */
+.menus-panel-form {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.menus-panel-form-content {
+    flex: 1;
+    min-height: 0; /* crucial */
+    overflow-y: auto;
+    padding: 1.25rem 1.5rem;
+}
+
+.menus-panel-placeholder {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--bs-secondary-color);
+    text-align: center;
+    padding: 2rem;
+}
+
+.placeholder-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: .2;
+}
+
+.menus-panel-toolbar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .625rem 1.25rem;
+    border-top: 1px solid var(--bs-border-color);
+    background: var(--bs-body-bg);
+}
+
+/* ── Árbol ───────────────────────────────────────────────────── */
+.menu-tree {
+    padding: .375rem 0;
+}
+
+.menu-nodo {
+    position: relative;
+}
+
+.menu-nodo-fila {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .45rem .75rem;
+    cursor: pointer;
+    transition: background-color .1s;
+    border-left: 3px solid transparent;
+    user-select: none;
+}
+
+.menu-nodo-fila:hover {
+    background: var(--bs-tertiary-bg);
+}
+
+.menu-nodo.nodo-activo > .menu-nodo-fila {
+    background: rgba(var(--bs-primary-rgb), .08);
+    border-left-color: var(--bs-primary);
+}
+
+/* Sangría por nivel */
+.menu-nodo-fila--l2 { padding-left: 1.75rem; }
+.menu-nodo-fila--l3 { padding-left: 3rem; }
+
+.drag-handle {
+    cursor: grab;
+    color: var(--bs-secondary-color);
+    opacity: .35;
+    flex-shrink: 0;
+    font-size: .875rem;
+}
+
+.drag-handle:hover { opacity: .75; }
+
+.nodo-icono {
+    flex-shrink: 0;
+    font-size: .9rem;
+    color: var(--bs-secondary-color);
+}
+
+.menu-nodo.nodo-activo > .menu-nodo-fila .nodo-icono {
+    color: var(--bs-primary);
+}
+
+.nodo-nombre {
+    flex: 1;
+    font-size: .8125rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nodo-orden {
+    font-size: .68rem;
+    flex-shrink: 0;
+    padding: .1rem .35rem;
+}
+
+/* ── Ghost al arrastrar ──────────────────────────────────────── */
+.drag-ghost {
+    opacity: .35;
+    background: rgba(var(--bs-primary-rgb), .08) !important;
+    border-radius: 4px;
+}
+
+/* ── Subárbol ────────────────────────────────────────────────── */
+.menu-subtree {
+    border-left: 1px dashed rgba(var(--bs-border-color-rgb), .6);
+    margin-left: 1.5rem;
+    min-height: 6px; /* área mínima para drop */
+}
+
+/* ── Card header ─────────────────────────────────────────────── */
+.card-header {
+    background-color: transparent;
+    padding: .75rem 1rem;
+}
+
+/* ── Responsive: móvil (< lg = 992px) ──────────────────────────
+   Los paneles se apilan. El árbol ocupa 100% cuando no hay
+   selección; el formulario ocupa 100% cuando hay selección.
+   ──────────────────────────────────────────────────────────────── */
+@media (max-width: 991.98px) {
+    .menus-panels {
+        flex-direction: column;
+    }
+
+    .menus-panel-arbol {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--bs-border-color);
+        flex: 1;
+    }
+
+    .menus-panel-arbol.arbol-oculto {
+        display: none;
+    }
+
+    .menus-panel-form.form-oculto {
+        display: none;
+    }
+}
