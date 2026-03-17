@@ -14,9 +14,11 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.2" />
+    <!-- Solo en dev: genera openapi.json para ERPNet.ApiClient. Se omite en Docker (SkipApiDescription=true) -->
     <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" Version="10.0.2"
-                      PrivateAssets="All" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.2">
+                      PrivateAssets="All"
+                      Condition="'$(SkipApiDescription)' != 'true'" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.4">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>

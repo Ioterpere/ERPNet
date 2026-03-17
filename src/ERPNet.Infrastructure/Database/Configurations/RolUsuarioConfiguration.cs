@@ -28,13 +28,13 @@ public class RolUsuarioConfiguration : IEntityTypeConfiguration<RolUsuario>
         // Unicidad: un usuario no puede tener el mismo rol global dos veces
         builder.HasIndex(ru => new { ru.UsuarioId, ru.RolId })
             .IsUnique()
-            .HasFilter("[EmpresaId] IS NULL")
+            .HasFilter("\"EmpresaId\" IS NULL")
             .HasDatabaseName("IX_RolUsuario_UsuarioId_RolId_Global");
 
         // Unicidad: un usuario no puede tener el mismo rol en la misma empresa dos veces
         builder.HasIndex(ru => new { ru.UsuarioId, ru.RolId, ru.EmpresaId })
             .IsUnique()
-            .HasFilter("[EmpresaId] IS NOT NULL")
+            .HasFilter("\"EmpresaId\" IS NOT NULL")
             .HasDatabaseName("IX_RolUsuario_UsuarioId_RolId_Empresa");
     }
 }

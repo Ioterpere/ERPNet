@@ -50,7 +50,6 @@ public class ERPNetDbContext(DbContextOptions<ERPNetDbContext> options) : DbCont
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.UseCollation("Latin1_General_CI_AI");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ERPNetDbContext).Assembly);
 
         // Global query filter para soft delete en todas las entidades que implementen ISoftDeletable
