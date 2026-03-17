@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ERPNet.ApiClient;
 using ERPNet.Web.Blazor.Client.Components.Common;
 using ERPNet.Web.Blazor.Client.Components.Pages.Common;
@@ -68,6 +69,8 @@ public partial class Empleados
     private string _nuevoDni = string.Empty;
     private int _nuevoSeccionId;
     private int? _nuevoEncargadoId;
+    private EmpleadoResponse? _encargadoPreseleccionado;
+    private int _selectorKeyNuevoEncargado;
     private bool _creando;
     private string? _errorCrear;
 
@@ -77,6 +80,7 @@ public partial class Empleados
     // ── Ciclo de vida ──────────────────────────────────────────
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
         await CargarSeccionesAsync();
     }
 
@@ -152,8 +156,10 @@ public partial class Empleados
         _nuevoApellidos   = string.Empty;
         _nuevoDni         = string.Empty;
         _nuevoSeccionId   = _secciones.FirstOrDefault()?.Id ?? 0;
-        _nuevoEncargadoId = null;
-        _errorCrear       = null;
+        _nuevoEncargadoId         = null;
+        _encargadoPreseleccionado = null;
+        _selectorKeyNuevoEncargado++;
+        _errorCrear               = null;
         _enfocarNuevo     = true;
         Nav.NavigateTo(Nav.GetUriWithQueryParameter("id", (int?)null));
         return Task.CompletedTask;
@@ -436,5 +442,26 @@ public partial class Empleados
         {
             _creando = false;
         }
+    }
+
+    // ── Inicialización desde fuente externa ────────────────────
+    protected override async Task InicializarCreacion(JsonElement datos)
+    {
+        var req = datos.Deserialize<CreateEmpleadoRequest>()!;
+
+        _nuevoNombre      = req.Nombre ?? "";
+        _nuevoApellidos   = req.Apellidos ?? "";
+        _nuevoDni         = req.Dni ?? "";
+        _nuevoSeccionId   = req.SeccionId > 0 ? req.SeccionId : (_secciones.FirstOrDefault()?.Id ?? 0);
+        _nuevoEncargadoId = req.EncargadoId;
+        _encargadoPreseleccionado = null;
+
+        if (_nuevoEncargadoId.HasValue)
+        {
+            try { _encargadoPreseleccionado = await EmpleadosClient.EmpleadosGET2Async(_nuevoEncargadoId.Value); }
+            catch { /* no crítico */ }
+        }
+
+        _selectorKeyNuevoEncargado++;
     }
 }

@@ -1,4 +1,6 @@
+using System.Security.Claims;
 using System.Text;
+using System.Threading.RateLimiting;
 using ERPNet.Api.Handlers;
 using ERPNet.Api.Middleware;
 using ERPNet.Api.Services;
@@ -25,6 +27,7 @@ builder.Services.AddEmailServices(builder.Configuration);
 builder.Services.AddMessaging(builder.Configuration);
 builder.Services.AddReporting();
 builder.Services.AddFileStorage(builder.Configuration);
+builder.Services.AddAiChat(builder.Configuration);
 
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpContextAccessor();
@@ -85,6 +88,27 @@ builder.Services.AddRateLimiter(options =>
         limiter.Window = TimeSpan.FromMinutes(1);
         limiter.QueueLimit = 0;
     });
+
+    // IA: 1 stream SSE activo por usuario a la vez
+    options.AddPolicy("ai-stream", ctx =>
+        RateLimitPartition.GetConcurrencyLimiter(
+            partitionKey: ctx.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "anon",
+            factory: _ => new ConcurrencyLimiterOptions
+            {
+                PermitLimit = 1,
+                QueueLimit = 0
+            }));
+
+    // IA: máx 10 sesiones nuevas por minuto por usuario
+    options.AddPolicy("ai-sesiones", ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: ctx.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "anon",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
 });
 
 #endregion

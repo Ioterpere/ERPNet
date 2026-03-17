@@ -14,8 +14,7 @@
   </ItemGroup>
 
 <!-- FilterExtensions se genera desde el cliente NSwag + spec — debe ir DESPUÉS de NSwagGenerate -->
-  <Target Name="GenerateFilterExtensions" AfterTargets="NSwagGenerate" BeforeTargets="CoreCompile"
-          Inputs="Generated/ErpNetApiClient.g.cs" Outputs="Generated/FilterExtensions.g.cs">
+  <Target Name="GenerateFilterExtensions" AfterTargets="NSwagGenerate" BeforeTargets="CoreCompile">
     <Message Importance="High" Text="→ Generando FilterExtensions desde cliente generado..." />
     <Exec WorkingDirectory="$(ProjectDir)"
           Command="powershell -NonInteractive -File &quot;$(ProjectDir)Scripts/GenerateFilterExtensions.ps1&quot; -ClientPath &quot;$(ProjectDir)Generated/ErpNetApiClient.g.cs&quot; -OutputPath &quot;$(ProjectDir)Generated/FilterExtensions.g.cs&quot;" />
@@ -27,7 +26,7 @@
     <Message Importance="High" Text="→ Generando cliente desde openapi.json..." />
     <MakeDir Directories="Generated" />
     <Exec WorkingDirectory="$(ProjectDir)"
-          Command="$(NSwagExe_Net80) openapi2csclient /input:ERPNet.Api.json /namespace:ERPNet.ApiClient /output:Generated/ErpNetApiClient.g.cs /generateClientInterfaces:true /generateDtoTypes:true /injectHttpClient:true /operationGenerationMode:MultipleClientsFromFirstTagAndOperationId /jsonLibrary:SystemTextJson /useBaseUrl:false" />
+          Command="$(NSwagExe_Net80) openapi2csclient /input:ERPNet.Api.json /namespace:ERPNet.ApiClient /output:Generated/ErpNetApiClient.g.cs /generateClientInterfaces:true /generateDtoTypes:true /injectHttpClient:true /operationGenerationMode:MultipleClientsFromFirstTagAndOperationId /jsonLibrary:SystemTextJson /useBaseUrl:false /jsonConverters:System.Text.Json.Serialization.JsonStringEnumConverter" />
   </Target>
 
 </Project>

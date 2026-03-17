@@ -765,6 +765,11 @@ namespace ERPNet.Infrastructure.Database.Migrations
                         {
                             Id = 11,
                             Codigo = "Empresas"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Codigo = "AsistenteIa"
                         });
                 });
 

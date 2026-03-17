@@ -1,5 +1,5 @@
 using System.Security.Claims;
-using ERPNet.Application.Auth;
+using ERPNet.Application.Auth.DTOs;
 using ERPNet.Application.Common.Interfaces;
 using ERPNet.Domain.Repositories;
 using ERPNet.Domain.Enums;
@@ -23,6 +23,14 @@ public class UsuarioContextMiddleware(RequestDelegate next)
                 && int.TryParse(empresaHeader, out var parsedEmpresaId))
             {
                 empresaId = parsedEmpresaId;
+            }
+
+            // Leer plataforma del header X-Plataforma
+            Plataforma? plataforma = null;
+            if (context.Request.Headers.TryGetValue("X-Plataforma", out var plataformaHeader)
+                && Enum.TryParse<Plataforma>(plataformaHeader, out var parsedPlataforma))
+            {
+                plataforma = parsedPlataforma;
             }
 
             var cacheKey = $"usuario:{id}:{empresaId ?? 0}";
@@ -53,7 +61,7 @@ public class UsuarioContextMiddleware(RequestDelegate next)
                     var permisos = rolesAplicables
                         .SelectMany(ru => ru.Rol.PermisosRolRecurso)
                         .GroupBy(p => (RecursoCodigo)p.RecursoId)
-                        .Select(g => new PermisoUsuario
+                        .Select(g => new PermisoResponse
                         {
                             Codigo = g.Key,
                             CanCreate = g.Any(p => p.CanCreate),
@@ -89,7 +97,8 @@ public class UsuarioContextMiddleware(RequestDelegate next)
 
             if (usuarioContext is not null)
             {
-                context.Items["UsuarioContext"] = usuarioContext;
+                // Enriquecer con datos de la petición actual (no forman parte del caché)
+                context.Items["UsuarioContext"] = usuarioContext with { Plataforma = plataforma };
             }
         }
 

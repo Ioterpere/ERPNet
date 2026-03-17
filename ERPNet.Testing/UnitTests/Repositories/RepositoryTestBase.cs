@@ -1,4 +1,4 @@
-using ERPNet.Application.Auth;
+using ERPNet.Application.Auth.DTOs;
 using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Domain.Entities;
 using ERPNet.Infrastructure.Database.Context;

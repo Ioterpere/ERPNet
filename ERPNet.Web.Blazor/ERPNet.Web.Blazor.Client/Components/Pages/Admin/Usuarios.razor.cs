@@ -1,9 +1,10 @@
+using System.Net.Http.Json;
+using System.Text.Json;
 using ERPNet.ApiClient;
 using ERPNet.Web.Blazor.Client.Components.Common;
 using ERPNet.Web.Blazor.Client.Components.Common.Tabs;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web.Virtualization;
-using System.Net.Http.Json;
 
 namespace ERPNet.Web.Blazor.Client.Components.Pages.Admin;
 
@@ -84,6 +85,7 @@ public partial class Usuarios
     // ── Ciclo de vida ──────────────────────────────────────────
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
         await Task.WhenAll(CargarTodosRolesAsync(), CargarTodasEmpresasAsync());
     }
 
@@ -474,4 +476,14 @@ public partial class Usuarios
         public int? EmpresaId { get; init; }
     }
 
+    // ── Inicialización desde fuente externa ────────────────────
+    protected override Task InicializarCreacion(JsonElement datos)
+    {
+        var req = datos.Deserialize<CreateUsuarioRequest>()!;
+
+        _nuevoEmail      = req.Email ?? "";
+        _nuevoEmpleadoId = req.EmpleadoId > 0 ? req.EmpleadoId : null;
+
+        return Task.CompletedTask;
+    }
 }

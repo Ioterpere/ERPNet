@@ -18,6 +18,11 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+if (-not (Test-Path $ClientPath)) {
+    Write-Host "→ $ClientPath no encontrado, saltando FilterExtensions."
+    exit 0
+}
+
 $clientLines = Get-Content $ClientPath -Encoding UTF8
 
 function ToPascal([string]$s) {

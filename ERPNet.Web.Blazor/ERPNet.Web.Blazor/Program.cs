@@ -1,6 +1,7 @@
 using ERPNet.ApiClient;
 using ERPNet.Web.Blazor.Bff;
 using ERPNet.Web.Blazor.Client.Components.Common.Toast;
+using ERPNet.Web.Blazor.Client.Services;
 using ERPNet.Web.Blazor.Components;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
@@ -42,6 +43,8 @@ builder.Services.AddHttpContextAccessor();
 
 // Servicios compartidos con el WASM client (deben registrarse en ambos contenedores DI)
 builder.Services.AddScoped<ToastService>();
+builder.Services.AddScoped<PermisosService>();
+builder.Services.AddScoped<PrefilladoService>();
 
 // BffTokenService: gestiona tokens JWT en caché del servidor (get, refresh, invalidate)
 builder.Services.AddScoped<BffTokenService>();

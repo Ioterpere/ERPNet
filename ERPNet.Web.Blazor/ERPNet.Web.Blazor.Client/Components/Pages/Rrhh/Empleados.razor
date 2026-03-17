@@ -192,13 +192,15 @@
                     </div>
                     <div class="col-sm-6">
                         <label class="form-label">Encargado</label>
-                        <ItemSelector TItem="EmpleadoResponse"
+                        <ItemSelector @key="_selectorKeyNuevoEncargado"
+                                      TItem="EmpleadoResponse"
                                       SearchAsync="BuscarEmpleadosAsync"
                                       GetId="e => e.Id"
                                       GetLabel='e => $"{e.Nombre} {e.Apellidos}"'
                                       GetSubLabel="e => e.Dni"
                                       Value="_nuevoEncargadoId"
                                       ValueChanged="id => _nuevoEncargadoId = id"
+                                      PreselectedItem="_encargadoPreseleccionado"
                                       Placeholder="Buscar encargado..." />
                     </div>
                 </div>

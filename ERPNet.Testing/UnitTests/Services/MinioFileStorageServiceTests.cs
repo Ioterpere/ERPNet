@@ -1,5 +1,5 @@
 using ERPNet.Application;
-using ERPNet.Application.Auth;
+using ERPNet.Application.Auth.DTOs;
 using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Application.Common.Enums;
 using ERPNet.Domain.Entities;

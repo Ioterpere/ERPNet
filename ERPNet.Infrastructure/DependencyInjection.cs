@@ -1,20 +1,26 @@
 using ERPNet.Application.Mailing;
 using ERPNet.Application.Messaging;
+using ERPNet.Application.Ai;
 using ERPNet.Application.Reports.Interfaces;
 using ERPNet.Infrastructure.Database;
 using ERPNet.Infrastructure.Database.Context;
 using ERPNet.Infrastructure.Mailing;
+using ERPNet.Infrastructure.Ai;
+using ERPNet.Infrastructure.Ai.Tools;
+using ERPNet.Infrastructure.Ai.Tools.Common;
 using ERPNet.Infrastructure.Messaging;
 using ERPNet.Infrastructure.FileStorage;
 using ERPNet.Infrastructure.Reports;
 using ERPNet.Application.FileStorage;
 using ERPNet.Application.Common.Interfaces;
 using ERPNet.Domain.Repositories;
+using Microsoft.Extensions.AI;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Minio;
+using OpenAI;
 using QuestPDF.Infrastructure;
 
 namespace ERPNet.Infrastructure;
@@ -99,6 +105,64 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IFileStorageService, MinioFileStorageService>();
+
+        return services;
+    }
+
+    public static IServiceCollection AddAiChat(
+        this IServiceCollection services, IConfiguration config)
+    {
+        services.Configure<AiSettings>(config.GetSection("AiSettings"));
+
+        var settings = config.GetSection("AiSettings").Get<AiSettings>() ?? new();
+
+        if (!settings.Habilitado)
+        {
+            services.AddSingleton<IAiChatService, NullAiChatService>();
+            return services;
+        }
+
+        // IChatClient — proveedor intercambiable desde config
+        // FunctionInvokingChatClient gestiona el loop tool-calling automáticamente
+        switch (settings.Proveedor.ToLowerInvariant())
+        {
+            case "openai":
+            default:
+                services.AddSingleton<Microsoft.Extensions.AI.IChatClient>(sp =>
+                    new OpenAIClient(settings.ApiKey)
+                        .GetChatClient(settings.Modelo)
+                        .AsIChatClient()
+                        .AsBuilder()
+                        .UseFunctionInvocation()
+                        .Build(sp));
+                break;
+        }
+
+        services.AddSingleton<IChatSessionStore, InMemoryChatSessionStore>();
+        services.AddScoped<IAccionesUiCollector, AccionesUiCollector>();
+
+        // Configs de consulta: singletons inyectados en los tools por tipo concreto
+        services.Scan(scan => scan
+            .FromAssemblyOf<ConsultaToolConfig>()
+            .AddClasses(c => c.AssignableTo<ConsultaToolConfig>())
+            .AsSelf()
+            .WithSingletonLifetime());
+
+        // Configs de formulario: singletons enumerables para AiChatService
+        services.Scan(scan => scan
+            .FromAssemblyOf<FormularioToolConfig>()
+            .AddClasses(c => c.AssignableTo<FormularioToolConfig>())
+            .As<FormularioToolConfig>()
+            .WithSingletonLifetime());
+
+        // Tools: scoped (tienen servicios de dominio inyectados)
+        services.Scan(scan => scan
+            .FromAssemblyOf<AiChatService>()
+            .AddClasses(c => c.AssignableTo<McpToolBase>())
+            .As<McpToolBase>()
+            .WithScopedLifetime());
+
+        services.AddScoped<IAiChatService, AiChatService>();
 
         return services;
     }

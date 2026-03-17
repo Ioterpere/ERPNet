@@ -1,8 +1,11 @@
 @using ERPNet.Web.Blazor.Client.Components.Common
+@using ERPNet.ApiClient
 @inherits LayoutComponentBase
 @implements IAsyncDisposable
 @inject IJSRuntime JS
 @inject NavigationManager Nav
+@inject PermisosService Permisos
+@inject IAiClient AiClient
 
 
 <div class="page">
@@ -43,7 +46,16 @@
             </div>
 
 
-            <div class="dropdown ms-auto">
+            @if (_tieneAsistenteIa)
+            {
+                <button class="btn btn-link text-white p-0 ms-auto me-2" type="button"
+                        data-bs-toggle="offcanvas" data-bs-target="#chat-offcanvas"
+                        title="Asistente IA (Ctrl+Shift+A)">
+                    <i class="bi bi-robot fs-5"></i>
+                </button>
+            }
+
+            <div class="dropdown">
                 <button
                     class="btn btn-link text-white text-decoration-none dropdown-toggle p-0 d-flex align-items-center gap-2"
                     type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -79,6 +91,36 @@
 
 <ToastContainer />
 
+@if (_tieneAsistenteIa)
+{
+<div class="offcanvas offcanvas-end" tabindex="-1" id="chat-offcanvas"
+     aria-labelledby="chat-offcanvas-label"
+     style="width: min(420px, 100vw)">
+    <div class="offcanvas-header" style="background-color: var(--bs-primary); color: #fff;">
+        <h6 class="offcanvas-title mb-0 d-flex align-items-center gap-2" id="chat-offcanvas-label">
+            <i class="bi bi-robot me-2"></i>Asistente IA
+            @if (_herramientas is { Count: > 0 })
+            {
+                <span class="ai-info" tabindex="0">
+                    <i class="bi bi-info-circle-fill opacity-50" style="font-size:.8rem"></i>
+                    <span class="ai-info-tooltip">
+                        @foreach (var h in _herramientas!)
+                        {
+                            <div>@h</div>
+                        }
+                    </span>
+                </span>
+            }
+        </h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"
+                aria-label="Cerrar"></button>
+    </div>
+    <div class="offcanvas-body p-0" style="display:flex; flex-direction:column; overflow:hidden;">
+        <ChatPanel />
+    </div>
+</div>
+}
+
 @code {
     [CascadingParameter]
     private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
@@ -87,6 +129,8 @@
     private string? _empresaNombre;
     private bool _sidebarCollapsed;
     private bool _cleanupPending;
+    private bool _tieneAsistenteIa;
+    private ICollection<string>? _herramientas;
     private DotNetObjectReference<MainLayout>? _dotNetRef;
 
     protected override async Task OnInitializedAsync()
@@ -94,6 +138,10 @@
         var state = await AuthStateTask;
         _email = state.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
         _empresaNombre = state.User.FindFirst("empresa_nombre")?.Value;
+        if (!RendererInfo.IsInteractive) return;
+        _tieneAsistenteIa = await Permisos.TieneAcceso(RecursoCodigo.AsistenteIa);
+        if (_tieneAsistenteIa)
+            try { _herramientas = await AiClient.HerramientasAsync(); } catch { }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -109,6 +157,7 @@
 
             _dotNetRef = DotNetObjectReference.Create(this);
             await JS.InvokeVoidAsync("sidebar.registerShortcut", _dotNetRef);
+            await JS.InvokeVoidAsync("chat.registerShortcut");
 
             _cleanupPending = true;
             StateHasChanged();
@@ -141,6 +190,7 @@
     public async ValueTask DisposeAsync()
     {
         try { await JS.InvokeVoidAsync("sidebar.unregisterShortcut"); } catch { }
+        try { await JS.InvokeVoidAsync("chat.unregisterShortcut"); } catch { }
         _dotNetRef?.Dispose();
     }
 

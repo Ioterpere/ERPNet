@@ -5,8 +5,9 @@ namespace ERPNet.Application.Common.Interfaces;
 
 public interface IMenuService
 {
-    Task<Result<List<MenuResponse>>> GetMenusVisiblesAsync(Plataforma plataforma, List<int> rolIds);
-    Task<Result<List<MenuResponse>>> GetAllAdminAsync(Plataforma plataforma);
+    Task<Result<List<MenuResponse>>> GetMenusVisiblesAsync(List<int> rolIds);
+    Task<Result<List<MenuResponse>>> BuscarEnMenuAsync(string busqueda);
+    Task<Result<List<MenuResponse>>> GetAllAdminAsync(Plataforma? plataforma = null);
     Task<Result<MenuResponse>> GetByIdAsync(int id);
     Task<Result<MenuResponse>> CreateAsync(CreateMenuRequest request);
     Task<Result<MenuResponse>> UpdateAsync(int id, UpdateMenuRequest request);

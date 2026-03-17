@@ -1,3 +1,4 @@
+using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Application.Common.DTOs;
 using ERPNet.Application.Common.DTOs.Mappings;
 using ERPNet.Application.Common.Enums;
@@ -10,18 +11,25 @@ namespace ERPNet.Application.Common;
 public class MenuService(
     IMenuRepository menuRepository,
     IUnitOfWork unitOfWork,
-    ICacheService cache) : IMenuService
+    ICacheService cache,
+    ICurrentUserProvider currentUser) : IMenuService
 {
-    public async Task<Result<List<MenuResponse>>> GetMenusVisiblesAsync(Plataforma plataforma, List<int> rolIds)
+    public async Task<Result<List<MenuResponse>>> GetMenusVisiblesAsync(List<int> rolIds)
     {
+        if (currentUser.Current?.Plataforma is not { } plataforma)
+            return Result<List<MenuResponse>>.Success([]);
+
         var menus = await menuRepository.GetMenusVisiblesAsync(plataforma, rolIds);
-        var response = menus.Select(m => m.ToResponse()).ToList();
-        return Result<List<MenuResponse>>.Success(response);
+        return Result<List<MenuResponse>>.Success(menus.Select(m => m.ToResponse()).ToList());
     }
 
-    public async Task<Result<List<MenuResponse>>> GetAllAdminAsync(Plataforma plataforma)
+    public async Task<Result<List<MenuResponse>>> GetAllAdminAsync(Plataforma? plataforma = null)
     {
-        var menus = await menuRepository.GetAllAdminAsync(plataforma);
+        var plataformaEfectiva = plataforma ?? currentUser.Current?.Plataforma;
+        if (plataformaEfectiva is null)
+            return Result<List<MenuResponse>>.Success([]);
+
+        var menus = await menuRepository.GetAllAdminAsync(plataformaEfectiva.Value);
         return Result<List<MenuResponse>>.Success(menus.Select(m => m.ToResponse()).ToList());
     }
 
@@ -138,10 +146,36 @@ public class MenuService(
         return Result.Success();
     }
 
+    public async Task<Result<List<MenuResponse>>> BuscarEnMenuAsync(string busqueda)
+    {
+        var ctx = currentUser.Current;
+        if (ctx?.Plataforma is not { } plataforma)
+            return Result<List<MenuResponse>>.Success([]);
+
+        var menus = await menuRepository.GetMenusVisiblesAsync(plataforma, ctx.RolIds);
+        var coincidencias = FlattenMenus(menus.Select(m => m.ToResponse()).ToList())
+            .Where(m => m.Path is not null)
+            .Where(m => m.Nombre.Contains(busqueda, StringComparison.OrdinalIgnoreCase)
+                     || m.Path!.Contains(busqueda, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        return Result<List<MenuResponse>>.Success(coincidencias);
+    }
+
+    private static IEnumerable<MenuResponse> FlattenMenus(List<MenuResponse> menus)
+    {
+        foreach (var m in menus)
+        {
+            yield return m;
+            foreach (var sub in FlattenMenus(m.SubMenus))
+                yield return sub;
+        }
+    }
+
     private async Task InvalidarCacheUsuariosAsync(List<int> rolIds)
     {
         var usuarioIds = await menuRepository.GetUsuarioIdsPorRolesAsync(rolIds);
         foreach (var uid in usuarioIds)
-            cache.Remove($"usuario:{uid}");
+            cache.RemoveByPrefix($"usuario:{uid}:");
     }
 }

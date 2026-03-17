@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using ERPNet.Application.Auth;
+using ERPNet.Application.Auth.DTOs;
 using ERPNet.Application.Common.DTOs;
 using ERPNet.Application.Common.DTOs.Mappings;
 using ERPNet.Application.Common.Enums;

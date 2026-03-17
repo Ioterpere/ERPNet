@@ -1,6 +1,6 @@
 using ERPNet.Api.Attributes;
 using ERPNet.Api.Middleware;
-using ERPNet.Application.Auth;
+using ERPNet.Application.Auth.DTOs;
 using ERPNet.Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using Xunit;
@@ -43,14 +43,14 @@ public class ControlAccesoMiddlewareTests
         return context;
     }
 
-    private static UsuarioContext CrearUsuarioContext(params PermisoUsuario[] permisos)
+    private static UsuarioContext CrearUsuarioContext(params PermisoResponse[] permisos)
     {
         return new UsuarioContext { Id = 1, Email = "test@erpnet.com", EmpleadoId = 1, SeccionId = 1, Permisos = permisos.ToList() };
     }
 
-    private static PermisoUsuario Permiso(RecursoCodigo codigo, bool create, bool edit, bool delete, Alcance alcance)
+    private static PermisoResponse Permiso(RecursoCodigo codigo, bool create, bool edit, bool delete, Alcance alcance)
     {
-        return new PermisoUsuario { Codigo = codigo, CanCreate = create, CanEdit = edit, CanDelete = delete, Alcance = alcance };
+        return new PermisoResponse { Codigo = codigo, CanCreate = create, CanEdit = edit, CanDelete = delete, Alcance = alcance };
     }
 
     #region Sin control de acceso (pasa libre)

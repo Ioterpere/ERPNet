@@ -1,5 +1,5 @@
 using System.Net.Mime;
-using ERPNet.Application.Auth;
+using ERPNet.Application.Auth.DTOs;
 using ERPNet.Application.Common;
 using ERPNet.Application.Common.Enums;
 using ERPNet.Application.FileStorage.DTOs;

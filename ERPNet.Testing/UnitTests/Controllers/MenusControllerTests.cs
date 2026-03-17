@@ -1,5 +1,5 @@
 using ERPNet.Api.Controllers;
-using ERPNet.Application.Auth;
+using ERPNet.Application.Auth.DTOs;
 using ERPNet.Application.Common;
 using ERPNet.Application.Common.DTOs;
 using ERPNet.Application.Common.Enums;
@@ -30,40 +30,37 @@ public class MenusControllerTests
     {
         _sut.HttpContext.Items["UsuarioContext"] = new UsuarioContext
         {
-            Id = 1, Email = "test@test.com", EmpleadoId = 1, SeccionId = 1, RolIds = rolIds ?? [1, 2]
+            Id = 1, Email = "test@test.com", EmpleadoId = 1, SeccionId = 1,
+            RolIds = rolIds ?? [1, 2], Plataforma = Plataforma.WebBlazor
         };
     }
 
     #region GetMenus
 
-    [Fact(DisplayName = "GetMenus: pasa RolIds y Plataforma al service")]
-    public async Task GetMenus_PasaRolIdsYPlataforma()
+    [Fact(DisplayName = "GetMenus: pasa RolIds al service")]
+    public async Task GetMenus_PasaRolIds()
     {
         SetupUsuarioContext(rolIds: [3, 5]);
-        _service.GetMenusVisiblesAsync(Arg.Any<Plataforma>(), Arg.Any<List<int>>())
+        _service.GetMenusVisiblesAsync(Arg.Any<List<int>>())
             .Returns(Result<List<MenuResponse>>.Success([]));
 
-        await _sut.GetMenus(Plataforma.WebBlazor);
+        await _sut.GetMenus();
 
-        await _service.Received(1).GetMenusVisiblesAsync(Plataforma.WebBlazor, Arg.Is<List<int>>(r => r.Contains(3) && r.Contains(5)));
+        await _service.Received(1).GetMenusVisiblesAsync(Arg.Is<List<int>>(r => r.Contains(3) && r.Contains(5)));
     }
 
     [Fact(DisplayName = "GetMenus: exitoso devuelve 200")]
     public async Task GetMenus_Exitoso_Devuelve200()
     {
         SetupUsuarioContext();
-        var menus = new List<MenuResponse>
-        {
-            new() { Id = 1, Nombre = "Dashboard", Orden = 1 }
-        };
-        _service.GetMenusVisiblesAsync(Arg.Any<Plataforma>(), Arg.Any<List<int>>())
+        var menus = new List<MenuResponse> { new() { Id = 1, Nombre = "Dashboard", Orden = 1 } };
+        _service.GetMenusVisiblesAsync(Arg.Any<List<int>>())
             .Returns(Result<List<MenuResponse>>.Success(menus));
 
-        var result = await _sut.GetMenus(Plataforma.WebBlazor);
+        var result = await _sut.GetMenus();
 
         var okResult = Assert.IsType<OkObjectResult>(result);
-        var value = Assert.IsType<List<MenuResponse>>(okResult.Value);
-        Assert.Single(value);
+        Assert.Single(Assert.IsType<List<MenuResponse>>(okResult.Value));
     }
 
     #endregion

@@ -1,4 +1,4 @@
-using ERPNet.Application.Auth;
+using ERPNet.Application.Auth.DTOs;
 using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Application.Common;
 using ERPNet.Application.Common.DTOs;
@@ -27,9 +27,9 @@ public class EmpleadoServiceTests
 
     private void SetupUsuario(int empleadoId = 1, int seccionId = 1, Alcance alcance = Alcance.Global)
     {
-        var permisos = new List<PermisoUsuario>
+        var permisos = new List<PermisoResponse>
         {
-            new PermisoUsuario { Codigo = RecursoCodigo.Empleados, CanCreate = true, CanEdit = true, CanDelete = true, Alcance = alcance }
+            new PermisoResponse { Codigo = RecursoCodigo.Empleados, CanCreate = true, CanEdit = true, CanDelete = true, Alcance = alcance }
         };
         _currentUser.Current.Returns(new UsuarioContext
         {

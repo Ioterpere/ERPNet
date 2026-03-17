@@ -47,6 +47,9 @@ public static class BffProxy
         if (empresaId is not null)
             apiRequest.Headers.TryAddWithoutValidation("X-Empresa-Id", empresaId);
 
+        // Inyectar plataforma — este BFF siempre es WebBlazor
+        apiRequest.Headers.TryAddWithoutValidation("X-Plataforma", "WebBlazor");
+
         if (ctx.Request.ContentLength > 0 || ctx.Request.Headers.ContainsKey("Content-Type"))
         {
             apiRequest.Content = new StreamContent(ctx.Request.Body);
@@ -64,6 +67,21 @@ public static class BffProxy
         if (apiResponse.Content.Headers.ContentType is { } contentType)
             ctx.Response.ContentType = contentType.ToString();
 
-        await apiResponse.Content.CopyToAsync(ctx.Response.Body);
+        if (apiResponse.Content.Headers.ContentType?.MediaType == "text/event-stream")
+        {
+            // SSE: flush tras cada chunk para que los eventos lleguen en tiempo real
+            var buffer = new byte[4096];
+            var stream = await apiResponse.Content.ReadAsStreamAsync();
+            int read;
+            while ((read = await stream.ReadAsync(buffer, ctx.RequestAborted)) > 0)
+            {
+                await ctx.Response.Body.WriteAsync(buffer.AsMemory(0, read), ctx.RequestAborted);
+                await ctx.Response.Body.FlushAsync(ctx.RequestAborted);
+            }
+        }
+        else
+        {
+            await apiResponse.Content.CopyToAsync(ctx.Response.Body);
+        }
     }
 }

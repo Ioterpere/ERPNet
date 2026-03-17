@@ -99,6 +99,39 @@ main .content {
 }
 
 
+/* ── Info icon tools IA ────────────────────────────────────── */
+
+.ai-info {
+    position: relative;
+    cursor: help;
+    color: rgba(255,255,255,.7);
+    display: inline-flex;
+    align-items: center;
+}
+
+.ai-info-tooltip {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: -4px;
+    background: #fff;
+    color: #212529;
+    border: 1px solid rgba(0,0,0,.15);
+    border-radius: .375rem;
+    padding: .4rem .65rem;
+    font-size: .75rem;
+    font-weight: 400;
+    max-width: 260px;
+    z-index: 1500;
+    box-shadow: 0 4px 10px rgba(0,0,0,.12);
+    line-height: 1.7;
+}
+
+.ai-info:hover .ai-info-tooltip,
+.ai-info:focus-within .ai-info-tooltip {
+    display: block;
+}
+
 #blazor-error-ui {
     color-scheme: light only;
     background: lightyellow;

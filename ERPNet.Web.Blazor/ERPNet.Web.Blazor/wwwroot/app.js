@@ -43,6 +43,82 @@ window.globalShortcut = {
     }
 };
 
+window.chat = {
+    scrollToBottom: function (id) {
+        const el = document.getElementById(id);
+        if (el) el.scrollTop = el.scrollHeight;
+    },
+    _shortcutHandler: null,
+    _shownHandler: null,
+    registerShortcut: function () {
+        this._shortcutHandler = function (e) {
+            if (!e.ctrlKey || !e.shiftKey || e.altKey || e.key !== 'A') return;
+            const tag = document.activeElement?.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+            e.preventDefault();
+            const el = document.getElementById('chat-offcanvas');
+            if (el) bootstrap.Offcanvas.getOrCreateInstance(el).toggle();
+        };
+        document.addEventListener('keydown', this._shortcutHandler);
+        this._shownHandler = function (e) {
+            if (e.target.id !== 'chat-offcanvas') return;
+            e.target.querySelector('textarea')?.focus();
+        };
+        document.addEventListener('shown.bs.offcanvas', this._shownHandler);
+    },
+    hide: function () {
+        const el = document.getElementById('chat-offcanvas');
+        if (el) bootstrap.Offcanvas.getOrCreateInstance(el).hide();
+    },
+    clickFileInput: function (id) {
+        document.getElementById(id)?.click();
+    },
+    unregisterShortcut: function () {
+        if (this._shortcutHandler) {
+            document.removeEventListener('keydown', this._shortcutHandler);
+            this._shortcutHandler = null;
+        }
+        if (this._shownHandler) {
+            document.removeEventListener('shown.bs.offcanvas', this._shownHandler);
+            this._shownHandler = null;
+        }
+    }
+};
+
+window.stt = {
+    _recognition: null,
+    start: function (dotNetRef) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return false;
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'es-ES';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onresult = function (e) {
+            const texto = e.results[0][0].transcript;
+            dotNetRef.invokeMethodAsync('OnSpeechResult', texto);
+        };
+        recognition.onend = function () {
+            dotNetRef.invokeMethodAsync('OnSpeechEnd');
+        };
+        recognition.onerror = function () {
+            dotNetRef.invokeMethodAsync('OnSpeechEnd');
+        };
+
+        recognition.start();
+        this._recognition = recognition;
+        return true;
+    },
+    stop: function () {
+        if (this._recognition) {
+            this._recognition.stop();
+            this._recognition = null;
+        }
+    }
+};
+
 window.itemSelector = {
     /** Registra preventDefault para ArrowDown/ArrowUp/Escape en el input. */
     registerKeys: function (el) {

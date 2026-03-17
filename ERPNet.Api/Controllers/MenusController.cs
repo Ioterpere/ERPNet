@@ -13,12 +13,12 @@ public class MenusController(IMenuService menuService) : BaseController
     [HttpGet]
     [SinPermiso]
     [ProducesResponseType<List<MenuResponse>>(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetMenus([FromQuery] Plataforma plataforma)
-        => FromResult(await menuService.GetMenusVisiblesAsync(plataforma, UsuarioActual.RolIds));
+    public async Task<IActionResult> GetMenus()
+        => FromResult(await menuService.GetMenusVisiblesAsync(UsuarioActual.RolIds));
 
     [HttpGet("admin")]
     [ProducesResponseType<List<MenuResponse>>(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAllAdmin([FromQuery] Plataforma plataforma = Plataforma.WebBlazor)
+    public async Task<IActionResult> GetAllAdmin([FromQuery] Plataforma? plataforma = null)
         => FromResult(await menuService.GetAllAdminAsync(plataforma));
 
     [HttpGet("{id}")]

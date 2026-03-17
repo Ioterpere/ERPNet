@@ -1,5 +1,5 @@
 using ERPNet.Api.Attributes;
-using ERPNet.Application.Auth;
+using ERPNet.Application.Auth.DTOs;
 
 namespace ERPNet.Api.Middleware;
 

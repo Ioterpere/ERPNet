@@ -1,6 +1,6 @@
 using ERPNet.Domain.Enums;
 
-namespace ERPNet.Application.Auth;
+namespace ERPNet.Application.Auth.DTOs;
 
 public record UsuarioContext
 {
@@ -10,16 +10,8 @@ public record UsuarioContext
     public int SeccionId { get; init; }
     public int? EmpresaId { get; init; }
     public List<int> EmpresaIds { get; init; } = [];
-    public List<PermisoUsuario> Permisos { get; init; } = [];
+    public List<PermisoResponse> Permisos { get; init; } = [];
     public List<int> RolIds { get; init; } = [];
     public bool RequiereCambioContrasena { get; init; }
-}
-
-public record PermisoUsuario
-{
-    public RecursoCodigo Codigo { get; init; }
-    public bool CanCreate { get; init; }
-    public bool CanEdit { get; init; }
-    public bool CanDelete { get; init; }
-    public Alcance Alcance { get; init; }
+    public Plataforma? Plataforma { get; init; }
 }

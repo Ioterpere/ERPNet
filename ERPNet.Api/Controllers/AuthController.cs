@@ -2,6 +2,7 @@ using ERPNet.Api.Attributes;
 using ERPNet.Api.Controllers.Common;
 using ERPNet.Application.Auth.DTOs;
 using ERPNet.Application.Auth.Interfaces;
+using ERPNet.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -40,6 +41,14 @@ public class AuthController(IAuthService authService) : BaseController
 
     private string GetIpAddress() =>
         HttpContext.Connection.RemoteIpAddress?.MapToIPv4().ToString() ?? "unknown";
+
+    [SinPermiso]
+    [HttpGet("mis-permisos")]
+    [ProducesResponseType<IEnumerable<PermisoResponse>>(StatusCodes.Status200OK)]
+    public IActionResult MisPermisos()
+    {
+        return Ok(UsuarioActual.Permisos);
+    }
 
     [SinPermiso]
     [AllowAnonymous]

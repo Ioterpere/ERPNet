@@ -31,9 +31,10 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (!RendererInfo.IsInteractive) return;
         try
         {
-            var menus = await MenusClient.MenusAllAsync(plataforma: 1);
+            var menus = await MenusClient.MenusAllAsync();
             _todosItems.Add(new("Inicio", "/", "bi-house-door-fill", null));
             foreach (var menu in menus)
             {

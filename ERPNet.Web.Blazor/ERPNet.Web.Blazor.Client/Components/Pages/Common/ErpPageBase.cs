@@ -1,4 +1,7 @@
+using System.Text.Json;
+using ERPNet.ApiClient;
 using ERPNet.Web.Blazor.Client.Components.Common.Toast;
+using ERPNet.Web.Blazor.Client.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -8,7 +11,8 @@ namespace ERPNet.Web.Blazor.Client.Components.Pages.Common;
 /// <summary>
 /// Clase base para páginas del Erp.
 /// Gestiona: parámetro Id, estado de paginación/búsqueda,
-/// navegación entre registros y atajos de teclado.
+/// navegación entre registros, atajos de teclado e
+/// inicialización del formulario de creación desde fuente externa.
 /// </summary>
 [Authorize]
 public abstract class ErpPageBase : PageBase, IAsyncDisposable
@@ -16,6 +20,7 @@ public abstract class ErpPageBase : PageBase, IAsyncDisposable
     [Inject] protected IJSRuntime JS { get; set; } = default!;
     [Inject] protected NavigationManager Nav { get; set; } = default!;
     [Inject] protected ToastService Toast { get; set; } = default!;
+    [Inject] private PrefilladoService _prefillado { get; set; } = default!;
 
     [SupplyParameterFromQuery(Name = "id")]
     public int? Id { get; set; }
@@ -78,7 +83,7 @@ public abstract class ErpPageBase : PageBase, IAsyncDisposable
     protected abstract Task OnBorrar();
     protected bool _enfocarFiltro;
 
-    protected virtual Task OnFiltro()       => Task.CompletedTask;
+    protected virtual Task OnFiltro()        => Task.CompletedTask;
     protected virtual Task OnLimpiarFiltro() => Task.CompletedTask;
     protected virtual Task OnEscape()
     {
@@ -86,8 +91,41 @@ public abstract class ErpPageBase : PageBase, IAsyncDisposable
         return Task.CompletedTask;
     }
 
+    // ── Inicialización de creación desde fuente externa ────────
+    protected virtual Task InicializarCreacion(JsonElement datos) => Task.CompletedTask;
+
+    private void OnPrefilladoHandler(string ruta)
+    {
+        if (ruta != new Uri(Nav.Uri).LocalPath) return;
+        _ = InvokeAsync(async () =>
+        {
+            var accion = _prefillado.Consumir(ruta);
+            if (accion is null) return;
+            await AplicarCreacionAsync(accion);
+            StateHasChanged();
+        });
+    }
+
+    private async Task AplicarCreacionAsync(AccionUi accion)
+    {
+        if (accion.Datos is not JsonElement je) return;
+        _esNuevo = true;
+        _enfocarNuevo = true;
+        await InicializarCreacion(je);
+        Nav.NavigateTo(Nav.GetUriWithQueryParameter("id", (int?)null));
+    }
+
     // ── Ciclo de vida ──────────────────────────────────────────
     private int? _idActual;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        _prefillado.OnPrefillado += OnPrefilladoHandler;
+
+        var accion = _prefillado.Consumir(new Uri(Nav.Uri).LocalPath);
+        if (accion is not null) await AplicarCreacionAsync(accion);
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -149,14 +187,14 @@ public abstract class ErpPageBase : PageBase, IAsyncDisposable
     {
         await (accion switch
         {
-            "nuevo"   => OnNuevo(),
-            "guardar" => OnGuardar(),
-            "borrar"  => OnBorrar(),
+            "nuevo"         => OnNuevo(),
+            "guardar"       => OnGuardar(),
+            "borrar"        => OnBorrar(),
             "filtro"        => OnFiltro(),
             "limpiarFiltro" => OnLimpiarFiltro(),
-            "escape"   => OnEscape(),
-            "busqueda" => Task.FromResult(_enfocarBusqueda = true),
-            _         => Task.CompletedTask
+            "escape"        => OnEscape(),
+            "busqueda"      => Task.FromResult(_enfocarBusqueda = true),
+            _               => Task.CompletedTask
         });
         await InvokeAsync(StateHasChanged);
     }
@@ -174,8 +212,9 @@ public abstract class ErpPageBase : PageBase, IAsyncDisposable
         Nav.NavigateTo(Nav.GetUriWithQueryParameter("id", (int?)null));
     }
 
-    public async ValueTask DisposeAsync()
+    public virtual async ValueTask DisposeAsync()
     {
+        _prefillado.OnPrefillado -= OnPrefilladoHandler;
         _ctsBusqueda?.Cancel();
         _ctsBusqueda?.Dispose();
         if (_jsModule is not null)

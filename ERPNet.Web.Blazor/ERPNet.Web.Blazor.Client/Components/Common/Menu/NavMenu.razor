@@ -184,6 +184,7 @@
         // El nombre viene en el claim — disponible antes de cualquier llamada HTTP
         _empresaActualNombre = state.User.FindFirst("empresa_nombre")?.Value;
 
+        if (!RendererInfo.IsInteractive) return;
         await Task.WhenAll(CargarMenusAsync(), CargarEmpresasAsync());
     }
 
@@ -191,7 +192,7 @@
     {
         try
         {
-            _menus = await MenusClient.MenusAllAsync(plataforma: 1);
+            _menus = await MenusClient.MenusAllAsync();
             AutoExpandActive();
         }
         catch

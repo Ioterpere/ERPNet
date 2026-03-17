@@ -1,3 +1,5 @@
+using ERPNet.Application.Auth.DTOs;
+using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Application.Common;
 using ERPNet.Application.Common.DTOs;
 using ERPNet.Application.Common.Enums;
@@ -15,11 +17,12 @@ public class MenuServiceTests
     private readonly IMenuRepository _repo = Substitute.For<IMenuRepository>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
     private readonly ICacheService _cache = Substitute.For<ICacheService>();
+    private readonly ICurrentUserProvider _currentUser = Substitute.For<ICurrentUserProvider>();
     private readonly MenuService _sut;
 
     public MenuServiceTests()
     {
-        _sut = new MenuService(_repo, _uow, _cache);
+        _sut = new MenuService(_repo, _uow, _cache, _currentUser);
     }
 
     private static Menu CrearMenu(int id = 1) => new()
@@ -37,13 +40,28 @@ public class MenuServiceTests
     public async Task GetMenusVisibles_DevuelveMenusMapeados()
     {
         var menus = new List<Menu> { CrearMenu(1), CrearMenu(2) };
+        _currentUser.Current.Returns(new UsuarioContext
+        {
+            Email = "test@test.com", Plataforma = Plataforma.WebBlazor
+        });
         _repo.GetMenusVisiblesAsync(Plataforma.WebBlazor, Arg.Any<List<int>>()).Returns(menus);
 
-        var result = await _sut.GetMenusVisiblesAsync(Plataforma.WebBlazor, [1, 2]);
+        var result = await _sut.GetMenusVisiblesAsync([1, 2]);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value!.Count);
         Assert.Equal("Menu1", result.Value[0].Nombre);
+    }
+
+    [Fact(DisplayName = "GetMenusVisibles: sin plataforma devuelve lista vacía")]
+    public async Task GetMenusVisibles_SinPlataforma_DevuelveVacio()
+    {
+        _currentUser.Current.Returns(new UsuarioContext { Email = "test@test.com" });
+
+        var result = await _sut.GetMenusVisiblesAsync([1, 2]);
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(result.Value!);
     }
 
     #endregion

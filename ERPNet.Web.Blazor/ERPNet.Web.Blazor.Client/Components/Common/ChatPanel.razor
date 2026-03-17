@@ -1,0 +1,147 @@
+@inject IAiClient AiClient
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+@inject PrefilladoService Prefillado
+@implements IAsyncDisposable
+
+<div class="chat-panel">
+
+    <div class="chat-messages" id="chat-messages">
+        @if (_mensajes.Count == 0)
+        {
+            <div class="chat-welcome">
+                <i class="bi bi-robot display-5 mb-3 opacity-25"></i>
+                <p class="fw-semibold mb-1">¿En qué puedo ayudarte?</p>
+                <p class="text-muted small mb-0">
+                    Puedo consultar y gestionar los datos del sistema.
+                </p>
+            </div>
+        }
+
+        @foreach (var msg in _mensajes)
+        {
+            if (msg is MensajeUsuario u)
+            {
+                <div class="chat-bubble chat-bubble-user">
+                    @if (u.Adjuntos.Count > 0)
+                    {
+                        <div class="chat-bubble-adjuntos">
+                            @foreach (var adj in u.Adjuntos)
+                            {
+                                @if (adj.EsImagen)
+                                {
+                                    <img src="@adj.DataUrl" alt="@adj.Nombre" class="chat-adjunto-img" />
+                                }
+                                else
+                                {
+                                    <span class="chat-adjunto-doc"><i class="bi bi-file-earmark me-1"></i>@adj.Nombre</span>
+                                }
+                            }
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(u.Texto))
+                    {
+                        <span>@u.Texto</span>
+                    }
+                </div>
+            }
+            else if (msg is MensajeAsistente a)
+            {
+                <div class="chat-bubble chat-bubble-ai">
+                    <i class="bi bi-robot me-2 opacity-50 flex-shrink-0 mt-1"></i>
+                    <span style="white-space: pre-wrap">@a.Texto</span>
+                </div>
+            }
+            else if (msg is MensajeSeleccion sel)
+            {
+                <div class="chat-seleccion"
+                     @ref="_seleccionRef"
+                     tabindex="0"
+                     @onkeydown="e => OnSeleccionKeyDown(e, sel)">
+                    <p class="chat-seleccion-hint"><i class="bi bi-list-ul me-1"></i>Selecciona una opción:</p>
+                    @for (var i = 0; i < sel.Opciones.Count; i++)
+                    {
+                        var item = sel.Opciones[i];
+                        var idx = i;
+                        <button class="chat-seleccion-item @(_seleccionFoco == idx ? "chat-seleccion-item-focused" : "")"
+                                @onclick="() => ConfirmarSeleccion(sel, item)"
+                                @onfocus="() => _seleccionFoco = idx">
+                            <span class="chat-seleccion-num">@(idx + 1)</span>
+                            @item.Etiqueta
+                        </button>
+                    }
+                </div>
+            }
+        }
+
+        @if (_loading)
+        {
+            <div class="chat-tool-badge chat-tool-running">
+                <span class="spinner-border spinner-border-sm me-1" style="width:.7rem;height:.7rem"></span>
+                <span>@(_toolActivo ?? "Pensando…")</span>
+            </div>
+        }
+
+        @if (_error is not null)
+        {
+            <div class="alert alert-danger mx-0 my-1 py-2 px-3 small" role="alert">
+                <i class="bi bi-exclamation-triangle me-1"></i>@_error
+            </div>
+        }
+    </div>
+
+    @if (_adjuntos.Count > 0)
+    {
+        <div class="chat-adjuntos-preview">
+            @foreach (var adj in _adjuntos)
+            {
+                <div class="chat-adjunto-chip">
+                    @if (adj.EsImagen)
+                    {
+                        <img src="@adj.DataUrl" alt="@adj.Nombre" />
+                    }
+                    else
+                    {
+                        <i class="bi bi-file-earmark"></i>
+                    }
+                    <span class="chat-adjunto-nombre">@adj.Nombre</span>
+                    <button type="button" class="chat-adjunto-remove" @onclick="() => _adjuntos.Remove(adj)" title="Quitar">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            }
+        </div>
+    }
+
+    <div class="chat-input-area">
+        <InputFile @ref="_inputFileRef" OnChange="OnFilesSelected" multiple accept="image/*,application/pdf,.txt"
+                   style="display:none" id="chat-file-input" disabled="@_loading" />
+        <button class="btn btn-outline-secondary chat-attach-btn"
+                @onclick="AbrirFilePicker"
+                disabled="@_loading"
+                title="Adjuntar archivo">
+            <i class="bi bi-paperclip"></i>
+        </button>
+        <textarea class="form-control chat-textarea"
+                  @ref="_textareaRef"
+                  @bind="_inputText"
+                  @bind:event="oninput"
+                  @onkeydown="OnKeyDown"
+                  placeholder="Escribe un mensaje…"
+                  rows="1"
+                  disabled="@_loading"></textarea>
+        <button class="btn btn-outline-secondary chat-mic-btn"
+                @onclick="ToggleMic"
+                disabled="@_loading"
+                title="Dictar mensaje">
+            <i class="bi @(_escuchando ? "bi-mic-fill text-danger" : "bi-mic")"></i>
+        </button>
+        <button class="btn btn-primary chat-send-btn"
+                @onclick="SendMessage"
+                disabled="@(_loading || (string.IsNullOrWhiteSpace(_inputText) && _adjuntos.Count == 0))"
+                title="Enviar (Enter)">
+            <i class="bi bi-send-fill"></i>
+        </button>
+    </div>
+</div>

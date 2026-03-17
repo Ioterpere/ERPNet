@@ -1,5 +1,8 @@
+using System.Text.Json.Serialization;
+
 namespace ERPNet.Domain.Enums;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum RecursoCodigo
 {
     /// <summary>
@@ -15,5 +18,6 @@ public enum RecursoCodigo
     OrdenesFabrica = 8,
     Clientes = 9,
     Facturas = 10,
-    Empresas = 11
+    Empresas = 11,
+    AsistenteIa = 12
 }
