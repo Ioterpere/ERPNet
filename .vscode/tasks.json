@@ -7,7 +7,7 @@
       "command": "dotnet",
       "args": [
         "build",
-        "${workspaceFolder}/ERPNet.slnx",
+        "${workspaceFolder}/src/ERPNet.slnx",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary;ForceNoAlign"
       ],
@@ -23,7 +23,7 @@
       "command": "dotnet",
       "args": [
         "test",
-        "${workspaceFolder}/ERPNet.Testing",
+        "${workspaceFolder}/src/ERPNet.Testing",
         "--filter",
         "FullyQualifiedName!~DbSeeder"
       ],
@@ -39,9 +39,9 @@
         "add",
         "${input:migrationName}",
         "--project",
-        "${workspaceFolder}/ERPNet.Infrastructure",
+        "${workspaceFolder}/src/ERPNet.Infrastructure",
         "--startup-project",
-        "${workspaceFolder}/ERPNet.Api",
+        "${workspaceFolder}/src/ERPNet.Api",
         "--output-dir",
         "Database/Migrations"
       ],
@@ -50,7 +50,7 @@
     {
       "label": "migrate",
       "type": "shell",
-      "command": "if ('${input:confirmMigrate}' -eq 'Confirmar') { dotnet ef database update --project ERPNet.Infrastructure --startup-project ERPNet.Api } else { Write-Host 'Cancelado.' }",
+      "command": "if ('${input:confirmMigrate}' -eq 'Confirmar') { dotnet ef database update --project src/ERPNet.Infrastructure --startup-project src/ERPNet.Api } else { Write-Host 'Cancelado.' }",
       "problemMatcher": []
     },
     {
@@ -59,7 +59,7 @@
       "command": "dotnet",
       "args": [
         "test",
-        "${workspaceFolder}/ERPNet.Testing",
+        "${workspaceFolder}/src/ERPNet.Testing",
         "--filter",
         "FullyQualifiedName~DbSeeder"
       ],
@@ -68,7 +68,7 @@
     {
       "label": "drop",
       "type": "shell",
-      "command": "if ('${input:confirmDrop}' -eq 'Confirmar') { dotnet ef database drop --force --project ERPNet.Infrastructure --startup-project ERPNet.Api } else { Write-Host 'Cancelado.' }",
+      "command": "if ('${input:confirmDrop}' -eq 'Confirmar') { dotnet ef database drop --force --project src/ERPNet.Infrastructure --startup-project src/ERPNet.Api } else { Write-Host 'Cancelado.' }",
       "problemMatcher": []
     },
     {
@@ -86,7 +86,7 @@
     {
       "label": "clear-minio",
       "type": "shell",
-      "command": "$bucket = (Get-Content ERPNet.Api/appsettings.json | ConvertFrom-Json).MinIO.BucketName; Write-Host \"Vaciando bucket: $bucket\"; docker compose exec minio mc alias set local http://localhost:9000 erpnet 'ERPNet_Dev123!' --api S3v4; docker compose exec minio mc rm --recursive --force --dangerous \"local/$bucket\"; Write-Host 'Bucket vaciado.'",
+      "command": "$bucket = (Get-Content src/ERPNet.Api/appsettings.json | ConvertFrom-Json).MinIO.BucketName; Write-Host \"Vaciando bucket: $bucket\"; docker compose exec minio mc alias set local http://localhost:9000 erpnet 'ERPNet_Dev123!' --api S3v4; docker compose exec minio mc rm --recursive --force --dangerous \"local/$bucket\"; Write-Host 'Bucket vaciado.'",
       "problemMatcher": []
     }
   ],

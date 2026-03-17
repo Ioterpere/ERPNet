@@ -5,13 +5,13 @@
       "name": "Api",
       "type": "dotnet",
       "request": "launch",
-      "projectPath": "${workspaceFolder}/ERPNet.Api/ERPNet.Api.csproj",
+      "projectPath": "${workspaceFolder}/src/ERPNet.Api/ERPNet.Api.csproj",
     },
     {
       "name": "Blazor",
       "type": "dotnet",
       "request": "launch",
-      "projectPath": "${workspaceFolder}/ERPNet.Web.Blazor/ERPNet.Web.Blazor/ERPNet.Web.Blazor.csproj",
+      "projectPath": "${workspaceFolder}/src/ERPNet.Web.Blazor/ERPNet.Web.Blazor/ERPNet.Web.Blazor.csproj",
       "serverReadyAction": {
         "action": "debugWithChrome",
         "pattern": "\\bNow listening on:\\s+(https?://\\S+)",
