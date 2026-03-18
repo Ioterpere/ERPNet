@@ -6,12 +6,10 @@
 <PageTitle>Iniciar sesión - ERPNet</PageTitle>
 
 <div class="login-container">
-    <div class="card shadow-lg" style="width: 100%; max-width: 420px;">
+    <div class="d-flex flex-column align-items-center gap-4" style="width: 100%; max-width: 420px;">
+        <img src="logo-clavo-blanco.png" alt="Clavo Food Factory" style="height:3rem" />
+        <div class="card shadow-lg w-100">
         <div class="card-body p-4">
-            <div class="text-center mb-4">
-                <i class="bi bi-box-seam-fill fs-1 text-primary"></i>
-                <h3 class="mt-2 fw-bold">ERP<span class="fw-light opacity-75">Net</span></h3>
-            </div>
 
             @if (!string.IsNullOrEmpty(_error))
             {
@@ -38,6 +36,7 @@
 
                 <button type="submit" class="btn btn-primary w-100">Entrar</button>
             </form>
+        </div>
         </div>
     </div>
 </div>
