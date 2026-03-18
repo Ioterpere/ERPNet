@@ -9,10 +9,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace ERPNet.Infrastructure.Migrations
+namespace ERPNet.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ERPNetDbContext))]
-    [Migration("20260318183228_InitialCreate")]
+    [Migration("20260318190420_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -73,6 +73,135 @@ namespace ERPNet.Infrastructure.Migrations
                     b.ToTable("Archivos");
                 });
 
+            modelBuilder.Entity("ERPNet.Domain.Entities.Articulo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Codigo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int?>("ConfiguracionCaducidadId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Descripcion")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int>("EmpresaId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("FamiliaArticuloId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("FormatoArticuloId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("PrecioCompra")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("PrecioVenta")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<int?>("TipoIvaId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UnidadMedida")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConfiguracionCaducidadId");
+
+                    b.HasIndex("EmpresaId");
+
+                    b.HasIndex("FamiliaArticuloId");
+
+                    b.HasIndex("FormatoArticuloId");
+
+                    b.HasIndex("TipoIvaId");
+
+                    b.HasIndex("Codigo", "EmpresaId")
+                        .IsUnique();
+
+                    b.ToTable("articulos", (string)null);
+                });
+
+            modelBuilder.Entity("ERPNet.Domain.Entities.ArticuloLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("ArticuloId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateOnly>("Fecha")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Nota")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<decimal?>("StockAnterior")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("StockNuevo")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ArticuloId");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("articulos_log", (string)null);
+                });
+
             modelBuilder.Entity("ERPNet.Domain.Entities.AsignacionTurno", b =>
                 {
                     b.Property<int>("Id")
@@ -121,6 +250,59 @@ namespace ERPNet.Infrastructure.Migrations
                     b.HasIndex("TurnoId");
 
                     b.ToTable("AsignacionesTurno");
+                });
+
+            modelBuilder.Entity("ERPNet.Domain.Entities.ConfiguracionCaducidad", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DiasAviso")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("configuraciones_caducidad", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            DiasAviso = 7,
+                            Nombre = "7 días antes"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            DiasAviso = 15,
+                            Nombre = "15 días antes"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            DiasAviso = 30,
+                            Nombre = "30 días antes"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            DiasAviso = 60,
+                            Nombre = "60 días antes"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            DiasAviso = 90,
+                            Nombre = "90 días antes"
+                        });
                 });
 
             modelBuilder.Entity("ERPNet.Domain.Entities.Empleado", b =>
@@ -244,6 +426,104 @@ namespace ERPNet.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Empresas");
+                });
+
+            modelBuilder.Entity("ERPNet.Domain.Entities.FamiliaArticulo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("EmpresaId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("FamiliaPadreId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmpresaId");
+
+                    b.HasIndex("FamiliaPadreId");
+
+                    b.ToTable("familias_articulo", (string)null);
+                });
+
+            modelBuilder.Entity("ERPNet.Domain.Entities.FormatoArticulo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("formatos_articulo", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Nombre = "Unidad"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Nombre = "Caja"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Nombre = "Palet"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Nombre = "Kilogramo"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Nombre = "Litro"
+                        });
                 });
 
             modelBuilder.Entity("ERPNet.Domain.Entities.IncidenciaMarcaje", b =>
@@ -773,6 +1053,11 @@ namespace ERPNet.Infrastructure.Migrations
                         {
                             Id = 12,
                             Codigo = "AsistenteIa"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Codigo = "Articulos"
                         });
                 });
 
@@ -950,6 +1235,54 @@ namespace ERPNet.Infrastructure.Migrations
                     b.HasIndex("ResponsableId");
 
                     b.ToTable("Secciones");
+                });
+
+            modelBuilder.Entity("ERPNet.Domain.Entities.TipoIva", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal>("Porcentaje")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("tipos_iva", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Nombre = "IVA 0%",
+                            Porcentaje = 0m
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Nombre = "IVA 4%",
+                            Porcentaje = 4m
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Nombre = "IVA 10%",
+                            Porcentaje = 10m
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Nombre = "IVA 21%",
+                            Porcentaje = 21m
+                        });
                 });
 
             modelBuilder.Entity("ERPNet.Domain.Entities.TipoMantenimiento", b =>
@@ -1216,6 +1549,64 @@ namespace ERPNet.Infrastructure.Migrations
                     b.Navigation("ArchivoOriginal");
                 });
 
+            modelBuilder.Entity("ERPNet.Domain.Entities.Articulo", b =>
+                {
+                    b.HasOne("ERPNet.Domain.Entities.ConfiguracionCaducidad", "ConfiguracionCaducidad")
+                        .WithMany()
+                        .HasForeignKey("ConfiguracionCaducidadId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("ERPNet.Domain.Entities.Empresa", "Empresa")
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ERPNet.Domain.Entities.FamiliaArticulo", "FamiliaArticulo")
+                        .WithMany("Articulos")
+                        .HasForeignKey("FamiliaArticuloId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("ERPNet.Domain.Entities.FormatoArticulo", "FormatoArticulo")
+                        .WithMany()
+                        .HasForeignKey("FormatoArticuloId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("ERPNet.Domain.Entities.TipoIva", "TipoIva")
+                        .WithMany()
+                        .HasForeignKey("TipoIvaId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ConfiguracionCaducidad");
+
+                    b.Navigation("Empresa");
+
+                    b.Navigation("FamiliaArticulo");
+
+                    b.Navigation("FormatoArticulo");
+
+                    b.Navigation("TipoIva");
+                });
+
+            modelBuilder.Entity("ERPNet.Domain.Entities.ArticuloLog", b =>
+                {
+                    b.HasOne("ERPNet.Domain.Entities.Articulo", "Articulo")
+                        .WithMany("Logs")
+                        .HasForeignKey("ArticuloId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ERPNet.Domain.Entities.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Articulo");
+
+                    b.Navigation("Usuario");
+                });
+
             modelBuilder.Entity("ERPNet.Domain.Entities.AsignacionTurno", b =>
                 {
                     b.HasOne("ERPNet.Domain.Entities.Empleado", "Empleado")
@@ -1266,6 +1657,24 @@ namespace ERPNet.Infrastructure.Migrations
                     b.Navigation("Foto");
 
                     b.Navigation("Seccion");
+                });
+
+            modelBuilder.Entity("ERPNet.Domain.Entities.FamiliaArticulo", b =>
+                {
+                    b.HasOne("ERPNet.Domain.Entities.Empresa", "Empresa")
+                        .WithMany()
+                        .HasForeignKey("EmpresaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ERPNet.Domain.Entities.FamiliaArticulo", "FamiliaPadre")
+                        .WithMany("SubFamilias")
+                        .HasForeignKey("FamiliaPadreId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Empresa");
+
+                    b.Navigation("FamiliaPadre");
                 });
 
             modelBuilder.Entity("ERPNet.Domain.Entities.IncidenciaMarcaje", b =>
@@ -1545,6 +1954,11 @@ namespace ERPNet.Infrastructure.Migrations
                     b.Navigation("Thumbnails");
                 });
 
+            modelBuilder.Entity("ERPNet.Domain.Entities.Articulo", b =>
+                {
+                    b.Navigation("Logs");
+                });
+
             modelBuilder.Entity("ERPNet.Domain.Entities.Empleado", b =>
                 {
                     b.Navigation("AsignacionesTurno");
@@ -1561,6 +1975,13 @@ namespace ERPNet.Infrastructure.Migrations
             modelBuilder.Entity("ERPNet.Domain.Entities.Empresa", b =>
                 {
                     b.Navigation("UsuarioEmpresas");
+                });
+
+            modelBuilder.Entity("ERPNet.Domain.Entities.FamiliaArticulo", b =>
+                {
+                    b.Navigation("Articulos");
+
+                    b.Navigation("SubFamilias");
                 });
 
             modelBuilder.Entity("ERPNet.Domain.Entities.Maquinaria", b =>
