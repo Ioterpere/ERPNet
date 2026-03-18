@@ -431,5 +431,6 @@ FodyWeavers.xsd
 *.msp
 
 # ERPNet.ApiClient — código C# generado por NSwag (se regenera en cada build)
-ERPNet.ApiClient/Generated/
+**/ERPNet.ApiClient/Generated/
+**/ERPNet.ApiClient/ERPNet.Api*.json
 ERPNet.Api.json
