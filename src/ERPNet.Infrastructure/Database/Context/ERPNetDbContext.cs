@@ -36,6 +36,13 @@ public class ERPNetDbContext(DbContextOptions<ERPNetDbContext> options) : DbCont
     public DbSet<Empresa> Empresas => Set<Empresa>();
     public DbSet<UsuarioEmpresa> UsuarioEmpresas => Set<UsuarioEmpresa>();
 
+    public DbSet<Articulo> Articulos => Set<Articulo>();
+    public DbSet<ArticuloLog> ArticulosLog => Set<ArticuloLog>();
+    public DbSet<FamiliaArticulo> FamiliasArticulo => Set<FamiliaArticulo>();
+    public DbSet<TipoIva> TiposIva => Set<TipoIva>();
+    public DbSet<FormatoArticulo> FormatosArticulo => Set<FormatoArticulo>();
+    public DbSet<ConfiguracionCaducidad> ConfiguracionesCaducidad => Set<ConfiguracionCaducidad>();
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         configurationBuilder.Properties<Email>()

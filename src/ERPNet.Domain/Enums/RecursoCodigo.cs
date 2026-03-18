@@ -19,5 +19,6 @@ public enum RecursoCodigo
     Clientes = 9,
     Facturas = 10,
     Empresas = 11,
-    AsistenteIa = 12
+    AsistenteIa = 12,
+    Articulos = 13
 }
