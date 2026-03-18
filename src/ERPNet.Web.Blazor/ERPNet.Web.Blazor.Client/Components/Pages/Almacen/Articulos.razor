@@ -1,0 +1,402 @@
+@page "/articulos"
+@inherits ErpPageBase
+
+<ErpPage @ref="_refLayout"
+               ConTabs="true"
+               Titulo="Artículos"
+               TituloNuevo="Nuevo artículo"
+               EsNuevo="_esNuevo"
+               TieneDetalle="Id.HasValue"
+               Busqueda="@_busqueda"
+               OnBusquedaInput="OnBusquedaInputAsync"
+               OnNuevo="OnNuevo"
+               OnVolverALista="VolverALista"
+               ColLista="4"
+               SearchPlaceholder="Código, descripción"
+               PlaceholderIcono="bi-tags"
+               PlaceholderTexto="Selecciona un artículo de la lista"
+               PlaceholderSubTexto='@("o crea uno nuevo con el botón &quot;+ Nuevo&quot;")'
+               TotalItems="_totalItems"
+               @bind-MostrarModalEliminar="_mostrarModalEliminar"
+               TextoEliminar="@($"el artículo {_articuloDetalle?.Codigo}")"
+               ErrorEliminar="@_errorEliminar"
+               Eliminando="_eliminando"
+               OnEliminar="EliminarArticuloAsync">
+
+    <ListaBody>
+        <VirtualList @ref="_refLista" TItem="ArticuloResponse"
+                    IconoVacio="bi-tags"
+                    ItemsProvider="CargarItemsAsync"
+                    ItemSize="56"
+                    OnTotalChanged="t => _totalItems = t">
+            <SkeletonItem>
+                <div class="art-row placeholder-glow">
+                    <span class="placeholder col-3 d-block mb-1" style="height:11px"></span>
+                    <span class="placeholder col-7" style="height:13px"></span>
+                </div>
+            </SkeletonItem>
+            <ItemTemplate Context="a">
+                <button type="button"
+                        class="art-row w-100 text-start @(Id == a.Id ? "active" : "")"
+                        @onclick="() => SeleccionarItem(a.Id)">
+                    <div class="art-codigo-col font-monospace text-muted">@a.Codigo</div>
+                    <div class="flex-grow-1 overflow-hidden">
+                        <div class="fw-semibold text-truncate small">@a.Descripcion</div>
+                        <div class="d-flex align-items-center gap-2 mt-1">
+                            @if (a.FamiliaArticuloNombre is not null)
+                            {
+                                <span class="text-muted text-truncate" style="font-size:.75rem">@a.FamiliaArticuloNombre</span>
+                            }
+                            <span class="badge rounded-pill flex-shrink-0 @(a.Activo ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")"
+                                  style="font-size:.65rem">
+                                @(a.Activo ? "Activo" : "Inactivo")
+                            </span>
+                        </div>
+                    </div>
+                </button>
+            </ItemTemplate>
+        </VirtualList>
+    </ListaBody>
+
+    <FormNuevo>
+        @if (_errorCrear is not null)
+        {
+            <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+                <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                <span>@_errorCrear</span>
+            </div>
+        }
+
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-tag text-primary"></i>
+                <span class="fw-semibold">Datos del artículo</span>
+            </div>
+            <div class="card-body py-4">
+                <div class="row g-3">
+                    <div class="col-sm-4">
+                        <label class="form-label">Código <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control font-monospace" @ref="_refNuevoCodigo"
+                               @bind="_nuevoCodigo" autocomplete="off" />
+                    </div>
+                    <div class="col-sm-8">
+                        <label class="form-label">Descripción <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" @bind="_nuevDescripcion" autocomplete="off" />
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="form-label">Unidad de medida</label>
+                        <input type="text" class="form-control" @bind="_nuevUnidadMedida"
+                               placeholder="Ud, Kg, Lt..." autocomplete="off" />
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="form-label">Familia</label>
+                        <select class="form-select" @bind="_nuevFamiliaId">
+                            <option value="0">-- Sin familia --</option>
+                            @foreach (var f in _familias)
+                            {
+                                <option value="@f.Id">@f.Nombre</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="form-label">Tipo IVA</label>
+                        <select class="form-select" @bind="_nuevTipoIvaId">
+                            <option value="0">-- Sin IVA --</option>
+                            @foreach (var t in _tiposIva)
+                            {
+                                <option value="@t.Id">@t.Nombre</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary px-4" @onclick="CrearArticuloAsync" disabled="@_creando">
+                @if (_creando)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                }
+                else
+                {
+                    <i class="bi bi-plus-lg me-2"></i>
+                }
+                Crear artículo
+            </button>
+            <button class="btn btn-outline-secondary" @onclick="VolverALista">Cancelar</button>
+        </div>
+    </FormNuevo>
+
+    <FormEdicion>
+        <div class="px-4 pt-4 flex-shrink-0">
+
+            <!-- Header de detalle -->
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <button class="btn btn-sm btn-light d-lg-none" @onclick="VolverALista">
+                    <i class="bi bi-arrow-left"></i>
+                </button>
+
+                @if (_cargandoDetalle)
+                {
+                    <div class="d-flex align-items-center gap-3 placeholder-glow flex-grow-1">
+                        <div>
+                            <span class="placeholder d-block mb-1" style="height:11px;width:80px"></span>
+                            <span class="placeholder" style="height:14px;width:200px"></span>
+                        </div>
+                    </div>
+                }
+                else if (_articuloDetalle is not null)
+                {
+                    <div class="flex-grow-1 overflow-hidden">
+                        <p class="text-muted small mb-0 font-monospace">@_articuloDetalle.Codigo</p>
+                        <h5 class="mb-0 fw-semibold text-truncate">@_articuloDetalle.Descripcion</h5>
+                    </div>
+                    <span class="badge rounded-pill flex-shrink-0 @(_articuloDetalle.Activo ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")">
+                        @(_articuloDetalle.Activo ? "Activo" : "Inactivo")
+                    </span>
+                }
+            </div>
+
+            @if (_errorDetalle is not null)
+            {
+                <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                    <span>@_errorDetalle</span>
+                </div>
+            }
+
+        </div>
+
+        @if (!_cargandoDetalle && _articuloDetalle is not null)
+        {
+            <Tabs Items="_tabsArticulo" ActiveTab="@(Tab ?? "datos")" ActiveTabChanged="CambiarTab">
+
+                <!-- ── Tab: Datos ────────────────────────────── -->
+                @if ((Tab ?? "datos") == "datos")
+                {
+                    <div class="card mb-3">
+                        <div class="card-header d-flex align-items-center gap-2">
+                            <i class="bi bi-tag text-primary"></i>
+                            <span class="fw-semibold">Datos del artículo</span>
+                        </div>
+                        <div class="card-body py-4">
+                            <div class="row g-3">
+                                <div class="col-sm-4">
+                                    <label class="form-label">Código</label>
+                                    <input type="text" class="form-control font-monospace" @bind="_editCodigo" />
+                                </div>
+                                <div class="col-sm-8">
+                                    <label class="form-label">Descripción</label>
+                                    <input type="text" class="form-control" @bind="_editDescripcion" />
+                                </div>
+                                <div class="col-sm-4">
+                                    <label class="form-label">Unidad de medida</label>
+                                    <input type="text" class="form-control" @bind="_editUnidadMedida"
+                                           placeholder="Ud, Kg, Lt..." />
+                                </div>
+                                <div class="col-sm-4">
+                                    <label class="form-label">Precio compra</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">€</span>
+                                        <input type="number" class="form-control" @bind="_editPrecioCompra"
+                                               step="0.01" min="0" />
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <label class="form-label">Precio venta</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">€</span>
+                                        <input type="number" class="form-control" @bind="_editPrecioVenta"
+                                               step="0.01" min="0" />
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <label class="form-label">Familia</label>
+                                    <select class="form-select" @bind="_editFamiliaId">
+                                        <option value="0">-- Sin familia --</option>
+                                        @foreach (var f in _familias)
+                                        {
+                                            <option value="@f.Id">@f.Nombre</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-sm-4">
+                                    <label class="form-label">Tipo IVA</label>
+                                    <select class="form-select" @bind="_editTipoIvaId">
+                                        <option value="0">-- Sin IVA --</option>
+                                        @foreach (var t in _tiposIva)
+                                        {
+                                            <option value="@t.Id">@t.Nombre</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-sm-4">
+                                    <label class="form-label">Formato</label>
+                                    <select class="form-select" @bind="_editFormatoId">
+                                        <option value="0">-- Sin formato --</option>
+                                        @foreach (var f in _formatos)
+                                        {
+                                            <option value="@f.Id">@f.Nombre</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="activo-art-switch"
+                                               @bind="_editActivo" />
+                                        <label class="form-check-label" for="activo-art-switch">Artículo activo</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- ── Tab: Log ──────────────────────────────── -->
+                @if ((Tab ?? "datos") == "log")
+                {
+                    <div class="card mb-3">
+                        <div class="card-header d-flex align-items-center gap-2">
+                            <i class="bi bi-journal-text text-primary"></i>
+                            <span class="fw-semibold">Nueva entrada de log</span>
+                        </div>
+                        <div class="card-body py-3">
+                            @if (_errorLog is not null)
+                            {
+                                <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-3">
+                                    <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                                    <span>@_errorLog</span>
+                                </div>
+                            }
+                            <div class="row g-2">
+                                <div class="col-sm-3">
+                                    <label class="form-label small">Fecha</label>
+                                    <input type="date" class="form-control form-control-sm"
+                                           @bind="_nuevoLogFecha" />
+                                </div>
+                                <div class="col-sm-3">
+                                    <label class="form-label small">Stock anterior</label>
+                                    <input type="number" class="form-control form-control-sm"
+                                           @bind="_nuevoLogStockAnterior" step="0.001" />
+                                </div>
+                                <div class="col-sm-3">
+                                    <label class="form-label small">Stock nuevo</label>
+                                    <input type="number" class="form-control form-control-sm"
+                                           @bind="_nuevoLogStockNuevo" step="0.001" />
+                                </div>
+                                <div class="col-sm-9">
+                                    <label class="form-label small">Nota <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control form-control-sm"
+                                           @bind="_nuevoLogNota" placeholder="Descripción del movimiento" />
+                                </div>
+                                <div class="col-sm-3 d-flex align-items-end">
+                                    <button class="btn btn-sm btn-primary w-100" @onclick="GuardarLogAsync"
+                                            disabled="@_guardandoLog">
+                                        @if (_guardandoLog)
+                                        {
+                                            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-plus-lg me-1"></i>
+                                        }
+                                        Añadir
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-list-ul text-primary"></i>
+                                <span class="fw-semibold">Historial</span>
+                            </div>
+                            @if (_logs.Count > 0)
+                            {
+                                <span class="badge bg-primary-subtle text-primary-emphasis">@_logs.Count</span>
+                            }
+                        </div>
+                        <div class="card-body p-0">
+                            @if (_cargandoLogs)
+                            {
+                                <div class="p-4 text-center text-muted">
+                                    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                                    Cargando...
+                                </div>
+                            }
+                            else if (_logs.Count == 0)
+                            {
+                                <div class="p-4 text-center text-muted small">
+                                    <i class="bi bi-journal-x d-block fs-4 mb-1"></i>
+                                    Sin entradas de log
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-sm align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th class="ps-3 small">Fecha</th>
+                                                <th class="small">Nota</th>
+                                                <th class="text-end small">Stock ant.</th>
+                                                <th class="text-end small pe-3">Stock nuevo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var log in _logs)
+                                            {
+                                                <tr>
+                                                    <td class="ps-3 small text-nowrap">@log.Fecha.ToString("dd/MM/yyyy")</td>
+                                                    <td class="small">
+                                                        <div class="text-truncate" style="max-width:260px">@log.Nota</div>
+                                                        @if (log.UsuarioNombre is not null)
+                                                        {
+                                                            <div class="text-muted" style="font-size:.7rem">@log.UsuarioNombre</div>
+                                                        }
+                                                    </td>
+                                                    <td class="text-end small font-monospace">@log.StockAnterior?.ToString("N2")</td>
+                                                    <td class="text-end small font-monospace pe-3">@log.StockNuevo?.ToString("N2")</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+            </Tabs>
+        }
+    </FormEdicion>
+
+    <DetailToolbar>
+        @if (!_cargandoDetalle && _articuloDetalle is not null)
+        {
+            <button class="btn btn-outline-danger me-auto" @onclick="AbrirModalEliminar">
+                <i class="bi bi-trash3 me-1"></i>Eliminar artículo
+            </button>
+            @if ((Tab ?? "datos") == "datos")
+            {
+                @if (_errorGuardar is not null)
+                {
+                    <span class="text-danger small me-auto d-flex align-items-center gap-1">
+                        <i class="bi bi-x-circle-fill"></i>@_errorGuardar
+                    </span>
+                }
+                <button class="btn btn-primary" @onclick="GuardarDatosAsync" disabled="@_guardando">
+                    @if (_guardando)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                    }
+                    Guardar cambios
+                </button>
+            }
+        }
+    </DetailToolbar>
+
+</ErpPage>

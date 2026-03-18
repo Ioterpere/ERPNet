@@ -105,8 +105,9 @@ public class DbSeeder(ITestOutputHelper output)
         var menuReportarAveria = new Menu { Nombre = "Reportar Averia", Path = "/reportar-averia", Icon = "bi-exclamation-triangle-fill", Orden = 4, MenuPadreId = menuMantenimiento.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
 
         // 4. Produccion y Calidad
-        var menuOrdenesFab = new Menu { Nombre = "Ordenes de Fabricacion", Path = "/ordenes-fabricacion", Icon = "bi-diagram-3-fill", Orden = 1, MenuPadreId = menuProduccion.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
-        var menuControlCalidad = new Menu { Nombre = "Control de Calidad", Path = "/control-calidad", Icon = "bi-patch-check-fill", Orden = 2, MenuPadreId = menuProduccion.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuArticulos = new Menu { Nombre = "Articulos", Path = "/articulos", Icon = "bi-tags-fill", Orden = 1, MenuPadreId = menuProduccion.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuOrdenesFab = new Menu { Nombre = "Ordenes de Fabricacion", Path = "/ordenes-fabricacion", Icon = "bi-diagram-3-fill", Orden = 2, MenuPadreId = menuProduccion.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuControlCalidad = new Menu { Nombre = "Control de Calidad", Path = "/control-calidad", Icon = "bi-patch-check-fill", Orden = 3, MenuPadreId = menuProduccion.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
 
         // 5. Gestion Comercial
         var menuClientes = new Menu { Nombre = "Clientes", Path = "/clientes", Icon = "bi-person-circle", Orden = 1, MenuPadreId = menuComercial.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
@@ -116,7 +117,7 @@ public class DbSeeder(ITestOutputHelper output)
             menuUsuarios, menuRoles, menuMenus, menuEmpresas,
             menuEmpleados, menuJornadas, menuIncidencias, menuValidar,
             menuMaquinaria, menuOrdenesMant, menuTareasMant, menuReportarAveria,
-            menuOrdenesFab, menuControlCalidad,
+            menuArticulos, menuOrdenesFab, menuControlCalidad,
             menuClientes, menuFacturas);
         await context.SaveChangesAsync();
 
@@ -138,10 +139,11 @@ public class DbSeeder(ITestOutputHelper output)
         var rolJefeProduccion = new Rol { Nombre = "Jefe de Produccion", Descripcion = "Gestion de ordenes de fabricacion", CreatedAt = DateTime.UtcNow };
         var rolComercial = new Rol { Nombre = "Comercial", Descripcion = "Gestion de clientes", CreatedAt = DateTime.UtcNow };
         var rolContabilidad = new Rol { Nombre = "Contabilidad", Descripcion = "Gestion de facturacion", CreatedAt = DateTime.UtcNow };
+        var rolGestorAlmacen = new Rol { Nombre = "Gestor Almacen", Descripcion = "Gestion de articulos y almacen", CreatedAt = DateTime.UtcNow };
 
         context.Roles.AddRange(rolAdmin, rolRRHH, rolEncGeneral);
         context.Roles.AddRange(rolesEncargado);
-        context.Roles.AddRange(rolOperarioMant, rolReportarAverias, rolJefeProduccion, rolComercial, rolContabilidad);
+        context.Roles.AddRange(rolOperarioMant, rolReportarAverias, rolJefeProduccion, rolComercial, rolContabilidad, rolGestorAlmacen);
         await context.SaveChangesAsync();
 
         var encCalidad = rolesEncargado.Single(r => r.Nombre == "Encargado Calidad");
@@ -157,7 +159,7 @@ public class DbSeeder(ITestOutputHelper output)
             menuAdmin, menuUsuarios, menuRoles, menuMenus, menuEmpresas,
             menuRRHH, menuEmpleados, menuJornadas, menuIncidencias, menuValidar,
             menuMantenimiento, menuMaquinaria, menuOrdenesMant, menuTareasMant, menuReportarAveria,
-            menuProduccion, menuOrdenesFab, menuControlCalidad,
+            menuProduccion, menuArticulos, menuOrdenesFab, menuControlCalidad,
             menuComercial, menuClientes, menuFacturas,
         };
         menusRoles.AddRange(todosMenus.Select(m => new MenuRol { MenuId = m.Id, RolId = rolAdmin.Id }));
@@ -188,15 +190,19 @@ public class DbSeeder(ITestOutputHelper output)
         // 3.4 Reportar Averia: Reportar Averias
         menusRoles.Add(new MenuRol { MenuId = menuReportarAveria.Id, RolId = rolReportarAverias.Id });
 
-        // 4. Produccion y Calidad padre: Encargado General, Jefe de Produccion, Encargado Calidad
-        foreach (var rol in new[] { rolEncGeneral, rolJefeProduccion, encCalidad })
+        // 4. Produccion y Calidad padre: Encargado General, Jefe de Produccion, Encargado Calidad, GestorAlmacen, Comercial
+        foreach (var rol in new[] { rolEncGeneral, rolJefeProduccion, encCalidad, rolGestorAlmacen, rolComercial })
             menusRoles.Add(new MenuRol { MenuId = menuProduccion.Id, RolId = rol.Id });
 
-        // 4.1 Ordenes de Fabricacion: Encargado General, Jefe de Produccion
+        // 4.1 Articulos: GestorAlmacen, Comercial, JefeProduccion
+        foreach (var rol in new[] { rolGestorAlmacen, rolComercial, rolJefeProduccion })
+            menusRoles.Add(new MenuRol { MenuId = menuArticulos.Id, RolId = rol.Id });
+
+        // 4.2 Ordenes de Fabricacion: Encargado General, Jefe de Produccion
         menusRoles.Add(new MenuRol { MenuId = menuOrdenesFab.Id, RolId = rolEncGeneral.Id });
         menusRoles.Add(new MenuRol { MenuId = menuOrdenesFab.Id, RolId = rolJefeProduccion.Id });
 
-        // 4.2 Control de Calidad: Encargado Calidad
+        // 4.3 Control de Calidad: Encargado Calidad
         menusRoles.Add(new MenuRol { MenuId = menuControlCalidad.Id, RolId = encCalidad.Id });
 
         // 5. Gestion Comercial padre + 5.1 Clientes: Comercial, Contabilidad
@@ -266,6 +272,15 @@ public class DbSeeder(ITestOutputHelper output)
         permisos.Add(Permiso(rolContabilidad.Id, RecursoCodigo.Facturas, true, true, true, Alcance.Global));
         permisos.Add(Permiso(rolContabilidad.Id, RecursoCodigo.Clientes, false, false, false, Alcance.Global));
 
+        // 19. GestorAlmacen: Articulos C+E+D, Global
+        permisos.Add(Permiso(rolGestorAlmacen.Id, RecursoCodigo.Articulos, true, true, true, Alcance.Global));
+
+        // 20. Comercial: Articulos read, Global
+        permisos.Add(Permiso(rolComercial.Id, RecursoCodigo.Articulos, false, false, false, Alcance.Global));
+
+        // 21. JefeProduccion: Articulos read, Global
+        permisos.Add(Permiso(rolJefeProduccion.Id, RecursoCodigo.Articulos, false, false, false, Alcance.Global));
+
         context.PermisosRolRecurso.AddRange(permisos);
         await context.SaveChangesAsync();
 
@@ -333,6 +348,75 @@ public class DbSeeder(ITestOutputHelper output)
         context.Maquinas.AddRange(maquinarias);
         await context.SaveChangesAsync();
         output.WriteLine($"  {maquinarias.Count} maquinarias creadas.");
+
+        // Familias de artículos
+        var familiasDatos = new[]
+        {
+            ("Carnicos", (int?)null),
+            ("Pescados", (int?)null),
+            ("Lacteos", (int?)null),
+            ("Bebidas", (int?)null),
+            ("Conservas", (int?)null),
+        };
+
+        var familias = familiasDatos.Select(f => new FamiliaArticulo
+        {
+            Nombre = f.Item1,
+            EmpresaId = empresa1.Id,
+            CreatedAt = DateTime.UtcNow,
+        }).ToArray();
+
+        context.FamiliasArticulo.AddRange(familias);
+        await context.SaveChangesAsync();
+        output.WriteLine($"  {familias.Length} familias de artículos creadas.");
+
+        // Artículos
+        var familiasIds = familias.Select(f => f.Id).ToArray();
+        var artIndex = 0;
+
+        var fakerArticulo = new Faker<Articulo>("es")
+            .UseSeed(42)
+            .RuleFor(a => a.Codigo, _ => $"ART-{artIndex + 1:D4}")
+            .RuleFor(a => a.Descripcion, f => f.Commerce.ProductName())
+            .RuleFor(a => a.UnidadMedida, f => f.PickRandom("Ud", "Kg", "Lt", "Caja"))
+            .RuleFor(a => a.PrecioCompra, f => Math.Round((decimal)f.Random.Double(0.5, 50), 2))
+            .RuleFor(a => a.PrecioVenta, (f, a) => Math.Round(a.PrecioCompra!.Value * (decimal)f.Random.Double(1.1, 2.5), 2))
+            .RuleFor(a => a.Activo, f => f.Random.Bool(0.9f))
+            .RuleFor(a => a.EmpresaId, _ => empresa1.Id)
+            .RuleFor(a => a.FamiliaArticuloId, f => f.PickRandom(familiasIds))
+            .RuleFor(a => a.TipoIvaId, f => f.Random.Number(1, 4))
+            .RuleFor(a => a.CreatedAt, DateTime.UtcNow)
+            .FinishWith((_, _) => artIndex++);
+
+        var articulos = fakerArticulo.Generate(200);
+        context.Articulos.AddRange(articulos);
+        await context.SaveChangesAsync();
+        output.WriteLine($"  {articulos.Count} artículos creados.");
+
+        // Logs de artículos (~60 entradas)
+        var articulosParaLogs = articulos.Take(40).ToArray();
+        var logsArticulo = new List<ArticuloLog>();
+        var fakerLog = new Faker("es") { Random = new Randomizer(42) };
+
+        for (var i = 0; i < 60; i++)
+        {
+            var articulo = fakerLog.PickRandom(articulosParaLogs);
+            var stockAnterior = Math.Round((decimal)fakerLog.Random.Double(0, 100), 2);
+            logsArticulo.Add(new ArticuloLog
+            {
+                ArticuloId    = articulo.Id,
+                UsuarioId     = usuarioAdmin.Id,
+                Fecha         = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-fakerLog.Random.Int(0, 90))),
+                Nota          = fakerLog.PickRandom("Entrada de mercancía", "Ajuste de inventario", "Devolución proveedor", "Merma detectada", "Inventario periódico"),
+                StockAnterior = stockAnterior,
+                StockNuevo    = Math.Round(stockAnterior + (decimal)fakerLog.Random.Double(-20, 50), 2),
+                CreatedAt     = DateTime.UtcNow,
+            });
+        }
+
+        context.ArticulosLog.AddRange(logsArticulo);
+        await context.SaveChangesAsync();
+        output.WriteLine($"  {logsArticulo.Count} logs de artículos creados.");
 
         // 25 Usuarios desde los primeros 25 empleados
         var passwordHash = BCrypt.Net.BCrypt.HashPassword("Test123!");
