@@ -74,13 +74,25 @@
     {
       "label": "services-up",
       "type": "shell",
-      "command": "docker compose up -d; Start-Sleep -Seconds 10; $urls = @('http://localhost:8025', 'http://localhost:9001', 'http://localhost:15672'); foreach ($url in $urls) { Start-Process $url }",
+      "command": "docker compose up -d postgres rabbitmq minio mailhog; Start-Sleep -Seconds 10; $urls = @('http://localhost:8025', 'http://localhost:9001', 'http://localhost:15672'); foreach ($url in $urls) { Start-Process $url }",
       "problemMatcher": [],
     },
     {
       "label": "services-stop",
       "type": "shell",
-      "command": "docker compose stop",
+      "command": "docker compose stop postgres rabbitmq minio mailhog",
+      "problemMatcher": []
+    },
+    {
+      "label": "app-up",
+      "type": "shell",
+      "command": "docker compose up -d --build api web",
+      "problemMatcher": []
+    },
+    {
+      "label": "app-stop",
+      "type": "shell",
+      "command": "docker compose stop api web",
       "problemMatcher": []
     },
     {
