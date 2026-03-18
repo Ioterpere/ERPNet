@@ -4,9 +4,21 @@ using ERPNet.Web.Blazor.Client.Components.Common.Toast;
 using ERPNet.Web.Blazor.Client.Services;
 using ERPNet.Web.Blazor.Components;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.HttpOverrides;
 
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Forwarded headers: necesario cuando hay un reverse proxy (Nginx) que termina TLS.
+// Permite que UseHttpsRedirection y las cookies conozcan el esquema real (https).
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    // En entorno de pruebas aceptamos proxy desde cualquier red.
+    // En producción restringir a la IP del proxy.
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
@@ -72,6 +84,7 @@ else
     app.UseHsts();
 }
 
+app.UseForwardedHeaders();
 app.UseStatusCodePagesWithReExecute("/not-found");
 app.UseHttpsRedirection();
 
