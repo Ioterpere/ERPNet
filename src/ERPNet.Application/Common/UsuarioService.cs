@@ -14,7 +14,6 @@ namespace ERPNet.Application.Common;
 public class UsuarioService(
     IUsuarioRepository usuarioRepository,
     IUnitOfWork unitOfWork,
-    ICacheService cache,
     IMailService mailService) : IUsuarioService
 {
     public async Task<Result<ListaPaginada<UsuarioResponse>>> GetAllAsync(PaginacionFilter filtro)
@@ -81,7 +80,6 @@ public class UsuarioService(
 
         request.ApplyTo(usuario);
         await unitOfWork.SaveChangesAsync();
-        cache.RemoveByPrefix($"usuario:{id}:");
 
         return Result.Success();
     }
@@ -95,7 +93,6 @@ public class UsuarioService(
 
         usuarioRepository.Delete(usuario);
         await unitOfWork.SaveChangesAsync();
-        cache.RemoveByPrefix($"usuario:{id}:");
 
         return Result.Success();
     }
@@ -114,7 +111,6 @@ public class UsuarioService(
         usuario.UltimoCambioContrasena = DateTime.UtcNow;
         usuario.CaducidadContrasena = DateTime.UtcNow.AddDays(ContrasenaSettings.DiasExpiracionPorDefecto);
         await unitOfWork.SaveChangesAsync();
-        cache.RemoveByPrefix($"usuario:{usuarioId}:");
 
         return Result.Success();
     }
@@ -131,7 +127,6 @@ public class UsuarioService(
         usuario.UltimoCambioContrasena = DateTime.UtcNow;
         usuario.CaducidadContrasena = DateTime.UtcNow;  // caducada: fuerza cambio en el próximo acceso
         await unitOfWork.SaveChangesAsync();
-        cache.RemoveByPrefix($"usuario:{usuarioId}:");
 
         await mailService.EnviarAsync(
             usuario.Email,
@@ -168,7 +163,6 @@ public class UsuarioService(
 
         await usuarioRepository.SincronizarRolesAsync(usuarioId, request.RolIds, empresaId);
         await unitOfWork.SaveChangesAsync();
-        cache.RemoveByPrefix($"usuario:{usuarioId}:");
 
         return Result.Success();
     }
@@ -196,7 +190,6 @@ public class UsuarioService(
             usuarioId,
             asignaciones.Select(a => (a.RolId, a.EmpresaId)).ToList());
         await unitOfWork.SaveChangesAsync();
-        cache.RemoveByPrefix($"usuario:{usuarioId}:");
 
         return Result.Success();
     }

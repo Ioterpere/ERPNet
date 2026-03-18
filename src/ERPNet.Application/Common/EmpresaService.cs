@@ -9,8 +9,7 @@ namespace ERPNet.Application.Common;
 
 public class EmpresaService(
     IEmpresaRepository empresaRepository,
-    IUnitOfWork unitOfWork,
-    ICacheService cache) : IEmpresaService
+    IUnitOfWork unitOfWork) : IEmpresaService
 {
     public async Task<Result<ListaPaginada<EmpresaResponse>>> GetAllAsync(PaginacionFilter filtro)
     {
@@ -75,8 +74,6 @@ public class EmpresaService(
     {
         await empresaRepository.SincronizarEmpresasDeUsuarioAsync(usuarioId, request.EmpresaIds);
         await unitOfWork.SaveChangesAsync();
-
-        cache.RemoveByPrefix($"usuario:{usuarioId}:");
 
         return Result.Success();
     }

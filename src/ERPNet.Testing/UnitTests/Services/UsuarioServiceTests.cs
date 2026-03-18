@@ -16,13 +16,12 @@ public class UsuarioServiceTests
 {
     private readonly IUsuarioRepository _repo = Substitute.For<IUsuarioRepository>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
-    private readonly ICacheService _cache = Substitute.For<ICacheService>();
     private readonly IMailService _mail = Substitute.For<IMailService>();
     private readonly UsuarioService _sut;
 
     public UsuarioServiceTests()
     {
-        _sut = new UsuarioService(_repo, _uow, _cache, _mail);
+        _sut = new UsuarioService(_repo, _uow, _mail);
     }
 
     private static Usuario CrearUsuario(int id = 1) => new()
@@ -306,77 +305,4 @@ public class UsuarioServiceTests
 
     #endregion
 
-    #region Invalidación de caché
-
-    [Fact(DisplayName = "Update: invalida cache del usuario")]
-    public async Task Update_InvalidaCache()
-    {
-        _repo.GetByIdAsync(1).Returns(CrearUsuario());
-
-        await _sut.UpdateAsync(1, new UpdateUsuarioRequest { Activo = false });
-
-        _cache.Received(1).RemoveByPrefix("usuario:1:");
-    }
-
-    [Fact(DisplayName = "Delete: invalida cache del usuario")]
-    public async Task Delete_InvalidaCache()
-    {
-        _repo.GetByIdAsync(1).Returns(CrearUsuario());
-
-        await _sut.DeleteAsync(1);
-
-        _cache.Received(1).RemoveByPrefix("usuario:1:");
-    }
-
-    [Fact(DisplayName = "CambiarContrasena: invalida cache del usuario")]
-    public async Task CambiarContrasena_InvalidaCache()
-    {
-        _repo.GetByIdAsync(1).Returns(CrearUsuario());
-
-        await _sut.CambiarContrasenaAsync(1, new CambiarContrasenaRequest
-        {
-            ContrasenaActual = "Password1!",
-            NuevaContrasena = "NuevaPass1!",
-            ConfirmarContrasena = "NuevaPass1!"
-        });
-
-        _cache.Received(1).RemoveByPrefix("usuario:1:");
-    }
-
-    [Fact(DisplayName = "ResetearContrasena: invalida cache del usuario")]
-    public async Task ResetearContrasena_InvalidaCache()
-    {
-        _repo.GetByIdAsync(1).Returns(CrearUsuario());
-
-        await _sut.ResetearContrasenaAsync(1);
-
-        _cache.Received(1).RemoveByPrefix("usuario:1:");
-    }
-
-    [Fact(DisplayName = "AsignarRoles: invalida cache del usuario")]
-    public async Task AsignarRoles_InvalidaCache()
-    {
-        _repo.GetByIdAsync(1).Returns(CrearUsuario());
-
-        await _sut.AsignarRolesAsync(1, new AsignarRolesRequest { RolIds = [1, 2] });
-
-        _cache.Received(1).RemoveByPrefix("usuario:1:");
-    }
-
-    [Fact(DisplayName = "Create: no invalida cache")]
-    public async Task Create_NoInvalidaCache()
-    {
-        _repo.ExisteEmailAsync("nuevo@test.com").Returns(false);
-        _repo.ExisteEmpleadoAsync(5).Returns(false);
-
-        await _sut.CreateAsync(new CreateUsuarioRequest
-        {
-            Email = "nuevo@test.com",
-            EmpleadoId = 5
-        });
-
-        _cache.DidNotReceive().Remove(Arg.Any<string>());
-    }
-
-    #endregion
 }

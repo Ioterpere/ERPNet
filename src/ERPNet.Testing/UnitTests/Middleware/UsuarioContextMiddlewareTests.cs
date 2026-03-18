@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using ERPNet.Api.Middleware;
 using ERPNet.Application.Auth.DTOs;
+using ERPNet.Application.Cache;
 using ERPNet.Application.Common.Interfaces;
 using ERPNet.Domain.Common.Values;
 using ERPNet.Domain.Repositories;

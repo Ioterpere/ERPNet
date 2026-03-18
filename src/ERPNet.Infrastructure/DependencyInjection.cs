@@ -1,7 +1,9 @@
 using ERPNet.Application.Mailing;
 using ERPNet.Application.Messaging;
 using ERPNet.Application.Ai;
+using ERPNet.Application.Common.Interfaces;
 using ERPNet.Application.Reports.Interfaces;
+using ERPNet.Infrastructure.Cache;
 using ERPNet.Infrastructure.Database;
 using ERPNet.Infrastructure.Database.Context;
 using ERPNet.Infrastructure.Mailing;
@@ -12,7 +14,6 @@ using ERPNet.Infrastructure.Messaging;
 using ERPNet.Infrastructure.FileStorage;
 using ERPNet.Infrastructure.Reports;
 using ERPNet.Application.FileStorage;
-using ERPNet.Application.Common.Interfaces;
 using ERPNet.Domain.Repositories;
 using Microsoft.Extensions.AI;
 using Microsoft.EntityFrameworkCore;
@@ -106,6 +107,15 @@ public static class DependencyInjection
 
         services.AddScoped<IFileStorageService, MinioFileStorageService>();
 
+        return services;
+    }
+
+    public static IServiceCollection AddCache(this IServiceCollection services)
+    {
+        services.Decorate<IMenuService, CachedMenuService>();
+        services.Decorate<IUsuarioService, CachedUsuarioService>();
+        services.Decorate<IRolService, CachedRolService>();
+        services.Decorate<IEmpresaService, CachedEmpresaService>();
         return services;
     }
 

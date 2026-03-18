@@ -1,7 +1,9 @@
 @inject IMenusClient MenusClient
 @inject NavigationManager Nav
 @inject HttpClient Http
+@inject PersistentComponentState ApplicationState
 @using Microsoft.AspNetCore.Components.Authorization
+@implements IDisposable
 
 <div class="nav-menu d-flex flex-column h-100">
     <div class="top-row ps-3 navbar navbar-dark d-none d-md-flex">
@@ -174,8 +176,12 @@
     private List<EmpresaItem> _empresas = [];
     private bool _cargandoEmpresas = true;
 
+    private PersistingComponentStateSubscription _persistingSubscription;
+
     protected override async Task OnInitializedAsync()
     {
+        _persistingSubscription = ApplicationState.RegisterOnPersisting(PersistirMenus);
+
         var state = await AuthStateTask;
         var empresaIdStr = state.User.FindFirst("empresa_id")?.Value;
         if (int.TryParse(empresaIdStr, out var eid))
@@ -184,9 +190,30 @@
         // El nombre viene en el claim — disponible antes de cualquier llamada HTTP
         _empresaActualNombre = state.User.FindFirst("empresa_nombre")?.Value;
 
-        if (!RendererInfo.IsInteractive) return;
-        await Task.WhenAll(CargarMenusAsync(), CargarEmpresasAsync());
+        if (ApplicationState.TryTakeFromJson<List<MenuResponse>>("nav-menus", out var persisted) && persisted is { Count: > 0 })
+        {
+            // Estado pre-cargado durante SSR — no se necesita llamada HTTP
+            _menus = persisted;
+            AutoExpandActive();
+        }
+        else
+        {
+            await CargarMenusAsync();
+        }
+
+        if (RendererInfo.IsInteractive)
+            await CargarEmpresasAsync();
     }
+
+    private Task PersistirMenus()
+    {
+        // Solo persistir si SSR cargó menús — si está vacío, WASM hará su propia llamada
+        if (_menus is { Count: > 0 })
+            ApplicationState.PersistAsJson("nav-menus", _menus);
+        return Task.CompletedTask;
+    }
+
+    public void Dispose() => _persistingSubscription.Dispose();
 
     private async Task CargarMenusAsync()
     {

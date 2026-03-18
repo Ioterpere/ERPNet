@@ -11,8 +11,7 @@ namespace ERPNet.Application.Common;
 
 public class RolService(
     IRolRepository rolRepository,
-    IUnitOfWork unitOfWork,
-    ICacheService cache) : IRolService
+    IUnitOfWork unitOfWork) : IRolService
 {
     public async Task<Result<ListaPaginada<RolResponse>>> GetAllAsync(PaginacionFilter filtro)
     {
@@ -60,7 +59,6 @@ public class RolService(
 
         request.ApplyTo(rol);
         await unitOfWork.SaveChangesAsync();
-        await InvalidarCacheUsuariosAsync(id);
 
         return Result.Success();
     }
@@ -74,7 +72,6 @@ public class RolService(
 
         rolRepository.Delete(rol);
         await unitOfWork.SaveChangesAsync();
-        await InvalidarCacheUsuariosAsync(id);
 
         return Result.Success();
     }
@@ -116,7 +113,6 @@ public class RolService(
 
         await rolRepository.SincronizarPermisosAsync(rolId, nuevos);
         await unitOfWork.SaveChangesAsync();
-        await InvalidarCacheUsuariosAsync(rolId);
 
         return Result.Success();
     }
@@ -140,22 +136,11 @@ public class RolService(
         if (rol is null)
             return Result.Failure("Rol no encontrado.", ErrorType.NotFound);
 
-        var idsAnteriores = await rolRepository.GetUsuarioIdsPorRolAsync(rolId);
-
         await rolRepository.SincronizarTodasAsignacionesUsuarioAsync(
             rolId, asignaciones.Select(a => (a.UsuarioId, a.EmpresaId)).ToList());
         await unitOfWork.SaveChangesAsync();
 
-        foreach (var uid in idsAnteriores.Union(asignaciones.Select(a => a.UsuarioId)))
-            cache.RemoveByPrefix($"usuario:{uid}:");
-
         return Result.Success();
     }
 
-    private async Task InvalidarCacheUsuariosAsync(int rolId)
-    {
-        var usuarioIds = await rolRepository.GetUsuarioIdsPorRolAsync(rolId);
-        foreach (var uid in usuarioIds)
-            cache.RemoveByPrefix($"usuario:{uid}:");
-    }
 }

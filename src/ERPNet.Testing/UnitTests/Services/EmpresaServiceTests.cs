@@ -14,12 +14,11 @@ public class EmpresaServiceTests
 {
     private readonly IEmpresaRepository _repo = Substitute.For<IEmpresaRepository>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
-    private readonly ICacheService _cache = Substitute.For<ICacheService>();
     private readonly EmpresaService _sut;
 
     public EmpresaServiceTests()
     {
-        _sut = new EmpresaService(_repo, _uow, _cache);
+        _sut = new EmpresaService(_repo, _uow);
     }
 
     private static Empresa CrearEmpresa(int id = 1, string nombre = "ERP Demo SA") => new()

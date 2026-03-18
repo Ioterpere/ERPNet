@@ -1,4 +1,4 @@
-namespace ERPNet.Application.Common.Interfaces;
+namespace ERPNet.Application.Cache;
 
 public interface ICacheService
 {

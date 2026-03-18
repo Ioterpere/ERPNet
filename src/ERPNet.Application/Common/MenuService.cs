@@ -11,12 +11,12 @@ namespace ERPNet.Application.Common;
 public class MenuService(
     IMenuRepository menuRepository,
     IUnitOfWork unitOfWork,
-    ICacheService cache,
     ICurrentUserProvider currentUser) : IMenuService
 {
     public async Task<Result<List<MenuResponse>>> GetMenusVisiblesAsync(List<int> rolIds)
     {
-        if (currentUser.Current?.Plataforma is not { } plataforma)
+        var ctx = currentUser.Current;
+        if (ctx?.Plataforma is not { } plataforma)
             return Result<List<MenuResponse>>.Success([]);
 
         var menus = await menuRepository.GetMenusVisiblesAsync(plataforma, rolIds);
@@ -76,11 +76,9 @@ public class MenuService(
         if (await menuRepository.TieneSubMenusAsync(id))
             return Result.Failure("No se puede eliminar un menú que tiene submenús.", ErrorType.Conflict);
 
-        var rolIds = await menuRepository.GetRolIdsAsync(id);
         menuRepository.Delete(menu);
         await unitOfWork.SaveChangesAsync();
 
-        await InvalidarCacheUsuariosAsync(rolIds);
         return Result.Success();
     }
 
@@ -135,13 +133,8 @@ public class MenuService(
         if (menu is null)
             return Result.Failure("Menú no encontrado.", ErrorType.NotFound);
 
-        var rolesAnteriores = await menuRepository.GetRolIdsAsync(menuId);
-
         await menuRepository.SincronizarRolesAsync(menuId, request.RolIds);
         await unitOfWork.SaveChangesAsync();
-
-        var rolesAfectados = rolesAnteriores.Union(request.RolIds).ToList();
-        await InvalidarCacheUsuariosAsync(rolesAfectados);
 
         return Result.Success();
     }
@@ -170,12 +163,5 @@ public class MenuService(
             foreach (var sub in FlattenMenus(m.SubMenus))
                 yield return sub;
         }
-    }
-
-    private async Task InvalidarCacheUsuariosAsync(List<int> rolIds)
-    {
-        var usuarioIds = await menuRepository.GetUsuarioIdsPorRolesAsync(rolIds);
-        foreach (var uid in usuarioIds)
-            cache.RemoveByPrefix($"usuario:{uid}:");
     }
 }

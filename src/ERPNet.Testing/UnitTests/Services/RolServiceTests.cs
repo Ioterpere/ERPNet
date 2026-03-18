@@ -14,12 +14,11 @@ public class RolServiceTests
 {
     private readonly IRolRepository _repo = Substitute.For<IRolRepository>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
-    private readonly ICacheService _cache = Substitute.For<ICacheService>();
     private readonly RolService _sut;
 
     public RolServiceTests()
     {
-        _sut = new RolService(_repo, _uow, _cache);
+        _sut = new RolService(_repo, _uow);
     }
 
     private static Rol CrearRol(int id = 1) => new()
@@ -105,7 +104,6 @@ public class RolServiceTests
     {
         var rol = CrearRol();
         _repo.GetByIdAsync(1).Returns(rol);
-        _repo.GetUsuarioIdsPorRolAsync(1).Returns([10, 20]);
 
         var result = await _sut.UpdateAsync(1, new UpdateRolRequest { Nombre = "SuperAdmin" });
 
@@ -146,7 +144,6 @@ public class RolServiceTests
     {
         var rol = CrearRol();
         _repo.GetByIdAsync(1).Returns(rol);
-        _repo.GetUsuarioIdsPorRolAsync(1).Returns([10]);
 
         var result = await _sut.DeleteAsync(1);
 
@@ -167,42 +164,4 @@ public class RolServiceTests
 
     #endregion
 
-    #region Invalidación de caché
-
-    [Fact(DisplayName = "Update: invalida cache de todos los usuarios del rol")]
-    public async Task Update_InvalidaCacheUsuarios()
-    {
-        _repo.GetByIdAsync(1).Returns(CrearRol());
-        _repo.GetUsuarioIdsPorRolAsync(1).Returns([10, 20, 30]);
-
-        await _sut.UpdateAsync(1, new UpdateRolRequest { Descripcion = "Nueva desc" });
-
-        _cache.Received(1).RemoveByPrefix("usuario:10:");
-        _cache.Received(1).RemoveByPrefix("usuario:20:");
-        _cache.Received(1).RemoveByPrefix("usuario:30:");
-    }
-
-    [Fact(DisplayName = "Delete: invalida cache de todos los usuarios del rol")]
-    public async Task Delete_InvalidaCacheUsuarios()
-    {
-        _repo.GetByIdAsync(1).Returns(CrearRol());
-        _repo.GetUsuarioIdsPorRolAsync(1).Returns([5, 15]);
-
-        await _sut.DeleteAsync(1);
-
-        _cache.Received(1).RemoveByPrefix("usuario:5:");
-        _cache.Received(1).RemoveByPrefix("usuario:15:");
-    }
-
-    [Fact(DisplayName = "Create: no invalida cache (no hay usuarios asignados)")]
-    public async Task Create_NoInvalidaCache()
-    {
-        _repo.ExisteNombreAsync("Nuevo").Returns(false);
-
-        await _sut.CreateAsync(new CreateRolRequest { Nombre = "Nuevo" });
-
-        _cache.DidNotReceive().Remove(Arg.Any<string>());
-    }
-
-    #endregion
 }

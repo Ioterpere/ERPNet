@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using ERPNet.Application.Auth;
+using ERPNet.Application.Cache;
 using ERPNet.Application.Common.Interfaces;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;

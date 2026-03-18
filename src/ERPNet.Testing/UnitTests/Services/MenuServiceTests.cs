@@ -16,13 +16,12 @@ public class MenuServiceTests
 {
     private readonly IMenuRepository _repo = Substitute.For<IMenuRepository>();
     private readonly IUnitOfWork _uow = Substitute.For<IUnitOfWork>();
-    private readonly ICacheService _cache = Substitute.For<ICacheService>();
     private readonly ICurrentUserProvider _currentUser = Substitute.For<ICurrentUserProvider>();
     private readonly MenuService _sut;
 
     public MenuServiceTests()
     {
-        _sut = new MenuService(_repo, _uow, _cache, _currentUser);
+        _sut = new MenuService(_repo, _uow, _currentUser);
     }
 
     private static Menu CrearMenu(int id = 1) => new()
@@ -147,8 +146,6 @@ public class MenuServiceTests
     public async Task AsignarRoles_Existente_SincronizaRoles()
     {
         _repo.GetByIdAsync(1).Returns(CrearMenu());
-        _repo.GetRolIdsAsync(1).Returns([1, 2]);
-        _repo.GetUsuarioIdsPorRolesAsync(Arg.Any<IEnumerable<int>>()).Returns([10, 20]);
 
         var result = await _sut.AsignarRolesAsync(1, new AsignarRolesRequest { RolIds = [2, 3] });
 
@@ -170,32 +167,4 @@ public class MenuServiceTests
 
     #endregion
 
-    #region Invalidación de caché
-
-    [Fact(DisplayName = "AsignarRoles: invalida cache de usuarios afectados por roles antiguos y nuevos")]
-    public async Task AsignarRoles_InvalidaCacheUsuariosAfectados()
-    {
-        _repo.GetByIdAsync(1).Returns(CrearMenu());
-        _repo.GetRolIdsAsync(1).Returns([1, 2]);
-        _repo.GetUsuarioIdsPorRolesAsync(Arg.Is<List<int>>(l => l.Contains(1) && l.Contains(2) && l.Contains(3)))
-            .Returns([10, 20, 30]);
-
-        await _sut.AsignarRolesAsync(1, new AsignarRolesRequest { RolIds = [2, 3] });
-
-        _cache.Received(1).Remove("usuario:10");
-        _cache.Received(1).Remove("usuario:20");
-        _cache.Received(1).Remove("usuario:30");
-    }
-
-    [Fact(DisplayName = "Create: no invalida cache")]
-    public async Task Create_NoInvalidaCache()
-    {
-        var request = new CreateMenuRequest { Nombre = "Nuevo", Plataforma = Plataforma.WebBlazor };
-
-        await _sut.CreateAsync(request);
-
-        _cache.DidNotReceive().Remove(Arg.Any<string>());
-    }
-
-    #endregion
 }

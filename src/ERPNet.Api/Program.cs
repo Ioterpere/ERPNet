@@ -7,6 +7,7 @@ using ERPNet.Api.Services;
 using ERPNet.Application;
 using ERPNet.Application.Auth;
 using ERPNet.Application.Auth.Interfaces;
+using ERPNet.Application.Cache;
 using ERPNet.Application.Common.Interfaces;
 using ERPNet.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -23,6 +24,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDatabase(builder.Configuration.GetConnectionString("DefaultConnection")!);
 builder.Services.AddApplication();
+builder.Services.AddCache();
 builder.Services.AddEmailServices(builder.Configuration);
 builder.Services.AddMessaging(builder.Configuration);
 builder.Services.AddReporting();
