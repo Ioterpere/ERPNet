@@ -1,8 +1,14 @@
 // ERPNet - Tema personalizado basado en Bootswatch Zephyr
-// Overrides de colores antes de importar el tema
+// Paleta "Acero azul" — Clavo Food Factory
 
-$primary: #2c3e6b;
-$secondary: #1a2940;
+$primary:   #2B2B2D;
+$secondary: #5A7FA0;
+$success:   #3E8A5B;
+$info:      #5A8FA6;
+$warning:   #D4A24E;
+$danger:    #C45046;
+$light:     #F4F5F7;
+$dark:      #1C1C1E;
 
 // Variables de Zephyr (deben ir antes de Bootstrap)
 @import "bootswatch/dist/zephyr/variables";
