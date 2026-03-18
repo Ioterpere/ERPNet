@@ -1,14 +1,13 @@
 services:
-  postgres:
-    image: postgres:17-alpine
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
-      POSTGRES_USER: "erpnet"
-      POSTGRES_PASSWORD: "ERPNet_Dev123!"
-      POSTGRES_DB: "erpnet"
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "ERPNet_Dev123!"
     ports:
-      - "5432:5432"
+      - "1434:1433"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - sqlserver-data:/var/opt/mssql
 
   mailhog:
     image: mailhog/mailhog
@@ -47,14 +46,14 @@ services:
       - "7268:8080"
     environment:
       ASPNETCORE_HTTP_PORTS: "8080"
-      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=erpnet;Username=erpnet;Password=ERPNet_Dev123!"
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=erpnet;User Id=sa;Password=ERPNet_Dev123!;TrustServerCertificate=True"
       MessageBrokerSettings__HostName: "rabbitmq"
       EmailSettings__Host: "mailhog"
       FileStorageSettings__Endpoint: "minio:9000"
       ErpNetSettings__ErpWebClient: "http://localhost:7100"
       ErpNetSettings__AllowedOrigins__0: "http://localhost:7100"
     depends_on:
-      - postgres
+      - sqlserver
       - rabbitmq
       - minio
 
@@ -71,6 +70,6 @@ services:
       - api
 
 volumes:
-  postgres-data:
+  sqlserver-data:
   rabbitmq-data:
   minio-data:

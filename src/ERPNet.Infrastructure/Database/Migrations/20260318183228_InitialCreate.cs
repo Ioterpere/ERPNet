@@ -1,12 +1,11 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace ERPNet.Infrastructure.Database.Migrations
+namespace ERPNet.Infrastructure.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -18,17 +17,17 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "Archivos",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    NombreOriginal = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    ContentType = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    NombreOriginal = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    ContentType = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Tamaño = table.Column<long>(type: "bigint", nullable: false),
-                    EsThumbnail = table.Column<bool>(type: "boolean", nullable: false),
-                    ArchivoOriginalId = table.Column<Guid>(type: "uuid", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    DeletedBy = table.Column<int>(type: "integer", nullable: true),
-                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    EsThumbnail = table.Column<bool>(type: "bit", nullable: false),
+                    ArchivoOriginalId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -45,18 +44,18 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "Empresas",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Nombre = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Cif = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
-                    Activo = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    UpdatedBy = table.Column<int>(type: "integer", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    DeletedBy = table.Column<int>(type: "integer", nullable: true),
-                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Nombre = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Cif = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    Activo = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -67,22 +66,22 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "Menus",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Nombre = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    MenuPadreId = table.Column<int>(type: "integer", nullable: true),
-                    Path = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    Icon = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    Tag = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    Orden = table.Column<int>(type: "integer", nullable: false),
-                    Plataforma = table.Column<int>(type: "integer", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    UpdatedBy = table.Column<int>(type: "integer", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    DeletedBy = table.Column<int>(type: "integer", nullable: true),
-                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Nombre = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    MenuPadreId = table.Column<int>(type: "int", nullable: true),
+                    Path = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Icon = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Tag = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Orden = table.Column<int>(type: "int", nullable: false),
+                    Plataforma = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -99,9 +98,9 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "Recursos",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Codigo = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Codigo = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -112,17 +111,17 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "Roles",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Nombre = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Descripcion = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    UpdatedBy = table.Column<int>(type: "integer", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    DeletedBy = table.Column<int>(type: "integer", nullable: true),
-                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Nombre = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Descripcion = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -133,9 +132,9 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "TiposMantenimiento",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Codigo = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Codigo = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -146,31 +145,31 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "Turnos",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Nombre = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    ToleranciaMinutos = table.Column<int>(type: "integer", nullable: false),
-                    LunesEntrada = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    LunesSalida = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    MartesEntrada = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    MartesSalida = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    MiercolesEntrada = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    MiercolesSalida = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    JuevesEntrada = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    JuevesSalida = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    ViernesEntrada = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    ViernesSalida = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    SabadoEntrada = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    SabadoSalida = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    DomingoEntrada = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    DomingoSalida = table.Column<TimeOnly>(type: "time without time zone", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    UpdatedBy = table.Column<int>(type: "integer", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    DeletedBy = table.Column<int>(type: "integer", nullable: true),
-                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Nombre = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    ToleranciaMinutos = table.Column<int>(type: "int", nullable: false),
+                    LunesEntrada = table.Column<TimeOnly>(type: "time", nullable: true),
+                    LunesSalida = table.Column<TimeOnly>(type: "time", nullable: true),
+                    MartesEntrada = table.Column<TimeOnly>(type: "time", nullable: true),
+                    MartesSalida = table.Column<TimeOnly>(type: "time", nullable: true),
+                    MiercolesEntrada = table.Column<TimeOnly>(type: "time", nullable: true),
+                    MiercolesSalida = table.Column<TimeOnly>(type: "time", nullable: true),
+                    JuevesEntrada = table.Column<TimeOnly>(type: "time", nullable: true),
+                    JuevesSalida = table.Column<TimeOnly>(type: "time", nullable: true),
+                    ViernesEntrada = table.Column<TimeOnly>(type: "time", nullable: true),
+                    ViernesSalida = table.Column<TimeOnly>(type: "time", nullable: true),
+                    SabadoEntrada = table.Column<TimeOnly>(type: "time", nullable: true),
+                    SabadoSalida = table.Column<TimeOnly>(type: "time", nullable: true),
+                    DomingoEntrada = table.Column<TimeOnly>(type: "time", nullable: true),
+                    DomingoSalida = table.Column<TimeOnly>(type: "time", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -181,9 +180,9 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "MenusRoles",
                 columns: table => new
                 {
-                    MenuId = table.Column<int>(type: "integer", nullable: false),
-                    RolId = table.Column<int>(type: "integer", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                    MenuId = table.Column<int>(type: "int", nullable: false),
+                    RolId = table.Column<int>(type: "int", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -206,13 +205,13 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "PermisosRolRecurso",
                 columns: table => new
                 {
-                    RolId = table.Column<int>(type: "integer", nullable: false),
-                    RecursoId = table.Column<int>(type: "integer", nullable: false),
-                    CanCreate = table.Column<bool>(type: "boolean", nullable: false),
-                    CanEdit = table.Column<bool>(type: "boolean", nullable: false),
-                    CanDelete = table.Column<bool>(type: "boolean", nullable: false),
-                    Alcance = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                    RolId = table.Column<int>(type: "int", nullable: false),
+                    RecursoId = table.Column<int>(type: "int", nullable: false),
+                    CanCreate = table.Column<bool>(type: "bit", nullable: false),
+                    CanEdit = table.Column<bool>(type: "bit", nullable: false),
+                    CanDelete = table.Column<bool>(type: "bit", nullable: false),
+                    Alcance = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -235,19 +234,19 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "AsignacionesTurno",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    EmpleadoId = table.Column<int>(type: "integer", nullable: false),
-                    TurnoId = table.Column<int>(type: "integer", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EmpleadoId = table.Column<int>(type: "int", nullable: false),
+                    TurnoId = table.Column<int>(type: "int", nullable: false),
                     FechaDesde = table.Column<DateOnly>(type: "date", nullable: false),
                     FechaHasta = table.Column<DateOnly>(type: "date", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    UpdatedBy = table.Column<int>(type: "integer", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    DeletedBy = table.Column<int>(type: "integer", nullable: true),
-                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -264,23 +263,23 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "Empleados",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Nombre = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Apellidos = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    DNI = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    Activo = table.Column<bool>(type: "boolean", nullable: false),
-                    EmpresaId = table.Column<int>(type: "integer", nullable: false),
-                    SeccionId = table.Column<int>(type: "integer", nullable: false),
-                    EncargadoId = table.Column<int>(type: "integer", nullable: true),
-                    FotoId = table.Column<Guid>(type: "uuid", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    UpdatedBy = table.Column<int>(type: "integer", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    DeletedBy = table.Column<int>(type: "integer", nullable: true),
-                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Nombre = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Apellidos = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    DNI = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    Activo = table.Column<bool>(type: "bit", nullable: false),
+                    EmpresaId = table.Column<int>(type: "int", nullable: false),
+                    SeccionId = table.Column<int>(type: "int", nullable: false),
+                    EncargadoId = table.Column<int>(type: "int", nullable: true),
+                    FotoId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -308,19 +307,19 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "Marcajes",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    EmpleadoId = table.Column<int>(type: "integer", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EmpleadoId = table.Column<int>(type: "int", nullable: false),
                     Fecha = table.Column<DateOnly>(type: "date", nullable: false),
-                    HoraEntrada = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    HoraSalida = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    UpdatedBy = table.Column<int>(type: "integer", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    DeletedBy = table.Column<int>(type: "integer", nullable: true),
-                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    HoraEntrada = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    HoraSalida = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -337,18 +336,18 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "Secciones",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Nombre = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    ResponsableId = table.Column<int>(type: "integer", nullable: true),
-                    EmpresaId = table.Column<int>(type: "integer", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    UpdatedBy = table.Column<int>(type: "integer", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    DeletedBy = table.Column<int>(type: "integer", nullable: true),
-                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Nombre = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    ResponsableId = table.Column<int>(type: "int", nullable: true),
+                    EmpresaId = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -371,22 +370,22 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "Usuarios",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    PasswordHash = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
-                    UltimoAcceso = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Activo = table.Column<bool>(type: "boolean", nullable: false),
-                    CaducidadContrasena = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    UltimoCambioContrasena = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    EmpleadoId = table.Column<int>(type: "integer", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    UpdatedBy = table.Column<int>(type: "integer", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    DeletedBy = table.Column<int>(type: "integer", nullable: true),
-                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    PasswordHash = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: false),
+                    UltimoAcceso = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Activo = table.Column<bool>(type: "bit", nullable: false),
+                    CaducidadContrasena = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UltimoCambioContrasena = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EmpleadoId = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -403,21 +402,21 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "Vacaciones",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    EmpleadoId = table.Column<int>(type: "integer", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    EmpleadoId = table.Column<int>(type: "int", nullable: false),
                     FechaInicio = table.Column<DateOnly>(type: "date", nullable: false),
                     FechaFin = table.Column<DateOnly>(type: "date", nullable: false),
-                    Estado = table.Column<int>(type: "integer", nullable: false),
-                    AprobadoPorId = table.Column<int>(type: "integer", nullable: true),
-                    Observaciones = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    UpdatedBy = table.Column<int>(type: "integer", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    DeletedBy = table.Column<int>(type: "integer", nullable: true),
-                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Estado = table.Column<int>(type: "int", nullable: false),
+                    AprobadoPorId = table.Column<int>(type: "int", nullable: true),
+                    Observaciones = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -440,20 +439,20 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "IncidenciasMarcaje",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    MarcajeId = table.Column<int>(type: "integer", nullable: false),
-                    MinutosRetraso = table.Column<int>(type: "integer", nullable: false),
-                    Estado = table.Column<int>(type: "integer", nullable: false),
-                    Observaciones = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    ValidadaPorId = table.Column<int>(type: "integer", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    UpdatedBy = table.Column<int>(type: "integer", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    DeletedBy = table.Column<int>(type: "integer", nullable: true),
-                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MarcajeId = table.Column<int>(type: "int", nullable: false),
+                    MinutosRetraso = table.Column<int>(type: "int", nullable: false),
+                    Estado = table.Column<int>(type: "int", nullable: false),
+                    Observaciones = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    ValidadaPorId = table.Column<int>(type: "int", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -476,25 +475,25 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "Maquinas",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Nombre = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Codigo = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    Ubicacion = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    Activa = table.Column<bool>(type: "boolean", nullable: false),
-                    EmpresaId = table.Column<int>(type: "integer", nullable: false),
-                    SeccionId = table.Column<int>(type: "integer", nullable: true),
-                    FichaTecnicaId = table.Column<Guid>(type: "uuid", nullable: true),
-                    ManualId = table.Column<Guid>(type: "uuid", nullable: true),
-                    CertificadoCeId = table.Column<Guid>(type: "uuid", nullable: true),
-                    FotoId = table.Column<Guid>(type: "uuid", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    UpdatedBy = table.Column<int>(type: "integer", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    DeletedBy = table.Column<int>(type: "integer", nullable: true),
-                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Nombre = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Codigo = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Ubicacion = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    Activa = table.Column<bool>(type: "bit", nullable: false),
+                    EmpresaId = table.Column<int>(type: "int", nullable: false),
+                    SeccionId = table.Column<int>(type: "int", nullable: true),
+                    FichaTecnicaId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    ManualId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CertificadoCeId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    FotoId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -538,12 +537,12 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    NombreUsuario = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
-                    DireccionIp = table.Column<string>(type: "character varying(45)", maxLength: 45, nullable: false),
-                    FechaIntento = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Exitoso = table.Column<bool>(type: "boolean", nullable: false),
-                    UsuarioId = table.Column<int>(type: "integer", nullable: true)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    NombreUsuario = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    DireccionIp = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: false),
+                    FechaIntento = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Exitoso = table.Column<bool>(type: "bit", nullable: false),
+                    UsuarioId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -561,14 +560,14 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    UsuarioId = table.Column<int>(type: "integer", nullable: true),
-                    Accion = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Entidad = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    EntidadId = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    Fecha = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Detalle = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: true),
-                    CodigoError = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UsuarioId = table.Column<int>(type: "int", nullable: true),
+                    Accion = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Entidad = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    EntidadId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Fecha = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Detalle = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    CodigoError = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -585,15 +584,15 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "RefreshTokens",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Token = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
-                    UsuarioId = table.Column<int>(type: "integer", nullable: false),
-                    FechaCreacion = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    FechaExpiracion = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    FechaRevocacion = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    ReemplazadoPor = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Token = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: false),
+                    UsuarioId = table.Column<int>(type: "int", nullable: false),
+                    FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FechaExpiracion = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FechaRevocacion = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ReemplazadoPor = table.Column<string>(type: "nvarchar(512)", maxLength: 512, nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -610,12 +609,12 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "RolesUsuarios",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    UsuarioId = table.Column<int>(type: "integer", nullable: false),
-                    RolId = table.Column<int>(type: "integer", nullable: false),
-                    EmpresaId = table.Column<int>(type: "integer", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UsuarioId = table.Column<int>(type: "int", nullable: false),
+                    RolId = table.Column<int>(type: "int", nullable: false),
+                    EmpresaId = table.Column<int>(type: "int", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -644,9 +643,9 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "UsuarioEmpresas",
                 columns: table => new
                 {
-                    UsuarioId = table.Column<int>(type: "integer", nullable: false),
-                    EmpresaId = table.Column<int>(type: "integer", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false)
+                    UsuarioId = table.Column<int>(type: "int", nullable: false),
+                    EmpresaId = table.Column<int>(type: "int", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -669,22 +668,22 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "OrdenesMantenimiento",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    MaquinariaId = table.Column<int>(type: "integer", nullable: false),
-                    TipoMantenimientoId = table.Column<int>(type: "integer", nullable: false),
-                    Descripcion = table.Column<string>(type: "character varying(2000)", maxLength: 2000, nullable: false),
-                    FechaCreacion = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    FechaCierre = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    Estado = table.Column<int>(type: "integer", nullable: false),
-                    AsignadoAId = table.Column<int>(type: "integer", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    CreatedBy = table.Column<int>(type: "integer", nullable: true),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    UpdatedBy = table.Column<int>(type: "integer", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "boolean", nullable: false),
-                    DeletedBy = table.Column<int>(type: "integer", nullable: true),
-                    DeletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MaquinariaId = table.Column<int>(type: "int", nullable: false),
+                    TipoMantenimientoId = table.Column<int>(type: "int", nullable: false),
+                    Descripcion = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
+                    FechaCreacion = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FechaCierre = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Estado = table.Column<int>(type: "int", nullable: false),
+                    AsignadoAId = table.Column<int>(type: "int", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<int>(type: "int", nullable: true),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    UpdatedBy = table.Column<int>(type: "int", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedBy = table.Column<int>(type: "int", nullable: true),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -772,7 +771,8 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "IX_Empleados_FotoId",
                 table: "Empleados",
                 column: "FotoId",
-                unique: true);
+                unique: true,
+                filter: "[FotoId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Empleados_SeccionId",
@@ -814,7 +814,8 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "IX_Maquinas_CertificadoCeId",
                 table: "Maquinas",
                 column: "CertificadoCeId",
-                unique: true);
+                unique: true,
+                filter: "[CertificadoCeId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Maquinas_Codigo",
@@ -831,19 +832,22 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 name: "IX_Maquinas_FichaTecnicaId",
                 table: "Maquinas",
                 column: "FichaTecnicaId",
-                unique: true);
+                unique: true,
+                filter: "[FichaTecnicaId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Maquinas_FotoId",
                 table: "Maquinas",
                 column: "FotoId",
-                unique: true);
+                unique: true,
+                filter: "[FotoId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Maquinas_ManualId",
                 table: "Maquinas",
                 column: "ManualId",
-                unique: true);
+                unique: true,
+                filter: "[ManualId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Maquinas_SeccionId",
@@ -917,14 +921,14 @@ namespace ERPNet.Infrastructure.Database.Migrations
                 table: "RolesUsuarios",
                 columns: new[] { "UsuarioId", "RolId", "EmpresaId" },
                 unique: true,
-                filter: "\"EmpresaId\" IS NOT NULL");
+                filter: "[EmpresaId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RolUsuario_UsuarioId_RolId_Global",
                 table: "RolesUsuarios",
                 columns: new[] { "UsuarioId", "RolId" },
                 unique: true,
-                filter: "\"EmpresaId\" IS NULL");
+                filter: "[EmpresaId] IS NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Secciones_EmpresaId",
