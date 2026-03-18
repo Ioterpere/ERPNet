@@ -35,8 +35,10 @@ public class AiController(
     [HttpPost("sesiones")]
     [EnableRateLimiting("ai-sesiones")]
     [ProducesResponseType<CrearSesionResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> CrearSesion()
     {
+        if (!settings.Value.Habilitado) return StatusCode(503);
         var usuarioId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
         var sessionId = await chatService.CrearSesionAsync(usuarioId);
         return Ok(new CrearSesionResponse { SessionId = sessionId });
