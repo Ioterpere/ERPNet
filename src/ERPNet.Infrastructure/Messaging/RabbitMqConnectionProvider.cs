@@ -14,7 +14,13 @@ public class RabbitMqConnectionProvider(
 
     public Task<IConnection> GetConnectionAsync() => _ready.Task;
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        _ = ConnectWithRetriesAsync(cancellationToken);
+        return Task.CompletedTask;
+    }
+
+    private async Task ConnectWithRetriesAsync(CancellationToken cancellationToken)
     {
         var settings = options.Value;
         var factory = new ConnectionFactory
