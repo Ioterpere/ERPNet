@@ -64,14 +64,13 @@ jobs:
             "
 
       # Paso 3: generar FilterExtensions.g.cs con Python
-      # Corre dentro de dotnet/sdk:10.0 (Debian 12) donde python3 está garantizado.
       - name: Generate FilterExtensions.g.cs
         run: |
           docker run --rm \
             --user $(id -u):$(id -g) \
             -v $(pwd)/src/ERPNet.ApiClient:/app -w /app \
-            mcr.microsoft.com/dotnet/sdk:10.0 \
-            python3 Scripts/GenerateFilterExtensions.py \
+            python:3-slim \
+            python Scripts/GenerateFilterExtensions.py \
               Generated/ErpNetApiClient.g.cs \
               Generated/FilterExtensions.g.cs
 
