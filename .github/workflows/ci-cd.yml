@@ -16,6 +16,8 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
+        with:
+          clean: false
 
       - name: Prepare Generated/ directory
         run: mkdir -p src/ERPNet.ApiClient/Generated
@@ -86,6 +88,8 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
+        with:
+          clean: false
       - uses: actions/download-artifact@v4
         with:
           name: apiclient-generated
@@ -109,6 +113,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          clean: false
           fetch-depth: 0 # paths-filter necesita historial para comparar commits
       - uses: dorny/paths-filter@v3
         id: filter
@@ -131,6 +136,8 @@ jobs:
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
+        with:
+          clean: false
       # Generated/ necesarios para el docker build de web (Dockerfile usa SkipNSwag=true)
       - uses: actions/download-artifact@v4
         with:
