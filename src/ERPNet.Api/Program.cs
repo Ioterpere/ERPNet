@@ -10,6 +10,7 @@ using ERPNet.Application.Auth.Interfaces;
 using ERPNet.Application.Cache;
 using ERPNet.Application.Common.Interfaces;
 using ERPNet.Infrastructure;
+using ERPNet.Infrastructure.Database;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
@@ -198,5 +199,11 @@ app.UseMiddleware<ControlAccesoMiddleware>();
 app.MapControllers();
 
 #endregion
+
+if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true"
+    && !app.Environment.IsDevelopment())
+{
+    await app.Services.ApplyMigrationsAsync();
+}
 
 app.Run();
