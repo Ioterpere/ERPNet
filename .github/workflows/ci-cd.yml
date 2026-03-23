@@ -1,0 +1,155 @@
+name: CI/CD Smart Deployment
+
+on:
+  push:
+    branches: [ clavo-dev ]
+  workflow_dispatch: # Permite redeploy manual desde GitHub
+
+# La VM solo necesita Docker y el runner de GitHub. No se requiere nada más.
+
+jobs:
+  # Job 0: Generar ApiClient
+  # Generated/ está gitignoreado — se genera en cada run dentro de Docker
+  generate:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pre-crear Generated/ con el usuario del runner ANTES de que Docker lo toque.
+      # Docker corre como root: si crea el directorio, el runner no puede escribir en él.
+      - name: Prepare Generated/ directory
+        run: mkdir -p src/ERPNet.ApiClient/Generated
+
+      # Paso 1: compilar ERPNet.Api → Microsoft.Extensions.ApiDescription.Server
+      # arranca la app para extraer el OpenAPI spec → src/ERPNet.ApiClient/ERPNet.Api.json
+      # RabbitMqConnectionProvider.StartAsync es fire-and-forget: la app arranca sin servicios reales.
+      # Requiere ASPNETCORE_ENVIRONMENT=Development: MapOpenApi() solo se registra en ese entorno.
+      - name: Generate ERPNet.Api.json
+        run: |
+          docker run --rm \
+            -v $(pwd):/app -w /app \
+            -e ASPNETCORE_ENVIRONMENT=Development \
+            -e ASPNETCORE_HTTP_PORTS=8080 \
+            mcr.microsoft.com/dotnet/sdk:10.0 \
+            dotnet build src/ERPNet.Api/ERPNet.Api.csproj --nologo -v q
+
+      # Paso 2: generar ErpNetApiClient.g.cs con NSwag CLI
+      # Se usa --tool-path en vez de --global para evitar problemas con $HOME en Docker como root.
+      # Mismos flags que el MSBuild target en ERPNet.ApiClient.csproj.
+      - name: Generate ErpNetApiClient.g.cs
+        run: |
+          docker run --rm \
+            -v $(pwd)/src/ERPNet.ApiClient:/app -w /app \
+            mcr.microsoft.com/dotnet/sdk:10.0 \
+            sh -c "
+              dotnet tool install NSwag.ConsoleCore --tool-path /tmp/nswag --version '14.*' &&
+              /tmp/nswag/dotnet-nswag openapi2csclient \
+                /input:ERPNet.Api.json \
+                /namespace:ERPNet.ApiClient \
+                /output:Generated/ErpNetApiClient.g.cs \
+                /generateClientInterfaces:true \
+                /generateDtoTypes:true \
+                /injectHttpClient:true \
+                /operationGenerationMode:MultipleClientsFromFirstTagAndOperationId \
+                /jsonLibrary:SystemTextJson \
+                /useBaseUrl:false \
+                /jsonConverters:System.Text.Json.Serialization.JsonStringEnumConverter
+            "
+
+      # Paso 3: generar FilterExtensions.g.cs con el script Python
+      # Corre dentro de dotnet/sdk:10.0 (Debian 12) donde python3 está garantizado.
+      - name: Generate FilterExtensions.g.cs
+        run: |
+          docker run --rm \
+            -v $(pwd)/src/ERPNet.ApiClient:/app -w /app \
+            mcr.microsoft.com/dotnet/sdk:10.0 \
+            python3 Scripts/GenerateFilterExtensions.py \
+              Generated/ErpNetApiClient.g.cs \
+              Generated/FilterExtensions.g.cs
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apiclient-generated
+          path: src/ERPNet.ApiClient/Generated/
+          retention-days: 1
+
+  # Job 1 y 2 corren en paralelo (ambos dependen de generate, son independientes entre sí)
+
+  # Job 1: Testear en contenedor limpio
+  # ERPNet.Testing usa xUnit + NSubstitute (tests unitarios, no necesita BD)
+  test:
+    needs: generate
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: apiclient-generated
+          path: src/ERPNet.ApiClient/Generated/
+      - name: Run Tests in Docker
+        run: |
+          docker run --rm -v $(pwd):/app -w /app mcr.microsoft.com/dotnet/sdk:10.0 \
+          dotnet test src/ERPNet.Testing/ERPNet.Testing.csproj -c Release /p:SkipNSwag=true --filter "Category!=Seeder"
+
+  # Job 2: Detectar qué ha cambiado
+  check-changes:
+    needs: generate
+    runs-on: self-hosted
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      web: ${{ steps.filter.outputs.web }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # paths-filter necesita historial para comparar commits
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api:
+              - 'src/ERPNet.Api/**'
+              - 'src/ERPNet.Infrastructure/**'
+              - 'src/ERPNet.Application/**'
+              - 'src/ERPNet.Domain/**'
+            web:
+              # Cubre ERPNet.Web.Blazor (BFF) y ERPNet.Web.Blazor.Client (WASM, anidado)
+              - 'src/ERPNet.Web.Blazor/**'
+              # ApiClient tiene archivos manuales (FileParameter.cs, DependencyInjection.cs)
+              - 'src/ERPNet.ApiClient/**'
+
+  # Job 3: Despliegue atómico
+  deploy:
+    needs: [test, check-changes]
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      # Generated/ necesarios para el docker build de web (Dockerfile usa SkipNSwag=true)
+      - uses: actions/download-artifact@v4
+        with:
+          name: apiclient-generated
+          path: src/ERPNet.ApiClient/Generated/
+
+      - name: Deploy API if changed
+        if: needs.check-changes.outputs.api == 'true' || github.event_name == 'workflow_dispatch'
+        env:
+          SERVER_IP: ${{ vars.SERVER_IP }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          SMTP_HOST: ${{ vars.SMTP_HOST }}
+          SMTP_PORT: ${{ vars.SMTP_PORT }}
+          SMTP_USE_SSL: ${{ vars.SMTP_USE_SSL }}
+          SMTP_REMITENTE_EMAIL: ${{ vars.SMTP_REMITENTE_EMAIL }}
+          SMTP_REMITENTE_NOMBRE: ${{ vars.SMTP_REMITENTE_NOMBRE }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+        run: docker compose -f docker-compose.prod.yml up -d --build api
+
+      # Si la API cambia, también rebuildeamos web: el ApiClient fue regenerado en este run
+      - name: Deploy Web if changed
+        if: needs.check-changes.outputs.web == 'true' || needs.check-changes.outputs.api == 'true' || github.event_name == 'workflow_dispatch'
+        env:
+          SERVER_IP: ${{ vars.SERVER_IP }}
+        run: docker compose -f docker-compose.prod.yml up -d --build web
+
+      - name: Cleanup dangling images
+        if: needs.check-changes.outputs.api == 'true' || needs.check-changes.outputs.web == 'true' || github.event_name == 'workflow_dispatch'
+        run: docker image prune -f
