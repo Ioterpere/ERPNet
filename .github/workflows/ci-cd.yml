@@ -8,6 +8,7 @@ on:
 # La VM solo necesita Docker y el runner de GitHub. No se requiere nada más.
 # Los docker run usan --user $(id -u):$(id -g) para evitar ficheros creados como root
 # que bloquearían el checkout en el siguiente run.
+# Como medida extra, cada job limpia ficheros root residuales antes del checkout.
 
 jobs:
   # Job 0: Generar ApiClient
@@ -15,9 +16,10 @@ jobs:
   generate:
     runs-on: self-hosted
     steps:
+      - name: Fix Docker root-owned files
+        run: docker run --rm -v ${{ github.workspace }}:/ws alpine sh -c "chown -R $(id -u):$(id -g) /ws" || true
+
       - uses: actions/checkout@v4
-        with:
-          clean: false
 
       - name: Prepare Generated/ directory
         run: mkdir -p src/ERPNet.ApiClient/Generated
@@ -87,9 +89,10 @@ jobs:
     needs: generate
     runs-on: self-hosted
     steps:
+      - name: Fix Docker root-owned files
+        run: docker run --rm -v ${{ github.workspace }}:/ws alpine sh -c "chown -R $(id -u):$(id -g) /ws" || true
+
       - uses: actions/checkout@v4
-        with:
-          clean: false
       - uses: actions/download-artifact@v4
         with:
           name: apiclient-generated
@@ -111,9 +114,11 @@ jobs:
       api: ${{ steps.filter.outputs.api }}
       web: ${{ steps.filter.outputs.web }}
     steps:
+      - name: Fix Docker root-owned files
+        run: docker run --rm -v ${{ github.workspace }}:/ws alpine sh -c "chown -R $(id -u):$(id -g) /ws" || true
+
       - uses: actions/checkout@v4
         with:
-          clean: false
           fetch-depth: 0 # paths-filter necesita historial para comparar commits
       - uses: dorny/paths-filter@v3
         id: filter
@@ -135,9 +140,10 @@ jobs:
     needs: [test, check-changes]
     runs-on: self-hosted
     steps:
+      - name: Fix Docker root-owned files
+        run: docker run --rm -v ${{ github.workspace }}:/ws alpine sh -c "chown -R $(id -u):$(id -g) /ws" || true
+
       - uses: actions/checkout@v4
-        with:
-          clean: false
       # Generated/ necesarios para el docker build de web (Dockerfile usa SkipNSwag=true)
       - uses: actions/download-artifact@v4
         with:
