@@ -13,6 +13,8 @@ jobs:
   generate:
     runs-on: self-hosted
     steps:
+      - name: Fix workspace permissions
+        run: sudo chown -R $USER:$USER . 2>/dev/null || true
       - uses: actions/checkout@v4
 
       # Pre-crear Generated/ con el usuario del runner ANTES de que Docker lo toque.
@@ -81,6 +83,8 @@ jobs:
     needs: generate
     runs-on: self-hosted
     steps:
+      - name: Fix workspace permissions
+        run: sudo chown -R $USER:$USER . 2>/dev/null || true
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
@@ -122,6 +126,8 @@ jobs:
     needs: [test, check-changes]
     runs-on: self-hosted
     steps:
+      - name: Fix workspace permissions
+        run: sudo chown -R $USER:$USER . 2>/dev/null || true
       - uses: actions/checkout@v4
       # Generated/ necesarios para el docker build de web (Dockerfile usa SkipNSwag=true)
       - uses: actions/download-artifact@v4
