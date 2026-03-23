@@ -1,7 +1,9 @@
-# Uso: SERVER_IP=<ip-vm> docker compose -f docker-compose.prod.yml up -d
-# En CI/CD se pasan desde las variables/secretos del repositorio (Settings > Secrets and variables > Actions):
+# Uso: docker compose -f docker-compose.prod.yml up -d
+# Vars configurables desde GitHub Actions (Settings > Secrets and variables > Actions):
 #   Variables:  SERVER_IP, SMTP_HOST, SMTP_PORT, SMTP_USE_SSL, SMTP_REMITENTE_EMAIL, SMTP_REMITENTE_NOMBRE
 #   Secretos:   JWT_SECRET_KEY, SMTP_USER, SMTP_PASSWORD
+#
+# TODO: reemplazar mailhog por servidor SMTP real y mover credenciales a GitHub secrets.
 
 services:
   sqlserver:
@@ -13,6 +15,12 @@ services:
       - "1434:1433"
     volumes:
       - sqlserver-data:/var/opt/mssql
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI
 
   rabbitmq:
     image: rabbitmq:4-management
@@ -48,9 +56,9 @@ services:
       ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=erpnet;User Id=sa;Password=ERPNet_Dev123!;TrustServerCertificate=True"
       JwtSettings__SecretKey: "${JWT_SECRET_KEY:-(change-this)}"
       MessageBrokerSettings__HostName: "rabbitmq"
-      EmailSettings__Host: "${SMTP_HOST:-(smtp)}"
-      EmailSettings__Port: "${SMTP_PORT:-587}"
-      EmailSettings__UseSsl: "${SMTP_USE_SSL:-true}"
+      EmailSettings__Host: "${SMTP_HOST:-mailhog}"
+      EmailSettings__Port: "${SMTP_PORT:-1025}"
+      EmailSettings__UseSsl: "${SMTP_USE_SSL:-false}"
       EmailSettings__Usuario: "${SMTP_USER:-}"
       EmailSettings__Password: "${SMTP_PASSWORD:-}"
       EmailSettings__RemitenteEmail: "${SMTP_REMITENTE_EMAIL:-noreply@erpnet.local}"

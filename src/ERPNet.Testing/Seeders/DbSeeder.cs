@@ -16,6 +16,7 @@ public class DbSeeder(ITestOutputHelper output)
     private static readonly string ConnectionString = new ConfigurationBuilder()
         .SetBasePath(Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "ERPNet.Api")))
         .AddJsonFile("appsettings.json")
+        .AddEnvironmentVariables()
         .Build()
         .GetConnectionString("DefaultConnection")!;
 
