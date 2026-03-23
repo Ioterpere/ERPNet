@@ -12,8 +12,8 @@ RUN dotnet restore ERPNet.Web.Blazor/ERPNet.Web.Blazor/ERPNet.Web.Blazor.csproj 
     -p:SkipNSwag=true
 
 # Copiar código fuente y publicar
-# SkipNSwag=true: omite NSwag (necesita PowerShell, no disponible en Linux)
-# y usa los archivos Generated/ ya commiteados
+# SkipNSwag=true: omite la generación de NSwag/FilterExtensions.
+# Los archivos Generated/ se copian desde el contexto de build (generados en CI).
 COPY ERPNet.ApiClient/    ERPNet.ApiClient/
 COPY ERPNet.Web.Blazor/   ERPNet.Web.Blazor/
 RUN dotnet publish ERPNet.Web.Blazor/ERPNet.Web.Blazor/ERPNet.Web.Blazor.csproj \
