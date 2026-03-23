@@ -200,8 +200,10 @@ app.MapControllers();
 
 #endregion
 
-if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true"
-    && !app.Environment.IsDevelopment())
+// Solo migrar en el despliegue real (ERPNET_AUTO_MIGRATE=true en docker-compose.prod.yml).
+// No usar IsProduction/DOTNET_RUNNING_IN_CONTAINER: dotnet-getdocument (OpenAPI gen) también
+// arranca Program.Main y fallaría al intentar conectar a SQL Server.
+if (Environment.GetEnvironmentVariable("ERPNET_AUTO_MIGRATE") == "true")
 {
     await app.Services.ApplyMigrationsAsync();
 }
