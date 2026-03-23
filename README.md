@@ -66,6 +66,7 @@ ERPNet.Testing    ←  xUnit + NSubstitute + DbSeeder
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Python 3](https://www.python.org/downloads/) — usado por el MSBuild target de `ERPNet.ApiClient` para generar `FilterExtensions.g.cs` al compilar
 - Node.js (opcional, para recompilar el tema Sass de Bootstrap)
 
 ### 2. Levantar los servicios de infraestructura

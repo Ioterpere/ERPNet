@@ -17,8 +17,13 @@
   <Target Name="GenerateFilterExtensions" AfterTargets="NSwagGenerate" BeforeTargets="CoreCompile"
           Condition="'$(SkipNSwag)' != 'true'">
     <Message Importance="High" Text="→ Generando FilterExtensions desde cliente generado..." />
+    <!-- 'python' en Windows, 'python3' en Linux/macOS — mismo script .py -->
+    <PropertyGroup>
+      <PythonExe Condition="'$(OS)' == 'Windows_NT'">py</PythonExe>
+      <PythonExe Condition="'$(OS)' != 'Windows_NT'">python3</PythonExe>
+    </PropertyGroup>
     <Exec WorkingDirectory="$(ProjectDir)"
-          Command="powershell -NonInteractive -File &quot;$(ProjectDir)Scripts/GenerateFilterExtensions.ps1&quot; -ClientPath &quot;$(ProjectDir)Generated/ErpNetApiClient.g.cs&quot; -OutputPath &quot;$(ProjectDir)Generated/FilterExtensions.g.cs&quot;" />
+          Command="$(PythonExe) &quot;$(ProjectDir)Scripts/GenerateFilterExtensions.py&quot; &quot;$(ProjectDir)Generated/ErpNetApiClient.g.cs&quot; &quot;$(ProjectDir)Generated/FilterExtensions.g.cs&quot;" />
   </Target>
 
 <!-- NSwag corre ANTES de compilar para que el .g.cs esté disponible -->

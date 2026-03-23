@@ -1,0 +1,192 @@
+#!/usr/bin/env python3
+"""
+Genera FilterExtensions.g.cs leyendo Generated/ErpNetApiClient.g.cs.
+
+Algoritmo:
+1. Extrae las clases DTO *Filter (propiedades PascalCase) del cliente generado.
+2. Extrae los métodos de cada interface (params camelCase, sin overload CT).
+3. Para cada método busca el *Filter DTO con más propiedades en común
+   con los params del método (intersección, case-insensitive).
+4. Genera un extension method que pasa solo los params coincidentes como
+   f.Prop; si el spec se desincroniza temporalmente los nuevos campos
+   simplemente no se pasan hasta que se regenere.
+
+Uso: python3 GenerateFilterExtensions.py <client_path> <output_path>
+"""
+
+import re
+import sys
+from pathlib import Path
+
+
+def to_pascal(s: str) -> str:
+    return s[0].upper() + s[1:] if s else s
+
+
+def parse_filter_classes(lines: list) -> dict:
+    """Devuelve dict: className -> list de nombres de propiedades (PascalCase)."""
+    dto_props = {}
+    cur_class = None
+    brace_depth = 0
+    body_open = False
+
+    for line in lines:
+        m = re.search(r'public partial class (\w+Filter)\b', line)
+        if m:
+            cur_class = m.group(1)
+            dto_props[cur_class] = []
+            brace_depth = 0
+            body_open = False
+            continue
+
+        if cur_class is None:
+            continue
+
+        opens = line.count('{')
+        closes = line.count('}')
+        brace_depth += opens - closes
+
+        if not body_open and opens > 0:
+            body_open = True
+        if body_open and brace_depth <= 0:
+            cur_class = None
+            body_open = False
+            continue
+
+        # Propiedad auto: public TYPE Name { get; set; }
+        m2 = re.match(r'^\s*public [\w?<>\[\].]+\s+(\w+)\s*\{\s*get;\s*set;\s*\}', line)
+        if m2:
+            dto_props[cur_class].append(m2.group(1))
+
+    return dto_props
+
+
+def parse_interfaces(lines: list) -> dict:
+    """Devuelve dict: interfaceName -> list de dicts con info del método."""
+    interfaces = {}
+    cur_iface = None
+
+    for line in lines:
+        m = re.search(r'public partial interface (I\w+)', line)
+        if m:
+            cur_iface = m.group(1)
+            interfaces[cur_iface] = []
+            continue
+
+        if cur_iface is None:
+            continue
+
+        if 'System.Threading.Tasks.Task' not in line:
+            continue
+        if 'CancellationToken' in line:
+            continue
+        if 'Async' not in line:
+            continue
+        if ';' not in line:
+            continue
+
+        m2 = re.match(
+            r'^\s*System\.Threading\.Tasks\.(Task(?:<\w+>)?)\s+(\w+)\(([^)]*)\);',
+            line
+        )
+        if not m2:
+            continue
+
+        return_type = m2.group(1)
+        method_name = m2.group(2)
+        params_str = m2.group(3)
+
+        param_names = []
+        for p in params_str.split(','):
+            p = p.strip()
+            if p:
+                parts = p.split()
+                if parts:
+                    param_names.append(parts[-1])
+
+        interfaces[cur_iface].append({
+            'method_name': method_name,
+            'return_type': return_type,
+            'param_names': param_names,
+        })
+
+    return interfaces
+
+
+def find_best_match(param_names: list, dto_props: dict):
+    """Devuelve (dto_name, args) o (None, []) si no hay match con score >= 2."""
+    param_set = {p.lower() for p in param_names}
+    best_dto = None
+    best_score = 1  # requerimos >= 2
+    best_dto_size = float('inf')
+
+    for dto_name, props in dto_props.items():
+        score = sum(1 for p in props if p.lower() in param_set)
+        dto_size = len(props)
+        if score >= 2 and (score > best_score or (score == best_score and dto_size < best_dto_size)):
+            best_dto = dto_name
+            best_score = score
+            best_dto_size = dto_size
+
+    if best_dto is None:
+        return None, []
+
+    dto_prop_set = {p.lower() for p in dto_props[best_dto]}
+    args = [f'f.{to_pascal(p)}' for p in param_names if p.lower() in dto_prop_set]
+    return best_dto, args
+
+
+def generate(client_path: Path, output_path: Path) -> None:
+    if not client_path.exists():
+        print(f'[GenerateFilterExtensions] {client_path} no encontrado, saltando.')
+        return
+
+    lines = client_path.read_text(encoding='utf-8').splitlines()
+
+    dto_props = parse_filter_classes(lines)
+    interfaces = parse_interfaces(lines)
+
+    extensions = []
+    for iface_name in sorted(interfaces.keys()):
+        for method in interfaces[iface_name]:
+            best_dto, args = find_best_match(method['param_names'], dto_props)
+            if best_dto is None:
+                continue
+            extensions.append({
+                'client_interface': iface_name,
+                'method_name': method['method_name'],
+                'return_type': method['return_type'],
+                'dto_name': best_dto,
+                'args': args,
+            })
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    out = [
+        '// <auto-generated/>',
+        '// Generado por Scripts/GenerateFilterExtensions.py — no editar manualmente.',
+        'namespace ERPNet.ApiClient;',
+        '',
+        'public static class FilterExtensions',
+        '{',
+    ]
+
+    for i, ext in enumerate(extensions):
+        if i > 0:
+            out.append('')
+        args_str = ', '.join(ext['args'] + ['ct'])
+        out.append(f"    public static {ext['return_type']} {ext['method_name']}(")
+        out.append(f"        this {ext['client_interface']} client, {ext['dto_name']} f, CancellationToken ct = default)")
+        out.append(f"        => client.{ext['method_name']}({args_str});")
+
+    out.append('}')
+
+    output_path.write_text('\n'.join(out), encoding='utf-8')
+    print(f'[GenerateFilterExtensions] {len(extensions)} metodos generados -> {output_path}')
+
+
+if __name__ == '__main__':
+    if len(sys.argv) != 3:
+        print('Uso: python3 GenerateFilterExtensions.py <client_path> <output_path>')
+        sys.exit(1)
+    generate(Path(sys.argv[1]), Path(sys.argv[2]))
