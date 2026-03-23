@@ -10,6 +10,7 @@ using Xunit.Abstractions;
 
 namespace ERPNet.Testing.Seeders;
 
+[Trait("Category", "Seeder")]
 public class DbSeeder(ITestOutputHelper output)
 {
     private static readonly string ConnectionString = new ConfigurationBuilder()
