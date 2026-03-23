@@ -84,6 +84,20 @@ services:
     depends_on:
       - api
 
+  # Uso: docker compose -f docker-compose.prod.yml run --rm seed
+  seed:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    volumes:
+      - ./src:/app
+    working_dir: /app
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=erpnet;User Id=sa;Password=ERPNet_Dev123!;TrustServerCertificate=True"
+    entrypoint: ["dotnet", "test", "ERPNet.Testing/ERPNet.Testing.csproj", "--filter", "Category=Seeder", "/p:SkipNSwag=true"]
+    depends_on:
+      - sqlserver
+    profiles:
+      - tools
+
 volumes:
   sqlserver-data:
   rabbitmq-data:
