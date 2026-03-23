@@ -43,7 +43,7 @@ jobs:
             mcr.microsoft.com/dotnet/sdk:10.0 \
             sh -c "
               dotnet tool install NSwag.ConsoleCore --tool-path /tmp/nswag --version '14.*' &&
-              /tmp/nswag/dotnet-nswag openapi2csclient \
+              /tmp/nswag/nswag openapi2csclient \
                 /input:ERPNet.Api.json \
                 /namespace:ERPNet.ApiClient \
                 /output:Generated/ErpNetApiClient.g.cs \
