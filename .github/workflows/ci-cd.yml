@@ -6,6 +6,8 @@ on:
   workflow_dispatch: # Permite redeploy manual desde GitHub
 
 # La VM solo necesita Docker y el runner de GitHub. No se requiere nada más.
+# Los docker run usan --user $(id -u):$(id -g) para evitar ficheros creados como root
+# que bloquearían el checkout en el siguiente run.
 
 jobs:
   # Job 0: Generar ApiClient
@@ -13,12 +15,8 @@ jobs:
   generate:
     runs-on: self-hosted
     steps:
-      - name: Fix workspace permissions
-        run: sudo chown -R $USER:$USER . 2>/dev/null || true
       - uses: actions/checkout@v4
 
-      # Pre-crear Generated/ con el usuario del runner ANTES de que Docker lo toque.
-      # Docker corre como root: si crea el directorio, el runner no puede escribir en él.
       - name: Prepare Generated/ directory
         run: mkdir -p src/ERPNet.ApiClient/Generated
 
@@ -29,6 +27,8 @@ jobs:
       - name: Generate ERPNet.Api.json
         run: |
           docker run --rm \
+            --user $(id -u):$(id -g) \
+            -e HOME=/tmp \
             -v $(pwd):/app -w /app \
             -e ASPNETCORE_ENVIRONMENT=Development \
             -e ASPNETCORE_HTTP_PORTS=8080 \
@@ -36,11 +36,12 @@ jobs:
             dotnet build src/ERPNet.Api/ERPNet.Api.csproj --nologo -v q
 
       # Paso 2: generar ErpNetApiClient.g.cs con NSwag CLI
-      # Se usa --tool-path en vez de --global para evitar problemas con $HOME en Docker como root.
-      # Mismos flags que el MSBuild target en ERPNet.ApiClient.csproj.
+      # --tool-path /tmp/nswag: /tmp es world-writable, funciona con cualquier usuario.
       - name: Generate ErpNetApiClient.g.cs
         run: |
           docker run --rm \
+            --user $(id -u):$(id -g) \
+            -e HOME=/tmp \
             -v $(pwd)/src/ERPNet.ApiClient:/app -w /app \
             mcr.microsoft.com/dotnet/sdk:10.0 \
             sh -c "
@@ -58,11 +59,12 @@ jobs:
                 /jsonConverters:System.Text.Json.Serialization.JsonStringEnumConverter
             "
 
-      # Paso 3: generar FilterExtensions.g.cs con el script Python
+      # Paso 3: generar FilterExtensions.g.cs con Python
       # Corre dentro de dotnet/sdk:10.0 (Debian 12) donde python3 está garantizado.
       - name: Generate FilterExtensions.g.cs
         run: |
           docker run --rm \
+            --user $(id -u):$(id -g) \
             -v $(pwd)/src/ERPNet.ApiClient:/app -w /app \
             mcr.microsoft.com/dotnet/sdk:10.0 \
             python3 Scripts/GenerateFilterExtensions.py \
@@ -83,8 +85,6 @@ jobs:
     needs: generate
     runs-on: self-hosted
     steps:
-      - name: Fix workspace permissions
-        run: sudo chown -R $USER:$USER . 2>/dev/null || true
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
@@ -92,8 +92,12 @@ jobs:
           path: src/ERPNet.ApiClient/Generated/
       - name: Run Tests in Docker
         run: |
-          docker run --rm -v $(pwd):/app -w /app mcr.microsoft.com/dotnet/sdk:10.0 \
-          dotnet test src/ERPNet.Testing/ERPNet.Testing.csproj -c Release /p:SkipNSwag=true --filter "Category!=Seeder"
+          docker run --rm \
+            --user $(id -u):$(id -g) \
+            -e HOME=/tmp \
+            -v $(pwd):/app -w /app \
+            mcr.microsoft.com/dotnet/sdk:10.0 \
+            dotnet test src/ERPNet.Testing/ERPNet.Testing.csproj -c Release /p:SkipNSwag=true --filter "Category!=Seeder"
 
   # Job 2: Detectar qué ha cambiado
   check-changes:
@@ -126,8 +130,6 @@ jobs:
     needs: [test, check-changes]
     runs-on: self-hosted
     steps:
-      - name: Fix workspace permissions
-        run: sudo chown -R $USER:$USER . 2>/dev/null || true
       - uses: actions/checkout@v4
       # Generated/ necesarios para el docker build de web (Dockerfile usa SkipNSwag=true)
       - uses: actions/download-artifact@v4
