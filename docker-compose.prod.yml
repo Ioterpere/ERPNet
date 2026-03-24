@@ -1,7 +1,7 @@
 # Uso: docker compose -f docker-compose.prod.yml up -d
 # Vars configurables desde GitHub Actions (Settings > Secrets and variables > Actions):
-#   Variables:  SERVER_IP, SMTP_HOST, SMTP_PORT, SMTP_USE_SSL, SMTP_REMITENTE_EMAIL, SMTP_REMITENTE_NOMBRE
-#   Secretos:   JWT_SECRET_KEY, SMTP_USER, SMTP_PASSWORD
+#   Variables:  SERVER_IP, SMTP_HOST, SMTP_PORT, SMTP_USE_SSL, SMTP_REMITENTE_EMAIL, SMTP_REMITENTE_NOMBRE, AI_MODEL
+#   Secretos:   JWT_SECRET_KEY, SMTP_USER, SMTP_PASSWORD, AI_API_KEY
 #
 # TODO: reemplazar mailhog por servidor SMTP real y mover credenciales a GitHub secrets.
 
@@ -65,6 +65,9 @@ services:
       EmailSettings__RemitenteEmail: "${SMTP_REMITENTE_EMAIL:-noreply@erpnet.local}"
       EmailSettings__RemitenteNombre: "${SMTP_REMITENTE_NOMBRE:-ERPNet}"
       FileStorageSettings__Endpoint: "minio:9000"
+      AiSettings__Habilitado: "true"
+      AiSettings__ApiKey: "${AI_API_KEY:-(not-set)}"
+      AiSettings__Modelo: "${AI_MODEL:-gpt-4o-mini}"
       ErpNetSettings__ErpWebClient: "http://${SERVER_IP:-(ip)}:7100"
       ErpNetSettings__AllowedOrigins__0: "http://${SERVER_IP:-(ip)}:7100"
     depends_on:
