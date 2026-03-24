@@ -112,4 +112,4 @@ app.MapControllers();
 // añade Bearer token y reenvía a ERPNet.Api. Sin boilerplate por endpoint.
 app.MapBffProxy();
 
-app.Run();
+await app.RunAsync();
