@@ -133,6 +133,9 @@ jobs:
               - 'src/ERPNet.Web.Blazor/**'
               # ApiClient tiene archivos manuales (FileParameter.cs, DependencyInjection.cs)
               - 'src/ERPNet.ApiClient/**'
+              # Nginx config o docker-compose cambios afectan el despliegue
+              - 'nginx/**'
+              - 'docker-compose.prod.yml'
 
   # Job 3: Despliegue atómico
   deploy:
@@ -173,6 +176,10 @@ jobs:
       - name: Deploy Web if changed
         if: needs.check-changes.outputs.web == 'true' || needs.check-changes.outputs.api == 'true' || github.event_name == 'workflow_dispatch'
         run: docker compose -f docker-compose.prod.yml up -d --build web
+
+      - name: Deploy Nginx
+        if: needs.check-changes.outputs.web == 'true' || needs.check-changes.outputs.api == 'true' || github.event_name == 'workflow_dispatch'
+        run: docker compose -f docker-compose.prod.yml up -d nginx
 
       - name: Cleanup dangling images
         if: needs.check-changes.outputs.api == 'true' || needs.check-changes.outputs.web == 'true' || github.event_name == 'workflow_dispatch'

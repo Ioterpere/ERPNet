@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 var builder = WebApplication.CreateBuilder(args);
 
 // Forwarded headers: necesario cuando hay un reverse proxy (Nginx) que termina TLS.
-// Permite que UseHttpsRedirection y las cookies conozcan el esquema real (https).
+// Permite que las cookies conozcan el esquema real (https) detrás del proxy.
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -88,7 +88,8 @@ else
 
 app.UseForwardedHeaders();
 app.UseStatusCodePagesWithReExecute("/not-found");
-app.UseHttpsRedirection();
+if (app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 
 app.Use(async (ctx, next) =>
 {
