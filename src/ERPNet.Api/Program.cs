@@ -189,7 +189,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseForwardedHeaders();
 app.UseExceptionHandler();
-app.UseHttpsRedirection();
+if (app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 app.UseCors();
 app.UseRateLimiter();
 app.UseAuthentication();
