@@ -149,25 +149,29 @@ jobs:
           name: apiclient-generated
           path: src/ERPNet.ApiClient/Generated/
 
+      # Escribir .env para que docker compose resuelva las variables.
+      # Persiste en disco → los contenedores mantienen los valores tras reinicios.
+      - name: Write .env
+        run: |
+          cat > .env << 'ENVEOF'
+          SERVER_IP=${{ vars.SERVER_IP }}
+          JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
+          SMTP_HOST=${{ vars.SMTP_HOST }}
+          SMTP_PORT=${{ vars.SMTP_PORT }}
+          SMTP_USE_SSL=${{ vars.SMTP_USE_SSL }}
+          SMTP_REMITENTE_EMAIL=${{ vars.SMTP_REMITENTE_EMAIL }}
+          SMTP_REMITENTE_NOMBRE=${{ vars.SMTP_REMITENTE_NOMBRE }}
+          SMTP_USER=${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}
+          ENVEOF
+
       - name: Deploy API if changed
         if: needs.check-changes.outputs.api == 'true' || github.event_name == 'workflow_dispatch'
-        env:
-          SERVER_IP: ${{ vars.SERVER_IP }}
-          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-          SMTP_HOST: ${{ vars.SMTP_HOST }}
-          SMTP_PORT: ${{ vars.SMTP_PORT }}
-          SMTP_USE_SSL: ${{ vars.SMTP_USE_SSL }}
-          SMTP_REMITENTE_EMAIL: ${{ vars.SMTP_REMITENTE_EMAIL }}
-          SMTP_REMITENTE_NOMBRE: ${{ vars.SMTP_REMITENTE_NOMBRE }}
-          SMTP_USER: ${{ secrets.SMTP_USER }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
         run: docker compose -f docker-compose.prod.yml up -d --build api
 
       # Si la API cambia, también rebuildeamos web: el ApiClient fue regenerado en este run
       - name: Deploy Web if changed
         if: needs.check-changes.outputs.web == 'true' || needs.check-changes.outputs.api == 'true' || github.event_name == 'workflow_dispatch'
-        env:
-          SERVER_IP: ${{ vars.SERVER_IP }}
         run: docker compose -f docker-compose.prod.yml up -d --build web
 
       - name: Cleanup dangling images
