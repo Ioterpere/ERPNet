@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ERPNet.Api\ERPNet.Api.csproj" />
+    <ProjectReference Include="..\ERPNet.Web.Blazor\ERPNet.Web.Blazor\ERPNet.Web.Blazor.csproj" />
     <ProjectReference Include="..\ERPNet.Infrastructure\ERPNet.Infrastructure.csproj" />
     <ProjectReference Include="..\ERPNet.Application\ERPNet.Application.csproj" />
   </ItemGroup>
