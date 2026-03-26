@@ -87,7 +87,16 @@ public abstract class ErpPageBase : PageBase, IAsyncDisposable
     protected virtual Task OnLimpiarFiltro() => Task.CompletedTask;
     protected virtual Task OnEscape()
     {
-        _mostrarModalEliminar = false;
+        if (_mostrarModalEliminar)
+        {
+            _mostrarModalEliminar = false;
+            return Task.CompletedTask;
+        }
+        if (_esNuevo)
+        {
+            VolverALista();
+            return Task.CompletedTask;
+        }
         return Task.CompletedTask;
     }
 
@@ -193,8 +202,8 @@ public abstract class ErpPageBase : PageBase, IAsyncDisposable
             "filtro"        => OnFiltro(),
             "limpiarFiltro" => OnLimpiarFiltro(),
             "escape"        => OnEscape(),
-            "busqueda"      => Task.FromResult(_enfocarBusqueda = true),
-            _               => Task.CompletedTask
+            "busqueda" => Task.FromResult(_enfocarBusqueda = true),
+            _          => Task.CompletedTask
         });
         await InvokeAsync(StateHasChanged);
     }
