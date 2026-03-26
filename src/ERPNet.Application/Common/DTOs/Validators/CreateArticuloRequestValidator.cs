@@ -17,13 +17,5 @@ public class CreateArticuloRequestValidator : AbstractValidator<CreateArticuloRe
         RuleFor(x => x.UnidadMedida)
             .MaximumLength(20).WithMessage("La unidad de medida no puede tener más de 20 caracteres.")
             .When(x => x.UnidadMedida is not null);
-
-        RuleFor(x => x.PrecioCompra)
-            .GreaterThanOrEqualTo(0).WithMessage("El precio de compra debe ser mayor o igual a 0.")
-            .When(x => x.PrecioCompra.HasValue);
-
-        RuleFor(x => x.PrecioVenta)
-            .GreaterThanOrEqualTo(0).WithMessage("El precio de venta debe ser mayor o igual a 0.")
-            .When(x => x.PrecioVenta.HasValue);
     }
 }

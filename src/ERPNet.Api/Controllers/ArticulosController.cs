@@ -59,4 +59,9 @@ public class ArticulosController(IArticuloService articuloService) : BaseControl
     [ProducesResponseType<List<FormatoArticuloResponse>>(StatusCodes.Status200OK)]
     public async Task<IActionResult> GetFormatos()
         => FromResult(await articuloService.GetFormatosAsync());
+
+    [HttpGet("configuraciones-caducidad")]
+    [ProducesResponseType<List<ConfiguracionCaducidadResponse>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetConfiguracionesCaducidad()
+        => FromResult(await articuloService.GetConfiguracionesCaducidadAsync());
 }
