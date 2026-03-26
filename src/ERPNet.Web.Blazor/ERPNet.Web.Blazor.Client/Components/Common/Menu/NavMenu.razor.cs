@@ -128,6 +128,7 @@ public partial class NavMenu : IDisposable
             // Invalidar cachés empresa-dependientes y re-fetch menús
             MenuState.Invalidar();
             Permisos.Invalidar();
+            _menus = null; // muestra skeleton mientras carga
             _menus = await MenuState.ObtenerAsync(MenusClient);
             _expanded.Clear();
             AutoExpandActive();
