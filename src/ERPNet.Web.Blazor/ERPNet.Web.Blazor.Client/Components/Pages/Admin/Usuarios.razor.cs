@@ -142,7 +142,9 @@ public partial class Usuarios
             _asignaciones    = (await asignacionesTask) ?? [];
             _empresasUsuario = ((await empresasTask) ?? []).ToHashSet();
 
-            _empleadoDetalle = await EmpleadosClient.EmpleadosGET2Async(_usuarioDetalle.EmpleadoId);
+            // El empleado puede pertenecer a otra empresa; no bloquear el detalle si no es accesible.
+            try { _empleadoDetalle = await EmpleadosClient.EmpleadosGET2Async(_usuarioDetalle.EmpleadoId); }
+            catch { _empleadoDetalle = null; }
 
             _editEmail = _usuarioDetalle.Email;
             _editActivo = _usuarioDetalle.Activo;

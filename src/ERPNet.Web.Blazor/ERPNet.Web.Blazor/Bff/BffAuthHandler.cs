@@ -7,7 +7,9 @@ namespace ERPNet.Web.Blazor.Bff;
 /// en las peticiones de los clientes tipados generados por NSwag.
 /// Se registra via AddHttpMessageHandler en DependencyInjection.AddApiClients.
 /// </summary>
-public sealed class BffAuthHandler(BffTokenService tokenService) : DelegatingHandler
+public sealed class BffAuthHandler(
+    BffTokenService tokenService,
+    IHttpContextAccessor httpContextAccessor) : DelegatingHandler
 {
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request, CancellationToken cancellationToken)
@@ -15,6 +17,15 @@ public sealed class BffAuthHandler(BffTokenService tokenService) : DelegatingHan
         var token = await tokenService.GetAccessTokenAsync();
         if (token is not null)
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var httpContext = httpContextAccessor.HttpContext;
+        if (httpContext is not null)
+        {
+            var empresaId = httpContext.User.FindFirst("empresa_id")?.Value;
+            if (empresaId is not null)
+                request.Headers.TryAddWithoutValidation("X-Empresa-Id", empresaId);
+            request.Headers.TryAddWithoutValidation("X-Plataforma", "WebBlazor");
+        }
 
         return await base.SendAsync(request, cancellationToken);
     }

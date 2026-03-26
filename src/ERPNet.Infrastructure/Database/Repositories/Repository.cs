@@ -13,6 +13,7 @@ public abstract class Repository<T>(ERPNetDbContext context, ICurrentUserProvide
 {
     protected ERPNetDbContext Context => context;
     protected DbSet<T> DbSet => context.Set<T>();
+    protected ICurrentUserProvider CurrentUser => currentUser;
 
     /// <summary>
     /// IQueryable base con el filtro de empresa aplicado automáticamente

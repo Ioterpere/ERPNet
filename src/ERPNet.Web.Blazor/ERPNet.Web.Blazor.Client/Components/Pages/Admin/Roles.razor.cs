@@ -81,6 +81,7 @@ public partial class Roles
     // ── Ciclo de vida ──────────────────────────────────────────
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
         await Task.WhenAll(CargarTodosRecursosAsync(), CargarTodosUsuariosAsync(), CargarTodasEmpresasAsync());
     }
 
@@ -134,7 +135,11 @@ public partial class Roles
                 Alcance   = p.Alcance
             }).ToList();
 
-            _asignacionesUsuario = (await asignacionesTask) ?? [];
+            var todasAsignaciones = (await asignacionesTask) ?? [];
+            // Mostrar solo asignaciones de usuarios accesibles en la empresa activa
+            _asignacionesUsuario = todasAsignaciones
+                .Where(a => _usuariosPorId.ContainsKey(a.UsuarioId))
+                .ToList();
 
             _editNombre      = _rolDetalle.Nombre;
             _editDescripcion = _rolDetalle.Descripcion ?? string.Empty;

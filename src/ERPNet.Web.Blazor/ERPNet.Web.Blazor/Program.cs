@@ -56,6 +56,8 @@ builder.Services.AddHttpContextAccessor();
 // Servicios compartidos con el WASM client (deben registrarse en ambos contenedores DI)
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<PermisosService>();
+builder.Services.AddScoped<MenuStateService>();
+builder.Services.AddScoped<EmpresaStateService>();
 builder.Services.AddScoped<PrefilladoService>();
 
 // BffTokenService: gestiona tokens JWT en caché del servidor (get, refresh, invalidate)

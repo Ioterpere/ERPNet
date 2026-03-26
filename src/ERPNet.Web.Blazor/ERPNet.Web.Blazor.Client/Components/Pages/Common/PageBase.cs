@@ -1,3 +1,4 @@
+using ERPNet.Web.Blazor.Client.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 
@@ -7,9 +8,11 @@ namespace ERPNet.Web.Blazor.Client.Components.Pages.Common;
 public abstract class PageBase : ComponentBase
 {
     [CascadingParameter] protected Task<AuthenticationState>? AuthStateTask { get; set; }
+    [Inject] protected EmpresaStateService EmpresaState { get; set; } = default!;
 
-    protected string NombreEmpresa =>
-        AuthStateTask?.IsCompletedSuccessfully == true
-            ? AuthStateTask.Result.User.FindFirst("empresa_nombre")?.Value ?? "ERPNet"
-            : "ERPNet";
+    /// <summary>
+    /// Nombre de la empresa activa. MainLayout inicializa <see cref="EmpresaStateService"/>
+    /// siempre antes de que cualquier página renderice, por lo que el valor es fiable.
+    /// </summary>
+    protected string NombreEmpresa => EmpresaState.EmpresaNombre ?? "ERPNet";
 }

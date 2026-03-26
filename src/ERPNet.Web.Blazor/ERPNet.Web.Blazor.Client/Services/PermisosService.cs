@@ -37,4 +37,7 @@ public class PermisosService(IAuthClient authClient)
 
     public async Task<bool> PuedeBorrar(RecursoCodigo recurso)
         => (await GetAsync()).Any(p => p.Codigo == recurso && p.CanDelete);
+
+    /// <summary>Invalida el caché para forzar una nueva petición (ej: cambio de empresa).</summary>
+    public void Invalidar() => _cache = null;
 }

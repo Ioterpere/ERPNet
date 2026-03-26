@@ -204,6 +204,10 @@ public class UsuarioRepositoryTests : RepositoryTestBase
             Crear(1, "a@t.com", 1),
             Crear(2, "b@t.com", 2),
             Crear(3, "c@t.com", 3));
+        Context.UsuarioEmpresas.AddRange(
+            new UsuarioEmpresa { UsuarioId = 1, EmpresaId = 1 },
+            new UsuarioEmpresa { UsuarioId = 2, EmpresaId = 1 },
+            new UsuarioEmpresa { UsuarioId = 3, EmpresaId = 1 });
         await SaveAndClearAsync();
 
         var (items, _) = await _sut.GetPaginatedAsync(new PaginacionFilter { PorPagina = 2 });

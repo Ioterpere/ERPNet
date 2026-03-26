@@ -1,12 +1,4 @@
-@using ERPNet.Web.Blazor.Client.Components.Common
-@using ERPNet.ApiClient
 @inherits LayoutComponentBase
-@implements IAsyncDisposable
-@inject IJSRuntime JS
-@inject NavigationManager Nav
-@inject PermisosService Permisos
-@inject IAiClient AiClient
-
 
 <div class="page">
     <div class="sidebar @(_sidebarCollapsed ? "sidebar-collapsed" : "") offcanvas-md offcanvas-start" tabindex="-1"
@@ -119,88 +111,6 @@
         <ChatPanel />
     </div>
 </div>
-}
-
-@code {
-    [CascadingParameter]
-    private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
-
-    private string? _email;
-    private string? _empresaNombre;
-    private bool _sidebarCollapsed;
-    private bool _cleanupPending;
-    private bool _tieneAsistenteIa;
-    private ICollection<string>? _herramientas;
-    private DotNetObjectReference<MainLayout>? _dotNetRef;
-
-    protected override async Task OnInitializedAsync()
-    {
-        var state = await AuthStateTask;
-        _email = state.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
-        _empresaNombre = state.User.FindFirst("empresa_nombre")?.Value;
-        if (!RendererInfo.IsInteractive) return;
-        if (await Permisos.TieneAcceso(RecursoCodigo.AsistenteIa))
-        {
-            try
-            {
-                await AiClient.AccesoAsync();
-                _herramientas = await AiClient.HerramientasAsync();
-                _tieneAsistenteIa = true;
-            }
-            catch { }
-        }
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            try
-            {
-                var val = await JS.InvokeAsync<string?>("localStorage.getItem", "sidebar-collapsed");
-                _sidebarCollapsed = val == "true";
-            }
-            catch { /* localStorage no disponible (modo privado, storage desactivado) */ }
-
-            _dotNetRef = DotNetObjectReference.Create(this);
-            await JS.InvokeVoidAsync("sidebar.registerShortcut", _dotNetRef);
-            await JS.InvokeVoidAsync("chat.registerShortcut");
-
-            _cleanupPending = true;
-            StateHasChanged();
-        }
-        else if (_cleanupPending)
-        {
-            _cleanupPending = false;
-            // El atributo pre-render ya no es necesario: Blazor tiene el estado correcto
-            await JS.InvokeVoidAsync("sidebar.removeSidebarInit");
-        }
-    }
-
-    private async Task ToggleSidebar()
-    {
-        _sidebarCollapsed = !_sidebarCollapsed;
-        try
-        {
-            await JS.InvokeVoidAsync("localStorage.setItem", "sidebar-collapsed", _sidebarCollapsed ? "true" : "false");
-        }
-        catch { /* localStorage no disponible */ }
-    }
-
-    [JSInvokable]
-    public async Task ToggleSidebarFromJs()
-    {
-        await ToggleSidebar();
-        await InvokeAsync(StateHasChanged);
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        try { await JS.InvokeVoidAsync("sidebar.unregisterShortcut"); } catch { }
-        try { await JS.InvokeVoidAsync("chat.unregisterShortcut"); } catch { }
-        _dotNetRef?.Dispose();
-    }
-
 }
 
 <div id="blazor-error-ui" data-nosnippet>

@@ -45,6 +45,8 @@ public class UsuarioRepository(ERPNetDbContext context, ICurrentUserProvider cur
     public override async Task<(List<Usuario> Items, int TotalRegistros)> GetPaginatedAsync(PaginacionFilter filtro)
     {
         IQueryable<Usuario> query = Query.AsNoTracking().Include(u => u.Empleado);
+        if (CurrentUser.Current?.EmpresaId is int empresaId)
+            query = query.Where(u => u.UsuarioEmpresas.Any(ue => ue.EmpresaId == empresaId && !ue.IsDeleted));
         foreach (var termino in (filtro.Busqueda ?? string.Empty)
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
         {

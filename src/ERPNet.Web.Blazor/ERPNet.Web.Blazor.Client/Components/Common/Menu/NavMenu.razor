@@ -1,10 +1,3 @@
-@inject IMenusClient MenusClient
-@inject NavigationManager Nav
-@inject HttpClient Http
-@inject PersistentComponentState ApplicationState
-@using Microsoft.AspNetCore.Components.Authorization
-@implements IDisposable
-
 <div class="nav-menu d-flex flex-column h-100">
     <div class="top-row ps-3 navbar navbar-dark d-none d-md-flex">
         <div class="container-fluid">
@@ -58,7 +51,7 @@
                             <span class="flex-grow-1">@menu.Nombre</span>
                             <i class="bi @(_expanded.Contains(menu.Id) ? "bi-chevron-up" : "bi-chevron-down") small opacity-75"></i>
                         </button>
-                        
+
 
                         @if (_expanded.Contains(menu.Id))
                         {
@@ -163,133 +156,3 @@
         }
     </div>
 </div>
-
-@code {
-    [CascadingParameter]
-    private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
-
-    private ICollection<MenuResponse>? _menus;
-    private readonly HashSet<int> _expanded = [];
-
-    private int? _empresaActualId;
-    private string? _empresaActualNombre;
-    private List<EmpresaItem> _empresas = [];
-    private bool _cargandoEmpresas = true;
-
-    private PersistingComponentStateSubscription _persistingSubscription;
-
-    protected override async Task OnInitializedAsync()
-    {
-        _persistingSubscription = ApplicationState.RegisterOnPersisting(PersistirMenus);
-
-        var state = await AuthStateTask;
-        var empresaIdStr = state.User.FindFirst("empresa_id")?.Value;
-        if (int.TryParse(empresaIdStr, out var eid))
-            _empresaActualId = eid;
-
-        // El nombre viene en el claim — disponible antes de cualquier llamada HTTP
-        _empresaActualNombre = state.User.FindFirst("empresa_nombre")?.Value;
-
-        if (ApplicationState.TryTakeFromJson<List<MenuResponse>>("nav-menus", out var persisted) && persisted is { Count: > 0 })
-        {
-            // Estado pre-cargado durante SSR — no se necesita llamada HTTP
-            _menus = persisted;
-            AutoExpandActive();
-        }
-        else
-        {
-            await CargarMenusAsync();
-        }
-
-        if (RendererInfo.IsInteractive)
-            await CargarEmpresasAsync();
-    }
-
-    private Task PersistirMenus()
-    {
-        // Solo persistir si SSR cargó menús — si está vacío, WASM hará su propia llamada
-        if (_menus is { Count: > 0 })
-            ApplicationState.PersistAsJson("nav-menus", _menus);
-        return Task.CompletedTask;
-    }
-
-    public void Dispose() => _persistingSubscription.Dispose();
-
-    private async Task CargarMenusAsync()
-    {
-        try
-        {
-            _menus = await MenusClient.MenusAllAsync();
-            AutoExpandActive();
-        }
-        catch
-        {
-            _menus = [];
-        }
-    }
-
-    private async Task CargarEmpresasAsync()
-    {
-        try
-        {
-            var empresas = await Http.GetFromJsonAsync<List<EmpresaItem>>("api/empresas/mis-empresas");
-            if (empresas is { Count: > 0 })
-            {
-                _empresas = empresas;
-                _empresaActualNombre = _empresas.FirstOrDefault(e => e.Id == _empresaActualId)?.Nombre
-                                    ?? _empresas.FirstOrDefault()?.Nombre;
-            }
-        }
-        catch { /* no interrumpir la navegación si falla */ }
-        finally { _cargandoEmpresas = false; }
-    }
-
-    private async Task CambiarEmpresaAsync(int empresaId)
-    {
-        if (empresaId == _empresaActualId) return;
-
-        _cargandoEmpresas = true; // Blazor renderiza el spinner en el primer await
-
-        try
-        {
-            var content = new FormUrlEncodedContent(
-                new[] { new KeyValuePair<string, string>(key: "empresaId", empresaId.ToString()) });
-            var response = await Http.PostAsync("bff/cambiar-empresa", content);
-            if (response.IsSuccessStatusCode)
-                Nav.NavigateTo("/", forceLoad: true);
-        }
-        catch { _cargandoEmpresas = false; /* ignorar errores de red */ }
-    }
-
-    private void AutoExpandActive()
-    {
-        if (_menus is null) return;
-        var currentPath = "/" + Nav.ToBaseRelativePath(Nav.Uri).Split('?')[0];
-        foreach (var menu in _menus.Where(m => m.SubMenus?.Count > 0))
-        {
-            foreach (var sub in menu.SubMenus!)
-            {
-                if (sub.Path == currentPath)
-                {
-                    _expanded.Add(menu.Id);
-                }
-                else if (sub.SubMenus?.Count > 0)
-                {
-                    if (sub.SubMenus.Any(s => s.Path == currentPath))
-                    {
-                        _expanded.Add(menu.Id);
-                        _expanded.Add(sub.Id);
-                    }
-                }
-            }
-        }
-    }
-
-    private void Toggle(int id)
-    {
-        if (!_expanded.Remove(id))
-            _expanded.Add(id);
-    }
-
-    private sealed record EmpresaItem(int Id, string Nombre, string? Cif, bool Activo);
-}

@@ -32,6 +32,8 @@ builder.Services.AddApiClients(
 builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<BootstrapIconsService>();
 builder.Services.AddScoped<PermisosService>();
+builder.Services.AddScoped<MenuStateService>();
+builder.Services.AddScoped<EmpresaStateService>();
 builder.Services.AddSingleton<PrefilladoService>();
 
 await builder.Build().RunAsync();
