@@ -151,6 +151,12 @@ public class ArticuloService(
         return Result<List<FormatoArticuloResponse>>.Success(formatos.Select(f => f.ToResponse()).ToList());
     }
 
+    public async Task<Result<List<ConfiguracionCaducidadResponse>>> GetConfiguracionesCaducidadAsync()
+    {
+        var configs = await catalogoRepository.GetConfiguracionesCaducidadAsync();
+        return Result<List<ConfiguracionCaducidadResponse>>.Success(configs.Select(c => c.ToResponse()).ToList());
+    }
+
     private bool TieneAcceso(Articulo articulo)
     {
         var empresaId = currentUser.Current!.EmpresaId;

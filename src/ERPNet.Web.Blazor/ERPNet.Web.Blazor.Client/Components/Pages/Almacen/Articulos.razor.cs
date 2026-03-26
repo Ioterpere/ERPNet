@@ -1,3 +1,4 @@
+using System.Globalization;
 using ERPNet.ApiClient;
 using ERPNet.Web.Blazor.Client.Components.Common;
 using ERPNet.Web.Blazor.Client.Components.Common.Tabs;
@@ -13,18 +14,36 @@ public partial class Articulos
     // ── Lista ──────────────────────────────────────────────────
     private VirtualList<ArticuloResponse>? _refLista;
     private int? _totalItems;
+    private string _ordenarPor = nameof(ArticuloResponse.Codigo);
+    private bool _ordenDesc;
+
+    private static readonly (string Valor, string Label)[] _camposOrden =
+    [
+        (nameof(ArticuloResponse.Codigo),                "Código"),
+        (nameof(ArticuloResponse.Descripcion),           "Descripción"),
+        (nameof(ArticuloResponse.FamiliaArticuloNombre), "Familia"),
+        (nameof(ArticuloResponse.PrecioCoste),           "Precio coste"),
+        (nameof(ArticuloResponse.PrecioVenta),           "Precio venta"),
+    ];
 
     // ── Tabs ───────────────────────────────────────────────────
     private static readonly TabItem[] _tabsArticulo =
     [
-        new("datos", "Datos",     "bi-tag"),
-        new("log",   "Log",       "bi-journal-text"),
+        new("datos",       "Datos",           "bi-tag"),
+        new("facturacion", "C. Facturación",  "bi-receipt"),
+        new("pallet",      "Tpo. Pallet",     "bi-box-seam"),
+        new("dpr",         "DPR",             "bi-graph-up"),
+        new("movimiento",  "Geo. Movimiento", "bi-geo-alt"),
+        new("rappel",      "Tpo. Rappel",     "bi-percent"),
+        new("calidad",     "Calidad",         "bi-shield-check"),
+        new("log",         "Log",             "bi-journal-text"),
     ];
 
     // ── Catálogos ──────────────────────────────────────────────
     private List<FamiliaArticuloResponse> _familias = [];
     private List<TipoIvaResponse> _tiposIva = [];
     private List<FormatoArticuloResponse> _formatos = [];
+    private List<ConfiguracionCaducidadResponse> _configuracionesCaducidad = [];
 
     // ── Estado ─────────────────────────────────────────────────
     private bool _eliminando;
@@ -35,16 +54,43 @@ public partial class Articulos
     private bool _cargandoDetalle;
     private string? _errorDetalle;
 
-    // ── Tab Datos ──────────────────────────────────────────────
+    // ── Tab Datos: ficha ───────────────────────────────────────
     private string _editCodigo = string.Empty;
+    private string? _editCodigoBarras;
     private string _editDescripcion = string.Empty;
+    private string? _editDescripcionVenta;
     private string? _editUnidadMedida;
-    private double? _editPrecioCompra;
-    private double? _editPrecioVenta;
-    private bool _editActivo;
+    private string? _editUnidadMedida2;
     private int _editFamiliaId;
     private int _editTipoIvaId;
     private int _editFormatoId;
+    private int _editCaducidadId;
+    private string? _editProveedorPrincipal;
+
+    // ── Tab Datos: precios ─────────────────────────────────────
+    private double _editPrecioCoste;
+    private double _editPrecioMedio;
+    private double _editPrecioVenta;
+
+    // ── Tab Datos: stock y logística ───────────────────────────
+    private double _editStockMinimo;
+    private double _editNivelPedido;
+    private double _editNivelReposicion;
+    private double _editUnidadesCaja;
+    private int _editUnidadesPalet;
+    private int _editFilasPalet;
+    private double _editPesoGramo;
+    private int? _editLeadTime;
+    private int _editDiasVidaUtil;
+    private double _editDepreciacion;
+
+    // ── Tab Datos: flags ───────────────────────────────────────
+    private bool _editEsInventariable;
+    private bool _editEsPropio;
+    private bool _editEsNuevo;
+    private bool _editEsObsoleto;
+    private string? _editObservaciones;
+
     private bool _guardando;
     private string? _errorGuardar;
 
@@ -64,15 +110,28 @@ public partial class Articulos
     private string _nuevDescripcion = string.Empty;
     private string? _nuevUnidadMedida;
     private int _nuevFamiliaId;
-    private int _nuevTipoIvaId;
     private bool _creando;
     private string? _errorCrear;
+
+    // ── Formato de precios (es-ES) ─────────────────────────────
+    private static readonly CultureInfo CulturaEs = new("es-ES");
+
+    private static string FormatPrecio(double valor) =>
+        valor.ToString("N2", CulturaEs);
+
+    private static double ParsePrecio(string? texto)
+    {
+        if (string.IsNullOrWhiteSpace(texto)) return 0;
+        if (double.TryParse(texto, NumberStyles.Any, CulturaEs, out var v)) return v;
+        if (double.TryParse(texto, NumberStyles.Any, CultureInfo.InvariantCulture, out v)) return v;
+        return 0;
+    }
 
     // ── Ciclo de vida ──────────────────────────────────────────
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        await Task.WhenAll(CargarFamiliasAsync(), CargarTiposIvaAsync(), CargarFormatosAsync());
+        await Task.WhenAll(CargarFamiliasAsync(), CargarTiposIvaAsync(), CargarFormatosAsync(), CargarConfiguracionesCaducidadAsync());
     }
 
     // ── Implementación de abstracts ────────────────────────────
@@ -80,6 +139,18 @@ public partial class Articulos
     {
         if (_refLista is not null)
             await _refLista.RefreshAsync();
+    }
+
+    private async Task SetOrdenAsync(string campo)
+    {
+        _ordenarPor = campo;
+        await CargarListaAsync();
+    }
+
+    private async Task ToggleOrdenDescAsync()
+    {
+        _ordenDesc = !_ordenDesc;
+        await CargarListaAsync();
     }
 
     internal async ValueTask<ItemsProviderResult<ArticuloResponse>> CargarItemsAsync(ItemsProviderRequest request)
@@ -90,8 +161,8 @@ public partial class Articulos
                 pagina:     request.StartIndex,
                 porPagina:  request.Count,
                 busqueda:   string.IsNullOrWhiteSpace(_busqueda) ? null : _busqueda,
-                ordenarPor: null,
-                ordenDesc:  null,
+                ordenarPor: _ordenarPor,
+                ordenDesc:  _ordenDesc,
                 cancellationToken: request.CancellationToken);
             return new(resultado.Items, resultado.TotalRegistros);
         }
@@ -111,16 +182,7 @@ public partial class Articulos
         try
         {
             _articuloDetalle = await ArticulosClient.ArticulosGET2Async(id);
-
-            _editCodigo        = _articuloDetalle.Codigo;
-            _editDescripcion   = _articuloDetalle.Descripcion;
-            _editUnidadMedida  = _articuloDetalle.UnidadMedida;
-            _editPrecioCompra  = _articuloDetalle.PrecioCompra;
-            _editPrecioVenta   = _articuloDetalle.PrecioVenta;
-            _editActivo        = _articuloDetalle.Activo;
-            _editFamiliaId     = _articuloDetalle.FamiliaArticuloId ?? 0;
-            _editTipoIvaId     = _articuloDetalle.TipoIvaId ?? 0;
-            _editFormatoId     = _articuloDetalle.FormatoArticuloId ?? 0;
+            MapearDetalleAEdit(_articuloDetalle);
 
             if ((Tab ?? "datos") == "log")
                 await CargarLogsAsync(id);
@@ -154,7 +216,6 @@ public partial class Articulos
         _nuevDescripcion  = string.Empty;
         _nuevUnidadMedida = null;
         _nuevFamiliaId    = 0;
-        _nuevTipoIvaId    = 0;
         _errorCrear       = null;
         _enfocarNuevo     = true;
         Nav.NavigateTo(Nav.GetUriWithQueryParameter("id", (int?)null));
@@ -213,6 +274,16 @@ public partial class Articulos
         catch { /* sin formatos */ }
     }
 
+    private async Task CargarConfiguracionesCaducidadAsync()
+    {
+        try
+        {
+            var configs = await ArticulosClient.ConfiguracionesCaducidadAsync();
+            _configuracionesCaducidad = configs.ToList();
+        }
+        catch { /* sin configuraciones */ }
+    }
+
     private async Task CargarLogsAsync(int articuloId)
     {
         _cargandoLogs = true;
@@ -233,6 +304,39 @@ public partial class Articulos
     {
         _errorGuardar = null;
         _errorLog     = null;
+    }
+
+    private void MapearDetalleAEdit(ArticuloResponse a)
+    {
+        _editCodigo              = a.Codigo;
+        _editCodigoBarras        = a.CodigoBarras;
+        _editDescripcion         = a.Descripcion;
+        _editDescripcionVenta    = a.DescripcionVenta;
+        _editUnidadMedida        = a.UnidadMedida;
+        _editUnidadMedida2       = a.UnidadMedida2;
+        _editFamiliaId           = a.FamiliaArticuloId ?? 0;
+        _editTipoIvaId           = a.TipoIvaId ?? 0;
+        _editFormatoId           = a.FormatoArticuloId ?? 0;
+        _editCaducidadId         = a.ConfiguracionCaducidadId ?? 0;
+        _editProveedorPrincipal  = a.ProveedorPrincipal;
+        _editPrecioCoste         = (double)a.PrecioCoste;
+        _editPrecioMedio         = (double)a.PrecioMedio;
+        _editPrecioVenta         = (double)a.PrecioVenta;
+        _editStockMinimo         = (double)a.StockMinimo;
+        _editNivelPedido         = (double)a.NivelPedido;
+        _editNivelReposicion     = (double)a.NivelReposicion;
+        _editUnidadesCaja        = (double)a.UnidadesCaja;
+        _editUnidadesPalet       = a.UnidadesPalet;
+        _editFilasPalet          = a.FilasPalet;
+        _editPesoGramo           = (double)a.PesoGramo;
+        _editLeadTime            = a.LeadTime;
+        _editDiasVidaUtil        = a.DiasVidaUtil;
+        _editDepreciacion        = (double)a.Depreciacion;
+        _editEsInventariable     = a.EsInventariable;
+        _editEsPropio            = a.EsPropio;
+        _editEsNuevo             = a.EsNuevo;
+        _editEsObsoleto          = a.EsObsoleto;
+        _editObservaciones       = a.Observaciones;
     }
 
     // ── Acciones ───────────────────────────────────────────────
@@ -256,11 +360,11 @@ public partial class Articulos
         {
             var creado = await ArticulosClient.ArticulosPOSTAsync(new CreateArticuloRequest
             {
-                Codigo             = _nuevoCodigo,
-                Descripcion        = _nuevDescripcion,
-                UnidadMedida       = string.IsNullOrWhiteSpace(_nuevUnidadMedida) ? null : _nuevUnidadMedida,
-                FamiliaArticuloId  = _nuevFamiliaId == 0 ? null : _nuevFamiliaId,
-                TipoIvaId          = _nuevTipoIvaId == 0 ? null : _nuevTipoIvaId,
+                Codigo            = _nuevoCodigo.Trim(),
+                Descripcion       = _nuevDescripcion.Trim(),
+                UnidadMedida      = string.IsNullOrWhiteSpace(_nuevUnidadMedida) ? null : _nuevUnidadMedida.Trim().ToUpper(),
+                FamiliaArticuloId = _nuevFamiliaId == 0 ? null : _nuevFamiliaId,
+                EsInventariable   = true,
             });
 
             await CargarListaAsync();
@@ -270,6 +374,10 @@ public partial class Articulos
         catch (ApiException ex) when (ex.StatusCode == 409)
         {
             _errorCrear = "Ya existe un artículo con ese código.";
+        }
+        catch (ApiException ex) when (ex.StatusCode == 400)
+        {
+            _errorCrear = "Los datos no son válidos.";
         }
         catch
         {
@@ -292,14 +400,34 @@ public partial class Articulos
             await ArticulosClient.ArticulosPUTAsync(Id.Value, new UpdateArticuloRequest
             {
                 Codigo             = _editCodigo,
+                CodigoBarras       = _editCodigoBarras ?? string.Empty,
                 Descripcion        = _editDescripcion,
-                UnidadMedida       = string.IsNullOrWhiteSpace(_editUnidadMedida) ? null : _editUnidadMedida,
-                PrecioCompra       = _editPrecioCompra,
+                DescripcionVenta   = _editDescripcionVenta ?? string.Empty,
+                UnidadMedida       = string.IsNullOrWhiteSpace(_editUnidadMedida) ? string.Empty : _editUnidadMedida.ToUpper(),
+                UnidadMedida2      = string.IsNullOrWhiteSpace(_editUnidadMedida2) ? string.Empty : _editUnidadMedida2.ToUpper(),
+                FamiliaArticuloId        = _editFamiliaId,
+                TipoIvaId                = _editTipoIvaId,
+                FormatoArticuloId        = _editFormatoId,
+                ConfiguracionCaducidadId = _editCaducidadId == 0 ? null : _editCaducidadId,
+                ProveedorPrincipal       = _editProveedorPrincipal ?? string.Empty,
+                PrecioCoste        = _editPrecioCoste,
+                PrecioMedio        = _editPrecioMedio,
                 PrecioVenta        = _editPrecioVenta,
-                Activo             = _editActivo,
-                FamiliaArticuloId  = _editFamiliaId == 0 ? null : _editFamiliaId,
-                TipoIvaId          = _editTipoIvaId == 0 ? null : _editTipoIvaId,
-                FormatoArticuloId  = _editFormatoId == 0 ? null : _editFormatoId,
+                StockMinimo        = _editStockMinimo,
+                NivelPedido        = _editNivelPedido,
+                NivelReposicion    = _editNivelReposicion,
+                UnidadesCaja       = _editUnidadesCaja,
+                UnidadesPalet      = _editUnidadesPalet,
+                FilasPalet         = _editFilasPalet,
+                PesoGramo          = _editPesoGramo,
+                LeadTime           = _editLeadTime,
+                DiasVidaUtil       = _editDiasVidaUtil,
+                Depreciacion       = _editDepreciacion,
+                EsInventariable    = _editEsInventariable,
+                EsPropio           = _editEsPropio,
+                EsNuevo            = _editEsNuevo,
+                EsObsoleto         = _editEsObsoleto,
+                Observaciones      = _editObservaciones ?? string.Empty,
             });
 
             Toast.Exito("Cambios guardados correctamente.");
@@ -309,6 +437,10 @@ public partial class Articulos
         catch (ApiException ex) when (ex.StatusCode == 409)
         {
             _errorGuardar = "Ya existe un artículo con ese código.";
+        }
+        catch (ApiException ex) when (ex.StatusCode == 400)
+        {
+            _errorGuardar = "Los datos no son válidos.";
         }
         catch
         {

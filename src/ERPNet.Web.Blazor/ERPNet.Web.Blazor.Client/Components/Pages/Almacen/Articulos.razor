@@ -27,36 +27,70 @@
         <VirtualList @ref="_refLista" TItem="ArticuloResponse"
                     IconoVacio="bi-tags"
                     ItemsProvider="CargarItemsAsync"
-                    ItemSize="56"
+                    ItemSize="26"
                     OnTotalChanged="t => _totalItems = t">
             <SkeletonItem>
                 <div class="art-row placeholder-glow">
-                    <span class="placeholder col-3 d-block mb-1" style="height:11px"></span>
-                    <span class="placeholder col-7" style="height:13px"></span>
+                    <span class="placeholder art-codigo-col" style="height:11px;border-radius:2px"></span>
+                    <span class="placeholder flex-grow-1 ms-2" style="height:11px;border-radius:2px"></span>
                 </div>
             </SkeletonItem>
             <ItemTemplate Context="a">
                 <button type="button"
                         class="art-row w-100 text-start @(Id == a.Id ? "active" : "")"
                         @onclick="() => SeleccionarItem(a.Id)">
-                    <div class="art-codigo-col font-monospace text-muted">@a.Codigo</div>
-                    <div class="flex-grow-1 overflow-hidden">
-                        <div class="fw-semibold text-truncate small">@a.Descripcion</div>
-                        <div class="d-flex align-items-center gap-2 mt-1">
-                            @if (a.FamiliaArticuloNombre is not null)
-                            {
-                                <span class="text-muted text-truncate" style="font-size:.75rem">@a.FamiliaArticuloNombre</span>
-                            }
-                            <span class="badge rounded-pill flex-shrink-0 @(a.Activo ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")"
-                                  style="font-size:.65rem">
-                                @(a.Activo ? "Activo" : "Inactivo")
-                            </span>
-                        </div>
-                    </div>
+                    <span class="art-codigo-col font-monospace">@a.Codigo</span>
+                    <span class="art-desc flex-grow-1 text-truncate text-uppercase">@a.Descripcion</span>
+                    @if (_ordenarPor == nameof(ArticuloResponse.FamiliaArticuloNombre))
+                    {
+                        <span class="art-meta">@a.FamiliaArticuloNombre</span>
+                    }
+                    else if (_ordenarPor == nameof(ArticuloResponse.PrecioCoste))
+                    {
+                        <span class="art-meta font-monospace">@a.PrecioCoste.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("es-ES")) €</span>
+                    }
+                    else if (_ordenarPor == nameof(ArticuloResponse.PrecioVenta))
+                    {
+                        <span class="art-meta font-monospace">@a.PrecioVenta.ToString("N2", System.Globalization.CultureInfo.GetCultureInfo("es-ES")) €</span>
+                    }
+                    @if (a.EsObsoleto)
+                    {
+                        <span class="art-pill obs">OBS</span>
+                    }
+                    @if (a.EsNuevo)
+                    {
+                        <span class="art-pill new">NEW</span>
+                    }
                 </button>
             </ItemTemplate>
         </VirtualList>
     </ListaBody>
+
+    <ListaFooterExtra>
+        <div class="d-flex align-items-center gap-1">
+            <button class="btn btn-link btn-sm text-muted p-0" type="button"
+                    @onclick="ToggleOrdenDescAsync" title="@(_ordenDesc ? "Descendente" : "Ascendente")"
+                    style="font-size:.8rem; box-shadow:none">
+                <i class="bi @(_ordenDesc ? "bi-sort-alpha-up" : "bi-sort-alpha-down")"></i>
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-link btn-sm text-muted text-decoration-none dropdown-toggle p-0"
+                        type="button" data-bs-toggle="dropdown" style="font-size:.75rem; box-shadow:none">
+                    @_camposOrden.First(c => c.Valor == _ordenarPor).Label
+                </button>
+                <ul class="dropdown-menu dropdown-menu-start shadow-sm">
+                    @foreach (var campo in _camposOrden)
+                    {
+                        <li>
+                            <button class="dropdown-item small" type="button" @onclick="() => SetOrdenAsync(campo.Valor)">
+                                <i class="bi bi-check me-2 @(_ordenarPor == campo.Valor ? "" : "invisible")"></i>@campo.Label
+                            </button>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </ListaFooterExtra>
 
     <FormNuevo>
         @if (_errorCrear is not null)
@@ -70,41 +104,32 @@
         <div class="card mb-3">
             <div class="card-header d-flex align-items-center gap-2">
                 <i class="bi bi-tag text-primary"></i>
-                <span class="fw-semibold">Datos del artículo</span>
+                <span class="fw-semibold">Datos básicos</span>
             </div>
             <div class="card-body py-4">
                 <div class="row g-3">
                     <div class="col-sm-4">
                         <label class="form-label">Código <span class="text-danger">*</span></label>
                         <input type="text" class="form-control font-monospace" @ref="_refNuevoCodigo"
-                               @bind="_nuevoCodigo" autocomplete="off" />
+                               @bind="_nuevoCodigo" placeholder="ART-001" autocomplete="off" />
                     </div>
                     <div class="col-sm-8">
                         <label class="form-label">Descripción <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" @bind="_nuevDescripcion" autocomplete="off" />
+                        <input type="text" class="form-control" @bind="_nuevDescripcion"
+                               placeholder="Nombre del artículo" autocomplete="off" />
                     </div>
                     <div class="col-sm-4">
                         <label class="form-label">Unidad de medida</label>
-                        <input type="text" class="form-control" @bind="_nuevUnidadMedida"
-                               placeholder="Ud, Kg, Lt..." autocomplete="off" />
+                        <input type="text" class="form-control font-monospace text-uppercase" @bind="_nuevUnidadMedida"
+                               placeholder="KG" autocomplete="off" maxlength="20" />
                     </div>
-                    <div class="col-sm-4">
+                    <div class="col-sm-8">
                         <label class="form-label">Familia</label>
                         <select class="form-select" @bind="_nuevFamiliaId">
                             <option value="0">-- Sin familia --</option>
                             @foreach (var f in _familias)
                             {
                                 <option value="@f.Id">@f.Nombre</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="col-sm-4">
-                        <label class="form-label">Tipo IVA</label>
-                        <select class="form-select" @bind="_nuevTipoIvaId">
-                            <option value="0">-- Sin IVA --</option>
-                            @foreach (var t in _tiposIva)
-                            {
-                                <option value="@t.Id">@t.Nombre</option>
                             }
                         </select>
                     </div>
@@ -120,7 +145,7 @@
                 }
                 else
                 {
-                    <i class="bi bi-plus-lg me-2"></i>
+                    <i class="bi bi-check-lg me-2"></i>
                 }
                 Crear artículo
             </button>
@@ -129,38 +154,41 @@
     </FormNuevo>
 
     <FormEdicion>
-        <div class="px-4 pt-4 flex-shrink-0">
+        <div class="px-3 py-2 flex-shrink-0">
 
             <!-- Header de detalle -->
-            <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="d-flex align-items-center gap-2 mb-2">
                 <button class="btn btn-sm btn-light d-lg-none" @onclick="VolverALista">
                     <i class="bi bi-arrow-left"></i>
                 </button>
 
                 @if (_cargandoDetalle)
                 {
-                    <div class="d-flex align-items-center gap-3 placeholder-glow flex-grow-1">
-                        <div>
-                            <span class="placeholder d-block mb-1" style="height:11px;width:80px"></span>
-                            <span class="placeholder" style="height:14px;width:200px"></span>
-                        </div>
+                    <div class="placeholder-glow flex-grow-1">
+                        <span class="placeholder d-block mb-1" style="height:13px;width:100px"></span>
+                        <span class="placeholder" style="height:10px;width:180px"></span>
                     </div>
                 }
                 else if (_articuloDetalle is not null)
                 {
-                    <div class="flex-grow-1 overflow-hidden">
-                        <p class="text-muted small mb-0 font-monospace">@_articuloDetalle.Codigo</p>
-                        <h5 class="mb-0 fw-semibold text-truncate">@_articuloDetalle.Descripcion</h5>
+                    <div class="flex-grow-1 overflow-hidden d-flex align-items-baseline gap-2">
+                        <span class="fw-semibold font-monospace" style="font-size:.95rem">@_articuloDetalle.Codigo</span>
+                        <span class="text-muted text-truncate small text-uppercase">@_articuloDetalle.Descripcion</span>
+                        @if (_articuloDetalle.EsObsoleto)
+                        {
+                            <span class="art-pill obs flex-shrink-0">OBS</span>
+                        }
+                        @if (_articuloDetalle.EsNuevo)
+                        {
+                            <span class="art-pill new flex-shrink-0">NEW</span>
+                        }
                     </div>
-                    <span class="badge rounded-pill flex-shrink-0 @(_articuloDetalle.Activo ? "bg-success-subtle text-success-emphasis" : "bg-secondary-subtle text-secondary-emphasis")">
-                        @(_articuloDetalle.Activo ? "Activo" : "Inactivo")
-                    </span>
                 }
             </div>
 
             @if (_errorDetalle is not null)
             {
-                <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+                <div class="alert alert-danger d-flex align-items-center gap-2 mb-2 py-2">
                     <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
                     <span>@_errorDetalle</span>
                 </div>
@@ -172,88 +200,265 @@
         {
             <Tabs Items="_tabsArticulo" ActiveTab="@(Tab ?? "datos")" ActiveTabChanged="CambiarTab">
 
-                <!-- ── Tab: Datos ────────────────────────────── -->
+                <!-- ── Tab: Datos ────────────────────────────────────── -->
                 @if ((Tab ?? "datos") == "datos")
                 {
-                    <div class="card mb-3">
-                        <div class="card-header d-flex align-items-center gap-2">
-                            <i class="bi bi-tag text-primary"></i>
-                            <span class="fw-semibold">Datos del artículo</span>
+                    <!-- Card 1: Ficha -->
+                    <div class="card mb-2">
+                        <div class="card-header-compact d-flex align-items-center gap-2">
+                            <i class="bi bi-tag text-primary" style="font-size:.8rem"></i>
+                            <span class="label-section">Ficha</span>
                         </div>
-                        <div class="card-body py-4">
-                            <div class="row g-3">
-                                <div class="col-sm-4">
-                                    <label class="form-label">Código</label>
-                                    <input type="text" class="form-control font-monospace" @bind="_editCodigo" />
+                        <div class="card-body px-3 py-2">
+                            <div class="row g-2">
+                                <div class="col-3 col-xl-2">
+                                    <label class="form-label-sm">Código</label>
+                                    <input type="text" class="form-control form-control-sm font-monospace"
+                                           @bind="_editCodigo" />
                                 </div>
-                                <div class="col-sm-8">
-                                    <label class="form-label">Descripción</label>
-                                    <input type="text" class="form-control" @bind="_editDescripcion" />
+                                <div class="col-2">
+                                    <label class="form-label-sm">U. medida</label>
+                                    <input type="text" class="form-control form-control-sm font-monospace text-uppercase"
+                                           @bind="_editUnidadMedida" maxlength="20" />
                                 </div>
-                                <div class="col-sm-4">
-                                    <label class="form-label">Unidad de medida</label>
-                                    <input type="text" class="form-control" @bind="_editUnidadMedida"
-                                           placeholder="Ud, Kg, Lt..." />
+                                <div class="col-2">
+                                    <label class="form-label-sm">U. medida 2</label>
+                                    <input type="text" class="form-control form-control-sm font-monospace text-uppercase"
+                                           @bind="_editUnidadMedida2" maxlength="3" />
                                 </div>
-                                <div class="col-sm-4">
-                                    <label class="form-label">Precio compra</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">€</span>
-                                        <input type="number" class="form-control" @bind="_editPrecioCompra"
-                                               step="0.01" min="0" />
-                                    </div>
+                                <div class="col-5 col-xl-6">
+                                    <label class="form-label-sm">Código de barras</label>
+                                    <input type="text" class="form-control form-control-sm font-monospace"
+                                           @bind="_editCodigoBarras" maxlength="13" />
                                 </div>
-                                <div class="col-sm-4">
-                                    <label class="form-label">Precio venta</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">€</span>
-                                        <input type="number" class="form-control" @bind="_editPrecioVenta"
-                                               step="0.01" min="0" />
-                                    </div>
+
+                                <div class="col-8">
+                                    <label class="form-label-sm">Descripción</label>
+                                    <input type="text" class="form-control form-control-sm"
+                                           @bind="_editDescripcion" />
                                 </div>
-                                <div class="col-sm-4">
-                                    <label class="form-label">Familia</label>
-                                    <select class="form-select" @bind="_editFamiliaId">
-                                        <option value="0">-- Sin familia --</option>
+                                <div class="col-4">
+                                    <label class="form-label-sm">Familia</label>
+                                    <select class="form-select form-select-sm" @bind="_editFamiliaId">
+                                        <option value="0">—</option>
                                         @foreach (var f in _familias)
                                         {
                                             <option value="@f.Id">@f.Nombre</option>
                                         }
                                     </select>
                                 </div>
-                                <div class="col-sm-4">
-                                    <label class="form-label">Tipo IVA</label>
-                                    <select class="form-select" @bind="_editTipoIvaId">
-                                        <option value="0">-- Sin IVA --</option>
+
+                                <div class="col-8">
+                                    <label class="form-label-sm">Descripción de venta</label>
+                                    <input type="text" class="form-control form-control-sm"
+                                           @bind="_editDescripcionVenta" />
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label-sm">Tipo de IVA</label>
+                                    <select class="form-select form-select-sm" @bind="_editTipoIvaId">
+                                        <option value="0">—</option>
                                         @foreach (var t in _tiposIva)
                                         {
-                                            <option value="@t.Id">@t.Nombre</option>
+                                            <option value="@t.Id">@t.Nombre (@t.Porcentaje %)</option>
                                         }
                                     </select>
                                 </div>
-                                <div class="col-sm-4">
-                                    <label class="form-label">Formato</label>
-                                    <select class="form-select" @bind="_editFormatoId">
-                                        <option value="0">-- Sin formato --</option>
-                                        @foreach (var f in _formatos)
+
+                                <div class="col-8">
+                                    <label class="form-label-sm">Proveedor principal</label>
+                                    <input type="text" class="form-control form-control-sm"
+                                           @bind="_editProveedorPrincipal" />
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label-sm">Formato</label>
+                                    <select class="form-select form-select-sm" @bind="_editFormatoId">
+                                        <option value="0">—</option>
+                                        @foreach (var fo in _formatos)
                                         {
-                                            <option value="@f.Id">@f.Nombre</option>
+                                            <option value="@fo.Id">@fo.Nombre</option>
                                         }
                                     </select>
                                 </div>
+
                                 <div class="col-12">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="activo-art-switch"
-                                               @bind="_editActivo" />
-                                        <label class="form-check-label" for="activo-art-switch">Artículo activo</label>
+                                    <label class="form-label-sm">Config. caducidad</label>
+                                    <select class="form-select form-select-sm" @bind="_editCaducidadId">
+                                        <option value="0">— Sin configurar —</option>
+                                        @foreach (var c in _configuracionesCaducidad)
+                                        {
+                                            <option value="@c.Id">@c.Nombre (@c.DiasAviso días)</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Precios y stock -->
+                    <div class="card mb-2">
+                        <div class="card-header-compact d-flex align-items-center gap-2">
+                            <i class="bi bi-currency-euro text-primary" style="font-size:.8rem"></i>
+                            <span class="label-section">Precios y stock</span>
+                        </div>
+                        <div class="card-body px-3 py-2">
+                            <div class="row g-2">
+                                <div class="col-4">
+                                    <label class="form-label-sm">Precio coste</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control text-end font-monospace"
+                                               value="@FormatPrecio(_editPrecioCoste)"
+                                               @onchange="e => _editPrecioCoste = ParsePrecio(e.Value?.ToString())" />
+                                        <span class="input-group-text">€</span>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label-sm">Precio medio</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control text-end font-monospace"
+                                               value="@FormatPrecio(_editPrecioMedio)"
+                                               @onchange="e => _editPrecioMedio = ParsePrecio(e.Value?.ToString())" />
+                                        <span class="input-group-text">€</span>
+                                    </div>
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label-sm">Precio venta</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control text-end font-monospace"
+                                               value="@FormatPrecio(_editPrecioVenta)"
+                                               @onchange="e => _editPrecioVenta = ParsePrecio(e.Value?.ToString())" />
+                                        <span class="input-group-text">€</span>
+                                    </div>
+                                </div>
+
+                                <div class="col-12"><hr class="my-1" /></div>
+
+                                <div class="col-4">
+                                    <label class="form-label-sm">Stock mínimo</label>
+                                    <input type="number" class="form-control form-control-sm"
+                                           step="0.001" min="0" @bind="_editStockMinimo" />
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label-sm">Nivel de pedido</label>
+                                    <input type="number" class="form-control form-control-sm"
+                                           step="0.001" min="0" @bind="_editNivelPedido" />
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label-sm">Nivel de reposición</label>
+                                    <input type="number" class="form-control form-control-sm"
+                                           step="0.001" min="0" @bind="_editNivelReposicion" />
+                                </div>
+
+                                <div class="col-4">
+                                    <label class="form-label-sm">Uds/caja</label>
+                                    <input type="number" class="form-control form-control-sm"
+                                           step="0.001" min="0" @bind="_editUnidadesCaja" />
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label-sm">Uds/palé</label>
+                                    <input type="number" class="form-control form-control-sm"
+                                           step="1" min="0" @bind="_editUnidadesPalet" />
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label-sm">Filas/palé</label>
+                                    <input type="number" class="form-control form-control-sm"
+                                           step="1" min="0" @bind="_editFilasPalet" />
+                                </div>
+
+                                <div class="col-3">
+                                    <label class="form-label-sm">Peso (g)</label>
+                                    <input type="number" class="form-control form-control-sm"
+                                           step="0.1" min="0" @bind="_editPesoGramo" />
+                                </div>
+                                <div class="col-3">
+                                    <label class="form-label-sm">Lead time (días)</label>
+                                    <input type="number" class="form-control form-control-sm"
+                                           step="1" min="0" @bind="_editLeadTime" />
+                                </div>
+                                <div class="col-3">
+                                    <label class="form-label-sm">Días vida útil</label>
+                                    <input type="number" class="form-control form-control-sm"
+                                           step="1" min="0" @bind="_editDiasVidaUtil" />
+                                </div>
+                                <div class="col-3">
+                                    <label class="form-label-sm">Depreciación</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control"
+                                               step="0.01" min="0" max="100" @bind="_editDepreciacion" />
+                                        <span class="input-group-text">%</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Card 3: Indicadores + Observaciones -->
+                    <div class="card mb-2">
+                        <div class="card-body px-3 py-2">
+                            <div class="d-flex flex-wrap gap-3 mb-2">
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="chk-inventariable"
+                                           @bind="_editEsInventariable" />
+                                    <label class="form-check-label small" for="chk-inventariable">Inventariable</label>
+                                </div>
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="chk-propio"
+                                           @bind="_editEsPropio" />
+                                    <label class="form-check-label small" for="chk-propio">Propio</label>
+                                </div>
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="chk-nuevo"
+                                           @bind="_editEsNuevo" />
+                                    <label class="form-check-label small" for="chk-nuevo">Nuevo</label>
+                                </div>
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="chk-obsoleto"
+                                           @bind="_editEsObsoleto" />
+                                    <label class="form-check-label small" for="chk-obsoleto">Obsoleto</label>
+                                </div>
+                            </div>
+                            <textarea class="form-control form-control-sm" rows="2"
+                                      placeholder="Observaciones..." @bind="_editObservaciones"></textarea>
+                        </div>
+                    </div>
                 }
 
-                <!-- ── Tab: Log ──────────────────────────────── -->
+                <!-- ── Tab: C. Facturación ──────────────────────────── -->
+                @if ((Tab ?? "datos") == "facturacion")
+                {
+                    <div class="text-muted p-4 text-center fst-italic">C. Facturación — pendiente de implementar</div>
+                }
+
+                <!-- ── Tab: Tpo. Pallet ──────────────────────────────── -->
+                @if ((Tab ?? "datos") == "pallet")
+                {
+                    <div class="text-muted p-4 text-center fst-italic">Tpo. Pallet — pendiente de implementar</div>
+                }
+
+                <!-- ── Tab: DPR ──────────────────────────────────────── -->
+                @if ((Tab ?? "datos") == "dpr")
+                {
+                    <div class="text-muted p-4 text-center fst-italic">DPR — pendiente de implementar</div>
+                }
+
+                <!-- ── Tab: Geo. Movimiento ───────────────────────────── -->
+                @if ((Tab ?? "datos") == "movimiento")
+                {
+                    <div class="text-muted p-4 text-center fst-italic">Geo. Movimiento — pendiente de implementar</div>
+                }
+
+                <!-- ── Tab: Tpo. Rappel ───────────────────────────────── -->
+                @if ((Tab ?? "datos") == "rappel")
+                {
+                    <div class="text-muted p-4 text-center fst-italic">Tpo. Rappel — pendiente de implementar</div>
+                }
+
+                <!-- ── Tab: Calidad ───────────────────────────────────── -->
+                @if ((Tab ?? "datos") == "calidad")
+                {
+                    <div class="text-muted p-4 text-center fst-italic">Calidad — pendiente de implementar</div>
+                }
+
+                <!-- ── Tab: Log ──────────────────────────────────────── -->
                 @if ((Tab ?? "datos") == "log")
                 {
                     <div class="card mb-3">

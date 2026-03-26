@@ -379,26 +379,29 @@ public class DbSeeder(ITestOutputHelper output)
             .RuleFor(a => a.Codigo, _ => $"ART-{artIndex + 1:D4}")
             .RuleFor(a => a.Descripcion, f => f.Commerce.ProductName())
             .RuleFor(a => a.UnidadMedida, f => f.PickRandom("Ud", "Kg", "Lt", "Caja"))
-            .RuleFor(a => a.PrecioCompra, f => Math.Round((decimal)f.Random.Double(0.5, 50), 2))
-            .RuleFor(a => a.PrecioVenta, (f, a) => Math.Round(a.PrecioCompra!.Value * (decimal)f.Random.Double(1.1, 2.5), 2))
-            .RuleFor(a => a.Activo, f => f.Random.Bool(0.9f))
+            .RuleFor(a => a.PrecioCoste, f => Math.Round((decimal)f.Random.Double(0.5, 50), 2))
+            .RuleFor(a => a.PrecioVenta, (f, a) => Math.Round(a.PrecioCoste * (decimal)f.Random.Double(1.1, 2.5), 2))
+            .RuleFor(a => a.EsInventariable, _ => true)
+            .RuleFor(a => a.EsPropio, _ => true)
+            .RuleFor(a => a.EsNuevo, f => f.Random.Bool(0.1f))
+            .RuleFor(a => a.EsObsoleto, f => f.Random.Bool(0.05f))
             .RuleFor(a => a.EmpresaId, _ => empresa1.Id)
             .RuleFor(a => a.FamiliaArticuloId, f => f.PickRandom(familiasIds))
             .RuleFor(a => a.TipoIvaId, f => f.Random.Number(1, 4))
             .RuleFor(a => a.CreatedAt, DateTime.UtcNow)
             .FinishWith((_, _) => artIndex++);
 
-        var articulos = fakerArticulo.Generate(200);
+        var articulos = fakerArticulo.Generate(2000);
         context.Articulos.AddRange(articulos);
         await context.SaveChangesAsync();
         output.WriteLine($"  {articulos.Count} artículos creados.");
 
-        // Logs de artículos (~60 entradas)
-        var articulosParaLogs = articulos.Take(40).ToArray();
+        // Logs de artículos (~600 entradas)
+        var articulosParaLogs = articulos.Take(400).ToArray();
         var logsArticulo = new List<ArticuloLog>();
         var fakerLog = new Faker("es") { Random = new Randomizer(42) };
 
-        for (var i = 0; i < 60; i++)
+        for (var i = 0; i < 600; i++)
         {
             var articulo = fakerLog.PickRandom(articulosParaLogs);
             var stockAnterior = Math.Round((decimal)fakerLog.Random.Double(0, 100), 2);

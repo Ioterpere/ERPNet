@@ -44,7 +44,7 @@ public class ArticuloServiceTests
         Id = id,
         Codigo = "ART-001",
         Descripcion = "Artículo de prueba",
-        Activo = true,
+        EsInventariable = true,
         EmpresaId = empresaId
     };
 

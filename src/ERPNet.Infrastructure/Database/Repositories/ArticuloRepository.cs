@@ -28,6 +28,18 @@ public class ArticuloRepository(ERPNetDbContext context, ICurrentUserProvider cu
                         && (!excludeId.HasValue || a.Id != excludeId.Value));
     }
 
+    private static readonly Dictionary<string, Func<IQueryable<Articulo>, bool, IOrderedQueryable<Articulo>>> _ordenadores = new()
+    {
+        ["Codigo"]                = (q, d) => d ? q.OrderByDescending(a => a.Codigo)              : q.OrderBy(a => a.Codigo),
+        ["Descripcion"]           = (q, d) => d ? q.OrderByDescending(a => a.Descripcion)         : q.OrderBy(a => a.Descripcion),
+        ["FamiliaArticuloNombre"] = (q, d) => d ? q.OrderByDescending(a => a.FamiliaArticulo!.Nombre) : q.OrderBy(a => a.FamiliaArticulo!.Nombre),
+        ["PrecioCoste"]           = (q, d) => d ? q.OrderByDescending(a => a.PrecioCoste)         : q.OrderBy(a => a.PrecioCoste),
+        ["PrecioVenta"]           = (q, d) => d ? q.OrderByDescending(a => a.PrecioVenta)         : q.OrderBy(a => a.PrecioVenta),
+    };
+
+    protected override IOrderedQueryable<Articulo> AplicarOrden(IQueryable<Articulo> query, string? campo, bool desc) =>
+        campo is not null && _ordenadores.TryGetValue(campo, out var fn) ? fn(query, desc) : query.OrderBy(a => a.Codigo);
+
     public async Task<(List<Articulo> Items, int TotalRegistros)> GetPaginatedAsync(
         PaginacionFilter filtro, int empresaId)
     {
@@ -45,8 +57,7 @@ public class ArticuloRepository(ERPNetDbContext context, ICurrentUserProvider cu
         }
 
         var total = await query.CountAsync();
-        var items = await query
-            .OrderByDescending(a => a.Id)
+        var items = await AplicarOrden(query, filtro.OrdenarPor, filtro.OrdenDesc)
             .Skip(filtro.Pagina)
             .Take(filtro.PorPagina)
             .ToListAsync();

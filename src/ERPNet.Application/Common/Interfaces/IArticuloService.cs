@@ -15,4 +15,5 @@ public interface IArticuloService
     Task<Result<List<FamiliaArticuloResponse>>> GetFamiliasAsync();
     Task<Result<List<TipoIvaResponse>>> GetTiposIvaAsync();
     Task<Result<List<FormatoArticuloResponse>>> GetFormatosAsync();
+    Task<Result<List<ConfiguracionCaducidadResponse>>> GetConfiguracionesCaducidadAsync();
 }
