@@ -76,8 +76,9 @@ export function registerShortcuts(dotNet) {
             return;
         }
 
-        // Alt+N: nuevo
-        if (e.altKey && !e.ctrlKey && !e.shiftKey && e.key === 'n') {
+
+        // Ctrl+Insert: nuevo
+        if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key === 'Insert') {
             e.preventDefault();
             _dotNet.invokeMethodAsync('HandleShortcutAsync', 'nuevo');
             return;
@@ -92,8 +93,8 @@ export function registerShortcuts(dotNet) {
             return;
         }
 
-        // Alt+Suprimir: borrar (ignorado si el foco está en un campo de texto)
-        if (e.altKey && !e.ctrlKey && !e.shiftKey && e.key === 'Delete' && !isEditing) {
+        // Ctrl+Suprimir: borrar (ignorado si el foco está en un campo de texto)
+        if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key === 'Delete' && !isEditing) {
             e.preventDefault();
             _dotNet.invokeMethodAsync('HandleShortcutAsync', 'borrar');
             return;

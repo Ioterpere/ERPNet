@@ -5,7 +5,7 @@ window.sidebar = {
     _shortcutHandler: null,
     registerShortcut: function (dotNetRef) {
         this._shortcutHandler = function (e) {
-            if (!e.ctrlKey || e.altKey || e.shiftKey || e.key !== 'b') return;
+            if (!e.ctrlKey || e.altKey || e.shiftKey || e.key !== 'm') return;
             const tag = document.activeElement?.tagName;
             if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
             e.preventDefault();
