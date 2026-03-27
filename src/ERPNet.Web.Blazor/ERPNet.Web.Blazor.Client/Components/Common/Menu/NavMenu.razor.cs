@@ -2,6 +2,7 @@ using ERPNet.ApiClient;
 using ERPNet.Web.Blazor.Client.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.JSInterop;
 using System.Net.Http.Json;
 
 namespace ERPNet.Web.Blazor.Client.Components.Common.Menu;
@@ -11,6 +12,7 @@ public partial class NavMenu : IDisposable
     [Inject] private IMenusClient MenusClient { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
     [Inject] private HttpClient Http { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
     [Inject] private PersistentComponentState ApplicationState { get; set; } = default!;
     [Inject] private MenuStateService MenuState { get; set; } = default!;
     [Inject] private PermisosService Permisos { get; set; } = default!;
@@ -65,6 +67,12 @@ public partial class NavMenu : IDisposable
 
         if (RendererInfo.IsInteractive)
             await CargarEmpresasAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && RendererInfo.IsInteractive)
+            await JS.InvokeVoidAsync("sidebar.initAutoClose");
     }
 
     private Task PersistirMenus()

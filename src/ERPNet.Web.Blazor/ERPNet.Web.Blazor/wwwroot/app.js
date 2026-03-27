@@ -2,6 +2,18 @@ window.sidebar = {
     removeSidebarInit: function () {
         document.documentElement.removeAttribute('data-sidebar-collapsed');
     },
+    cerrarMobile: function () {
+        bootstrap.Offcanvas.getInstance(document.getElementById('sidebar'))?.hide();
+    },
+    initAutoClose: function () {
+        const sidebar = document.getElementById('sidebar');
+        if (!sidebar) return;
+        sidebar.addEventListener('click', function (e) {
+            if (e.target.closest('a[href]')) {
+                window.sidebar.cerrarMobile();
+            }
+        });
+    },
     _shortcutHandler: null,
     registerShortcut: function (dotNetRef) {
         this._shortcutHandler = function (e) {

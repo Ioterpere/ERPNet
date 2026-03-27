@@ -40,7 +40,7 @@
 
             @if (_tieneAsistenteIa)
             {
-                <button class="btn btn-link text-white p-0 ms-auto me-2" type="button"
+                <button class="btn btn-link text-white p-0 me-2 d-none d-md-flex align-items-center" type="button"
                         data-bs-toggle="offcanvas" data-bs-target="#chat-offcanvas"
                         title="Asistente IA (Ctrl+Shift+A)">
                     <i class="bi bi-robot fs-5"></i>
@@ -60,6 +60,15 @@
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><a class="dropdown-item" href="/account"><i class="bi bi-person me-2"></i>Mi perfil</a>
                     </li>
+                    @if (_tieneAsistenteIa)
+                    {
+                        <li class="d-md-none">
+                            <button class="dropdown-item" type="button"
+                                    data-bs-toggle="offcanvas" data-bs-target="#chat-offcanvas">
+                                <i class="bi bi-robot me-2"></i>Asistente IA
+                            </button>
+                        </li>
+                    }
                     <li>
                         <hr class="dropdown-divider" />
                     </li>
