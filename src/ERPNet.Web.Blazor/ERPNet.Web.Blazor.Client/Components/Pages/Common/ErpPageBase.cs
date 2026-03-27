@@ -66,8 +66,9 @@ public abstract class ErpPageBase : PageBase, IAsyncDisposable
 
     protected Task EnfocarBtnEliminarAsync() => _refLayout?.FocusBtnEliminarAsync() ?? Task.CompletedTask;
 
-    // ── Foco en formulario de creación ─────────────────────────
+    // ── Foco en formulario de creación / detalle ───────────────
     protected bool _enfocarNuevo;
+    private bool _enfocarDetalle;
 
     protected virtual Task EnfocarPrimerCampoNuevoAsync()  => Task.CompletedTask;
     protected virtual Task EnfocarPrimerCampoFiltroAsync() => Task.CompletedTask;
@@ -145,6 +146,7 @@ public abstract class ErpPageBase : PageBase, IAsyncDisposable
         {
             _esNuevo = false;
             await CargarDetalleAsync(Id.Value);
+            _enfocarDetalle = true;
         }
         else
         {
@@ -170,6 +172,13 @@ public abstract class ErpPageBase : PageBase, IAsyncDisposable
         {
             _enfocarNuevo = false;
             await EnfocarPrimerCampoNuevoAsync();
+        }
+
+        if (_enfocarDetalle)
+        {
+            _enfocarDetalle = false;
+            if (_jsModule is not null)
+                await _jsModule.InvokeVoidAsync("enfocarPrimerCampoDetalle");
         }
 
         if (_enfocarFiltro)

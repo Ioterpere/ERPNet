@@ -1,13 +1,14 @@
 let _dotNet = null;
 let _handler = null;
 
+// ── Helpers de navegación ──────────────────────────────────
+
 function navegarLista(delta) {
     const items = Array.from(document.querySelectorAll('.erp-lista-cuerpo button'));
     if (items.length === 0) return;
     const activeIdx = items.findIndex(b => b.classList.contains('active'));
-    const nextIdx = activeIdx < 0
-        ? (delta > 0 ? 0 : items.length - 1)
-        : activeIdx + delta;
+    const defaultIdx = delta > 0 ? 0 : items.length - 1;
+    const nextIdx = activeIdx < 0 ? defaultIdx : activeIdx + delta;
     if (nextIdx < 0 || nextIdx >= items.length) return;
     items[nextIdx].click();
     items[nextIdx].scrollIntoView({ block: 'nearest' });
@@ -18,39 +19,32 @@ function navegarListaExtremo(goFirst) {
     if (!cuerpo) return;
     const container = cuerpo.firstElementChild; // div interno de VirtualList (el que scrollea)
     if (!container) return;
+
+    function tryScroll(attempts, scrollTo, getTarget) {
+        container.scrollTop = scrollTo();
+        setTimeout(() => {
+            const items = Array.from(container.querySelectorAll('button'));
+            const target = getTarget(items, container);
+            if (target) {
+                target.click();
+                target.scrollIntoView({ block: 'nearest' });
+            } else if (attempts < 20) {
+                tryScroll(attempts + 1, scrollTo, getTarget);
+            }
+        }, 50);
+    }
+
     if (goFirst) {
-        function tryStart(attempts) {
-            container.scrollTop = 0;
-            setTimeout(() => {
-                const items = Array.from(container.querySelectorAll('button'));
-                const containerTop = container.getBoundingClientRect().top;
-                const firstTop = items[0]?.getBoundingClientRect().top ?? Infinity;
-                if (items.length > 0 && firstTop - containerTop < 150) {
-                    items[0].click();
-                    items[0].scrollIntoView({ block: 'nearest' });
-                } else if (attempts < 20) {
-                    tryStart(attempts + 1);
-                }
-            }, 50);
-        }
-        tryStart(0);
+        tryScroll(0, () => 0, (items, c) => {
+            const top = c.getBoundingClientRect().top;
+            return items.length > 0 && (items[0].getBoundingClientRect().top - top) < 150
+                ? items[0] : null;
+        });
     } else {
-        function tryEnd(attempts) {
-            container.scrollTop = container.scrollHeight;
-            setTimeout(() => {
-                const atBottom =
-                    container.scrollHeight - container.scrollTop - container.clientHeight < 2;
-                const items = Array.from(container.querySelectorAll('button'));
-                if (atBottom && items.length > 0) {
-                    const last = items[items.length - 1];
-                    last.click();
-                    last.scrollIntoView({ block: 'nearest' });
-                } else if (attempts < 20) {
-                    tryEnd(attempts + 1);
-                }
-            }, 50);
-        }
-        tryEnd(0);
+        tryScroll(0, () => container.scrollHeight, (items, c) => {
+            const atBottom = c.scrollHeight - c.scrollTop - c.clientHeight < 2;
+            return atBottom && items.length > 0 ? items[items.length - 1] : null;
+        });
     }
 }
 
@@ -64,110 +58,81 @@ function navegarTab(delta) {
     tabs[nextIdx].click();
 }
 
+// ── Helpers del handler ────────────────────────────────────
+
+function invoke(accion) {
+    _dotNet.invokeMethodAsync('HandleShortcutAsync', accion);
+}
+
+function blurIfEditing(isEditing) {
+    if (isEditing) document.activeElement.blur();
+}
+
+// ── Grupos de shortcuts ────────────────────────────────────
+
+function handleCtrl(e, isEditing) {
+    if (!e.ctrlKey || e.altKey || e.shiftKey) return false;
+    switch (e.key) {
+        case 'Insert':     invoke('nuevo'); break;
+        case 's':          blurIfEditing(isEditing); invoke('guardar'); break;
+        case 'Delete':     blurIfEditing(isEditing); invoke('borrar'); break;
+        case 'Home':       blurIfEditing(isEditing); navegarListaExtremo(true); break;
+        case 'End':        blurIfEditing(isEditing); navegarListaExtremo(false); break;
+        case 'ArrowUp':    blurIfEditing(isEditing); navegarLista(-1); break;
+        case 'ArrowDown':  blurIfEditing(isEditing); navegarLista(+1); break;
+        case 'ArrowLeft':  blurIfEditing(isEditing); navegarTab(-1); break;
+        case 'ArrowRight': blurIfEditing(isEditing); navegarTab(+1); break;
+        default: return false;
+    }
+    e.preventDefault();
+    return true;
+}
+
+function handleAlt(e, isEditing) {
+    if (!e.altKey || e.ctrlKey || e.shiftKey) return false;
+    // Evitar que Alt active el menú del navegador (Chrome/Edge en Windows)
+    if (e.key === 'Alt') { e.preventDefault(); return true; }
+    switch (e.key) {
+        case 'f': invoke('filtro'); break;
+        case 'x': blurIfEditing(isEditing); invoke('limpiarFiltro'); break;
+        default: return false;
+    }
+    e.preventDefault();
+    return true;
+}
+
+function handlePlain(e, isEditing) {
+    if (e.ctrlKey || e.altKey) return false;
+    switch (e.key) {
+        case 'Escape': invoke('escape'); break;
+        case '/':      blurIfEditing(isEditing); invoke('busqueda'); break;
+        default: return false;
+    }
+    e.preventDefault();
+    return true;
+}
+
+// ── Registro ───────────────────────────────────────────────
+
 export function registerShortcuts(dotNet) {
     _dotNet = dotNet;
     _handler = (e) => {
         const tag = document.activeElement?.tagName?.toLowerCase();
         const isEditing = tag === 'input' || tag === 'textarea' || tag === 'select';
-
-        // Evitar que Alt active el menú del navegador (Chrome/Edge en Windows)
-        if (e.key === 'Alt' && !e.ctrlKey && !e.shiftKey) {
-            e.preventDefault();
-            return;
-        }
-
-
-        // Ctrl+Insert: nuevo
-        if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key === 'Insert') {
-            e.preventDefault();
-            _dotNet.invokeMethodAsync('HandleShortcutAsync', 'nuevo');
-            return;
-        }
-
-        // Ctrl+S: guardar (sobreescribe el diálogo de guardar del navegador)
-        if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key === 's') {
-            e.preventDefault();
-            // Forzar blur para que @bind de Blazor vacíe valores pendientes antes de guardar
-            if (isEditing) document.activeElement.blur();
-            _dotNet.invokeMethodAsync('HandleShortcutAsync', 'guardar');
-            return;
-        }
-
-        // Ctrl+Suprimir: borrar (ignorado si el foco está en un campo de texto)
-        if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key === 'Delete' && !isEditing) {
-            e.preventDefault();
-            _dotNet.invokeMethodAsync('HandleShortcutAsync', 'borrar');
-            return;
-        }
-
-        // Alt+X: limpiar filtro (ignorado si el foco está en un campo de texto)
-        if (e.altKey && !e.ctrlKey && !e.shiftKey && e.key === 'x' && !isEditing) {
-            e.preventDefault();
-            _dotNet.invokeMethodAsync('HandleShortcutAsync', 'limpiarFiltro');
-            return;
-        }
-
-        // Alt+F: filtro
-        if (e.altKey && !e.ctrlKey && !e.shiftKey && e.key === 'f') {
-            e.preventDefault();
-            _dotNet.invokeMethodAsync('HandleShortcutAsync', 'filtro');
-            return;
-        }
-
-        // Esc: cerrar modal
-        if (!e.altKey && !e.ctrlKey && !e.shiftKey && e.key === 'Escape') {
-            e.preventDefault();
-            _dotNet.invokeMethodAsync('HandleShortcutAsync', 'escape');
-            return;
-        }
-
-        // /: ir al buscador (ignorado si el foco ya está en un campo de texto)
-        if (!e.altKey && !e.ctrlKey && e.key === '/' && !isEditing) {
-            e.preventDefault();
-            _dotNet.invokeMethodAsync('HandleShortcutAsync', 'busqueda');
-            return;
-        }
-
-        // Ctrl+Inicio/Fin: seleccionar primer/último ítem de la lista
-        if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key === 'Home' && !isEditing) {
-            e.preventDefault();
-            navegarListaExtremo(true);
-            return;
-        }
-
-        if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key === 'End' && !isEditing) {
-            e.preventDefault();
-            navegarListaExtremo(false);
-            return;
-        }
-
-        // Ctrl+Arriba/Abajo: navegar lista lateral (ignorado si el foco está en un campo de texto)
-        if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key === 'ArrowUp' && !isEditing) {
-            e.preventDefault();
-            navegarLista(-1);
-            return;
-        }
-
-        if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key === 'ArrowDown' && !isEditing) {
-            e.preventDefault();
-            navegarLista(+1);
-            return;
-        }
-
-        // Ctrl+Izquierda/Derecha: navegar tabs (ignorado si el foco está en un campo de texto)
-        if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key === 'ArrowLeft' && !isEditing) {
-            e.preventDefault();
-            navegarTab(-1);
-            return;
-        }
-
-        if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key === 'ArrowRight' && !isEditing) {
-            e.preventDefault();
-            navegarTab(+1);
-            return;
-        }
+        handleCtrl(e, isEditing) || handleAlt(e, isEditing) || handlePlain(e, isEditing);
     };
     document.addEventListener('keydown', _handler);
+}
+
+export function enfocarPrimerCampoDetalle() {
+    const panel = document.querySelector('.erp-detail-content, .erp-detail-tabs');
+    if (!panel) return;
+    const campo = panel.querySelector(
+        'input:not([disabled]):not([readonly]):not([type="hidden"]), ' +
+        'select:not([disabled]), ' +
+        'textarea:not([disabled]):not([readonly])'
+    );
+    campo?.focus();
 }
 
 export function unregisterShortcuts() {
