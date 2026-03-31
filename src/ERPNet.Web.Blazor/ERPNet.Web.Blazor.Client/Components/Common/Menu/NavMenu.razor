@@ -124,7 +124,7 @@
                 <span class="text-truncate">@(_empresaActualNombre ?? "Cargando...")</span>
             </div>
         }
-        else if (_empresas.Count > 1)
+        else if (EmpresaState.Empresas.Count > 1)
         {
             <div class="dropup px-3 py-2">
                 <button class="btn btn-link text-white text-decoration-none p-0 w-100 text-start d-flex align-items-center gap-2 dropdown-toggle"
@@ -134,7 +134,7 @@
                 </button>
                 <ul class="dropdown-menu">
                     <li><h6 class="dropdown-header">Cambiar empresa</h6></li>
-                    @foreach (var empresa in _empresas)
+                    @foreach (var empresa in EmpresaState.Empresas)
                     {
                         <li>
                             <button class="dropdown-item @(empresa.Id == _empresaActualId ? "active" : "")"

@@ -26,10 +26,37 @@
                 @if (_empresaNombre is not null)
                 {
                     <span class="vr opacity-25 my-1"></span>
-                    <div class="top-row-empresa d-flex gap-2">
-                        <i class="bi bi-building-fill"></i>
-                        <span>@_empresaNombre</span>
-                    </div>
+                    @if (EmpresaState.Empresas.Count > 1)
+                    {
+                        <div class="dropdown d-none d-md-flex align-items-center">
+                            <button class="btn btn-link text-white text-decoration-none p-0 d-flex align-items-center gap-2 dropdown-toggle top-row-empresa-btn"
+                                    type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-building-fill"></i>
+                                <span>@_empresaNombre</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><h6 class="dropdown-header">Cambiar empresa</h6></li>
+                                @foreach (var empresa in EmpresaState.Empresas)
+                                {
+                                    <li>
+                                        <button class="dropdown-item @(empresa.Id == EmpresaState.EmpresaId ? "active" : "")"
+                                                type="button"
+                                                @onclick="() => CambiarEmpresaAsync(empresa.Id)"
+                                                disabled="@(empresa.Id == EmpresaState.EmpresaId)">
+                                            <i class="bi bi-building me-2"></i>@empresa.Nombre
+                                        </button>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="top-row-empresa d-flex gap-2">
+                            <i class="bi bi-building-fill"></i>
+                            <span>@_empresaNombre</span>
+                        </div>
+                    }
                 }
                 <span class="vr opacity-25 my-1"></span>
                 <div class="top-row-search flex-grow-1">

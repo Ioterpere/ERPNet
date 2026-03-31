@@ -54,11 +54,10 @@
         {
             <div class="erp-panel-placeholder">
                 <i class="bi @PlaceholderIcono text-muted" style="font-size:3rem"></i>
-                <p class="text-muted mt-3 mb-1">@PlaceholderTexto</p>
-                @if (PlaceholderSubTexto is not null)
-                {
-                    <p class="text-muted small mb-0">@PlaceholderSubTexto</p>
-                }
+                <p class="text-muted mt-3 mb-2">@PlaceholderTexto</p>
+                <button class="btn btn-sm btn-outline-primary" type="button" @onclick="OnNuevo">
+                    <i class="bi bi-plus-lg me-1"></i>Nuevo
+                </button>
             </div>
         }
         else if (EsNuevo)

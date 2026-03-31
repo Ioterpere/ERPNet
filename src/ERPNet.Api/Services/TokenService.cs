@@ -19,7 +19,8 @@ public class TokenService(IOptions<JwtSettings> jwtSettings) : ITokenService
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, usuario.Id.ToString()),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new("nombre", $"{usuario.Empleado?.Nombre} {usuario.Empleado?.Apellidos}".Trim())
         };
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));

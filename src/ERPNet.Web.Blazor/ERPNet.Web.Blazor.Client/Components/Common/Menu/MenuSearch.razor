@@ -2,6 +2,7 @@
 <ItemSelector TItem="MenuItem"
               SearchAsync="@BuscarAsync"
               GetLabel="@(m => m.Nombre)"
+              GetHref="@(m => m.Path)"
               OnNavigate="@OnItemNavigate"
               Placeholder="Buscar en el menú... (Ctrl+K)"
               ShowSearchIcon="false"

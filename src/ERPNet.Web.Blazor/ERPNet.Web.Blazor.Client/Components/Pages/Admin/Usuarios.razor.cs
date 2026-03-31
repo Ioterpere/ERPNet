@@ -19,7 +19,6 @@ public partial class Usuarios
     // ── Lista ──────────────────────────────────────────────────
     private VirtualList<UsuarioResponse>? _refLista;
     private int? _totalItems;
-    private Dictionary<int, EmpleadoResponse> _empleadosPorId = [];
 
     // ── Roles (todos) ──────────────────────────────────────────
     private List<RolResponse> _todosRoles = [];
@@ -92,7 +91,6 @@ public partial class Usuarios
     // ── Implementación de abstracts ────────────────────────────
     protected override async Task CargarListaAsync()
     {
-        _empleadosPorId = [];
         if (_refLista is not null)
             await _refLista.RefreshAsync();
     }
@@ -107,16 +105,6 @@ public partial class Usuarios
                 PorPagina = request.Count,
                 Busqueda  = string.IsNullOrWhiteSpace(_busqueda) ? null : _busqueda
             });
-
-            var ids = resultado.Items.Select(u => u.EmpleadoId).Distinct();
-            var empleados = await Task.WhenAll(ids.Select(async id =>
-            {
-                try { return await EmpleadosClient.EmpleadosGET2Async(id); }
-                catch { return null; }
-            }));
-            foreach (var emp in empleados.OfType<EmpleadoResponse>())
-                _empleadosPorId[emp.Id] = emp;
-
             return new(resultado.Items, resultado.TotalRegistros);
         }
         catch

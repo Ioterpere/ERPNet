@@ -26,7 +26,6 @@ public partial class NavMenu : IDisposable
 
     private int? _empresaActualId;
     private string? _empresaActualNombre;
-    private List<EmpresaItem> _empresas = [];
     private bool _cargandoEmpresas;
 
     private PersistingComponentStateSubscription _persistingSubscription;
@@ -66,7 +65,10 @@ public partial class NavMenu : IDisposable
         }
 
         if (RendererInfo.IsInteractive)
+        {
+            EmpresaState.OnCambio += OnCambioExterno;
             await CargarEmpresasAsync();
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -83,7 +85,11 @@ public partial class NavMenu : IDisposable
         return Task.CompletedTask;
     }
 
-    public void Dispose() => _persistingSubscription.Dispose();
+    public void Dispose()
+    {
+        _persistingSubscription.Dispose();
+        EmpresaState.OnCambio -= OnCambioExterno;
+    }
 
     private async Task CargarMenusAsync()
     {
@@ -105,9 +111,9 @@ public partial class NavMenu : IDisposable
             var empresas = await Http.GetFromJsonAsync<List<EmpresaItem>>("api/empresas/mis-empresas");
             if (empresas is { Count: > 0 })
             {
-                _empresas = empresas;
-                _empresaActualNombre = _empresas.FirstOrDefault(e => e.Id == _empresaActualId)?.Nombre
-                                    ?? _empresas.FirstOrDefault()?.Nombre;
+                _empresaActualNombre = empresas.FirstOrDefault(e => e.Id == _empresaActualId)?.Nombre
+                                    ?? empresas.FirstOrDefault()?.Nombre;
+                EmpresaState.SetEmpresas(empresas);
             }
         }
         catch { /* no interrumpir la navegación si falla */ }
@@ -127,11 +133,10 @@ public partial class NavMenu : IDisposable
             var response = await Http.PostAsync("bff/cambiar-empresa", content);
             if (!response.IsSuccessStatusCode) return;
 
-            // Actualizar estado de empresa (notifica MainLayout, PageBase, etc.)
-            var nombre = _empresas.FirstOrDefault(e => e.Id == empresaId)?.Nombre ?? "";
+            var nombre = EmpresaState.Empresas.FirstOrDefault(e => e.Id == empresaId)?.Nombre ?? "";
             _empresaActualId = empresaId;
             _empresaActualNombre = nombre;
-            EmpresaState.Cambiar(empresaId, nombre);
+            EmpresaState.Cambiar(empresaId, nombre);  // OnCambioExterno ve id == _empresaActualId → no hace nada
 
             // Invalidar cachés empresa-dependientes y re-fetch menús
             MenuState.Invalidar();
@@ -147,6 +152,25 @@ public partial class NavMenu : IDisposable
         finally { _cargandoEmpresas = false; }
     }
 
+    // Reacciona cuando alguien externo (MainLayout) cambia la empresa activa.
+    private void OnCambioExterno()
+    {
+        if (EmpresaState.EmpresaId == _empresaActualId) return; // cambio propio, ya gestionado
+        InvokeAsync(async () =>
+        {
+            _empresaActualId = EmpresaState.EmpresaId;
+            _empresaActualNombre = EmpresaState.EmpresaNombre;
+            MenuState.Invalidar();
+            Permisos.Invalidar();
+            _menus = null;
+            _menus = await MenuState.ObtenerAsync(MenusClient);
+            _expanded.Clear();
+            AutoExpandActive();
+            Nav.NavigateTo("/", forceLoad: false);
+            StateHasChanged();
+        });
+    }
+
     private void AutoExpandActive()
     {
         if (_menus is null) return;
@@ -159,13 +183,10 @@ public partial class NavMenu : IDisposable
                 {
                     _expanded.Add(menu.Id);
                 }
-                else if (sub.SubMenus?.Count > 0)
+                else if (sub.SubMenus?.Count > 0 && sub.SubMenus.Any(s => s.Path == currentPath))
                 {
-                    if (sub.SubMenus.Any(s => s.Path == currentPath))
-                    {
-                        _expanded.Add(menu.Id);
-                        _expanded.Add(sub.Id);
-                    }
+                    _expanded.Add(menu.Id);
+                    _expanded.Add(sub.Id);
                 }
             }
         }
@@ -176,6 +197,4 @@ public partial class NavMenu : IDisposable
         if (!_expanded.Remove(id))
             _expanded.Add(id);
     }
-
-    private sealed record EmpresaItem(int Id, string Nombre, string? Cif, bool Activo);
 }

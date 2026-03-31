@@ -24,7 +24,6 @@ public partial class ErpPage
     [Parameter] public string? TituloNuevo { get; set; }
     [Parameter] public string PlaceholderIcono { get; set; } = "bi-inbox";
     [Parameter] public string PlaceholderTexto { get; set; } = "Selecciona un elemento de la lista";
-    [Parameter] public string? PlaceholderSubTexto { get; set; }
     [Parameter] public int? TotalItems { get; set; }
 
     // ── Modal eliminar ────────────────────────────────────────────

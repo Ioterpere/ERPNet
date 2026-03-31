@@ -43,9 +43,9 @@
                             @(u.Activo ? "Activo" : "Inactivo")
                         </span>
                     </div>
-                    @if (_empleadosPorId.TryGetValue(u.EmpleadoId, out var emp))
+                    @if (!string.IsNullOrEmpty(u.EmpleadoNombre))
                     {
-                        <div class="text-muted text-truncate" style="font-size:.75rem">@emp.Nombre @emp.Apellidos</div>
+                        <div class="text-muted text-truncate" style="font-size:.75rem">@u.EmpleadoNombre @u.EmpleadoApellidos</div>
                     }
                 </button>
             </ItemTemplate>

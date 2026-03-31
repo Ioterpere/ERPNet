@@ -77,28 +77,57 @@
                     {
                         var item = _resultados[i];
                         var index = i;
-                        <button type="button"
-                                id="@($"{_id}-{index}")"
-                                class="item-selector-item @(index == _indiceActivo ? "activo" : "")"
-                                @onclick="() => Seleccionar(item)"
-                                @onmouseenter="() => _indiceActivo = index">
-                            @if (ItemTemplate is not null)
-                            {
-                                @ItemTemplate(item)
-                            }
-                            else
-                            {
-                                <span class="item-selector-item-label">@GetLabel(item)</span>
-                                @if (GetSubLabel?.Invoke(item) is { Length: > 0 } subItem)
+                        @if (GetHref is not null && OnNavigate.HasDelegate)
+                        {
+                            <a href="@GetHref(item)"
+                               id="@($"{_id}-{index}")"
+                               class="item-selector-item @(index == _indiceActivo ? "activo" : "")"
+                               @onclick:preventDefault
+                               @onclick="() => Seleccionar(item)"
+                               @onmouseenter="() => _indiceActivo = index">
+                                @if (ItemTemplate is not null)
                                 {
-                                    <span class="item-selector-item-sub">@subItem</span>
+                                    @ItemTemplate(item)
                                 }
-                            }
-                            @if (index == _indiceActivo)
-                            {
-                                <kbd class="item-selector-kbd ms-auto">↵</kbd>
-                            }
-                        </button>
+                                else
+                                {
+                                    <span class="item-selector-item-label">@GetLabel(item)</span>
+                                    @if (GetSubLabel?.Invoke(item) is { Length: > 0 } subItem)
+                                    {
+                                        <span class="item-selector-item-sub">@subItem</span>
+                                    }
+                                }
+                                @if (index == _indiceActivo)
+                                {
+                                    <kbd class="item-selector-kbd ms-auto">↵</kbd>
+                                }
+                            </a>
+                        }
+                        else
+                        {
+                            <button type="button"
+                                    id="@($"{_id}-{index}")"
+                                    class="item-selector-item @(index == _indiceActivo ? "activo" : "")"
+                                    @onclick="() => Seleccionar(item)"
+                                    @onmouseenter="() => _indiceActivo = index">
+                                @if (ItemTemplate is not null)
+                                {
+                                    @ItemTemplate(item)
+                                }
+                                else
+                                {
+                                    <span class="item-selector-item-label">@GetLabel(item)</span>
+                                    @if (GetSubLabel?.Invoke(item) is { Length: > 0 } subItem)
+                                    {
+                                        <span class="item-selector-item-sub">@subItem</span>
+                                    }
+                                }
+                                @if (index == _indiceActivo)
+                                {
+                                    <kbd class="item-selector-kbd ms-auto">↵</kbd>
+                                }
+                            </button>
+                        }
                     }
                 }
             </div>
@@ -134,6 +163,14 @@
     /// </summary>
     [Parameter]
     public EventCallback<TItem> OnNavigate { get; set; }
+
+    /// <summary>
+    /// Cuando está definido junto a OnNavigate, los ítems se renderizan como &lt;a&gt; en lugar de &lt;button&gt;,
+    /// lo que permite abrir en nueva pestaña (click central) y ver el menú contextual del navegador.
+    /// El click izquierdo sigue usando la navegación Blazor.
+    /// </summary>
+    [Parameter]
+    public Func<TItem, string>? GetHref { get; set; }
 
     /// <summary>Valor actual (id del item seleccionado). Solo para modo selección.</summary>
     [Parameter]
@@ -233,6 +270,7 @@
 
         if (string.IsNullOrWhiteSpace(_query))
         {
+            _buscando = false;
             _resultados.Clear();
             _sinResultados = false;
             _abierto = false;

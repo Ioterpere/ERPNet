@@ -10,8 +10,14 @@ public sealed class EmpresaStateService
     public int? EmpresaId { get; private set; }
     public string? EmpresaNombre { get; private set; }
 
+    /// <summary>Lista de empresas accesibles por el usuario. Vacía hasta que NavMenu la cargue.</summary>
+    public IReadOnlyList<EmpresaItem> Empresas { get; private set; } = [];
+
     /// <summary>Se dispara cuando el usuario cambia de empresa.</summary>
     public event Action? OnCambio;
+
+    /// <summary>Se dispara cuando la lista de empresas está disponible.</summary>
+    public event Action? OnEmpresasLoaded;
 
     /// <summary>
     /// Inicializa desde los claims de AuthenticationState en el primer render.
@@ -25,6 +31,16 @@ public sealed class EmpresaStateService
     }
 
     /// <summary>
+    /// Almacena la lista de empresas accesibles y notifica a los suscriptores.
+    /// Llamado por NavMenu tras cargarlas de la API.
+    /// </summary>
+    public void SetEmpresas(List<EmpresaItem> empresas)
+    {
+        Empresas = empresas;
+        OnEmpresasLoaded?.Invoke();
+    }
+
+    /// <summary>
     /// Cambia la empresa activa y notifica a los suscriptores.
     /// </summary>
     public void Cambiar(int empresaId, string empresaNombre)
@@ -34,3 +50,5 @@ public sealed class EmpresaStateService
         OnCambio?.Invoke();
     }
 }
+
+public sealed record EmpresaItem(int Id, string Nombre, string? Cif, bool Activo);

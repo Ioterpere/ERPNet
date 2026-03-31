@@ -3,6 +3,7 @@ using ERPNet.Web.Blazor.Client.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
+using System.Net.Http;
 using System.Security.Claims;
 
 namespace ERPNet.Web.Blazor.Client.Components.Layout;
@@ -10,13 +11,17 @@ namespace ERPNet.Web.Blazor.Client.Components.Layout;
 public partial class MainLayout : IAsyncDisposable
 {
     [Inject] private IJSRuntime JS { get; set; } = default!;
+    [Inject] private HttpClient Http { get; set; } = default!;
+    [Inject] private NavigationManager Nav { get; set; } = default!;
     [Inject] private PermisosService Permisos { get; set; } = default!;
+    [Inject] private MenuStateService MenuState { get; set; } = default!;
     [Inject] private EmpresaStateService EmpresaState { get; set; } = default!;
     [Inject] private IAiClient AiClient { get; set; } = default!;
 
     [CascadingParameter]
     private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
 
+    private string? _nombre;
     private string? _email;
     private string? _empresaNombre;
     private bool _sidebarCollapsed;
@@ -28,12 +33,14 @@ public partial class MainLayout : IAsyncDisposable
     protected override async Task OnInitializedAsync()
     {
         var state = await AuthStateTask;
-        _email = state.User.FindFirst(ClaimTypes.Email)?.Value;
+        _nombre = state.User.FindFirst(ClaimTypes.Name)?.Value;
+        _email  = state.User.FindFirst(ClaimTypes.Email)?.Value;
         _empresaNombre = state.User.FindFirst("empresa_nombre")?.Value;
         EmpresaState.Inicializar(
             int.TryParse(state.User.FindFirst("empresa_id")?.Value, out var eid) ? eid : null,
             _empresaNombre);
         EmpresaState.OnCambio += OnEmpresaCambiada;
+        EmpresaState.OnEmpresasLoaded += OnEmpresasLoaded;
         if (!RendererInfo.IsInteractive) return;
         if (await Permisos.TieneAcceso(RecursoCodigo.AsistenteIa))
         {
@@ -96,9 +103,28 @@ public partial class MainLayout : IAsyncDisposable
         InvokeAsync(StateHasChanged);
     }
 
+    private void OnEmpresasLoaded() => InvokeAsync(StateHasChanged);
+
+    private async Task CambiarEmpresaAsync(int empresaId)
+    {
+        if (empresaId == EmpresaState.EmpresaId) return;
+        try
+        {
+            var content = new FormUrlEncodedContent(
+                [new KeyValuePair<string, string>("empresaId", empresaId.ToString())]);
+            var response = await Http.PostAsync("bff/cambiar-empresa", content);
+            if (!response.IsSuccessStatusCode) return;
+
+            var nombre = EmpresaState.Empresas.FirstOrDefault(e => e.Id == empresaId)?.Nombre ?? "";
+            EmpresaState.Cambiar(empresaId, nombre); // NavMenu reacciona vía OnCambio → recarga menús
+        }
+        catch { /* ignorar errores de red */ }
+    }
+
     public async ValueTask DisposeAsync()
     {
         EmpresaState.OnCambio -= OnEmpresaCambiada;
+        EmpresaState.OnEmpresasLoaded -= OnEmpresasLoaded;
         try { await JS.InvokeVoidAsync("sidebar.unregisterShortcut"); } catch { }
         try { await JS.InvokeVoidAsync("chat.unregisterShortcut"); } catch { }
         _dotNetRef?.Dispose();

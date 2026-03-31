@@ -44,14 +44,17 @@ public abstract class ErpPageBase : PageBase, IAsyncDisposable
     protected async Task OnBusquedaInputAsync(ChangeEventArgs e)
     {
         _busqueda = e.Value?.ToString() ?? string.Empty;
-        _ctsBusqueda?.Cancel();
+        if (_ctsBusqueda is not null) await _ctsBusqueda.CancelAsync();
         _ctsBusqueda = new CancellationTokenSource();
         try
         {
             await Task.Delay(300, _ctsBusqueda.Token);
             await CargarListaAsync();
         }
-        catch (OperationCanceledException) { }
+        catch (OperationCanceledException)
+        {
+            // debounce cancelado intencionalmente — no requiere acción
+        }
     }
 
     // ── Modal de eliminación ───────────────────────────────────
@@ -127,10 +130,13 @@ public abstract class ErpPageBase : PageBase, IAsyncDisposable
 
     // ── Ciclo de vida ──────────────────────────────────────────
     private int? _idActual;
+    private string? _tabActual;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+        if (!RendererInfo.IsInteractive) return;
+
         _prefillado.OnPrefillado += OnPrefilladoHandler;
 
         var accion = _prefillado.Consumir(new Uri(Nav.Uri).LocalPath);
@@ -139,7 +145,17 @@ public abstract class ErpPageBase : PageBase, IAsyncDisposable
 
     protected override async Task OnParametersSetAsync()
     {
-        if (Id == _idActual) return;
+        if (Id == _idActual)
+        {
+            // Solo cambió el tab con un ítem activo → enfocar primer campo de la nueva tab
+            if (Tab != _tabActual && Id.HasValue)
+            {
+                _tabActual = Tab;
+                _enfocarDetalle = true;
+            }
+            return;
+        }
+        _tabActual = Tab;
         _idActual = Id;
 
         if (Id.HasValue)
@@ -200,6 +216,12 @@ public abstract class ErpPageBase : PageBase, IAsyncDisposable
         }
     }
 
+    private Task SetEnfocarBusquedaAsync()
+    {
+        _enfocarBusqueda = true;
+        return Task.CompletedTask;
+    }
+
     [JSInvokable]
     public async Task HandleShortcutAsync(string accion)
     {
@@ -211,7 +233,7 @@ public abstract class ErpPageBase : PageBase, IAsyncDisposable
             "filtro"        => OnFiltro(),
             "limpiarFiltro" => OnLimpiarFiltro(),
             "escape"        => OnEscape(),
-            "busqueda" => Task.FromResult(_enfocarBusqueda = true),
+            "busqueda" => SetEnfocarBusquedaAsync(),
             _          => Task.CompletedTask
         });
         await InvokeAsync(StateHasChanged);
@@ -233,7 +255,7 @@ public abstract class ErpPageBase : PageBase, IAsyncDisposable
     public virtual async ValueTask DisposeAsync()
     {
         _prefillado.OnPrefillado -= OnPrefilladoHandler;
-        _ctsBusqueda?.Cancel();
+        if (_ctsBusqueda is not null) await _ctsBusqueda.CancelAsync();
         _ctsBusqueda?.Dispose();
         if (_jsModule is not null)
         {
