@@ -20,5 +20,6 @@ public enum RecursoCodigo
     Facturas = 10,
     Empresas = 11,
     AsistenteIa = 12,
-    Articulos = 13
+    Articulos = 13,
+    Contabilidad = 14
 }

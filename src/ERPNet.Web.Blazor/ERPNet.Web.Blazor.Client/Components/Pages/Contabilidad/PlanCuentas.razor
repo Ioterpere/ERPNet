@@ -1,0 +1,621 @@
+@page "/plan-cuentas"
+@inherits ErpPageBase
+
+<ErpPage @ref="_refLayout"
+               ConTabs="true"
+               Titulo="Plan de Cuentas"
+               TituloNuevo="Nueva cuenta"
+               EsNuevo="_esNuevo"
+               TieneDetalle="Id.HasValue"
+               Busqueda="@_busqueda"
+               OnBusquedaInput="OnBusquedaInputAsync"
+               OnNuevo="OnNuevo"
+               OnVolverALista="VolverALista"
+               ColLista="3"
+               SearchPlaceholder="Código o descripción..."
+               PlaceholderIcono="bi-journal-bookmark"
+               PlaceholderTexto="Selecciona una cuenta de la lista"
+               TotalItems="_totalItems"
+               @bind-MostrarModalEliminar="_mostrarModalEliminar"
+               TextoEliminar="@($"{_cuentaDetalle?.Codigo} — {_cuentaDetalle?.Descripcion}")"
+               ErrorEliminar="@_errorEliminar"
+               Eliminando="_eliminando"
+               OnEliminar="EliminarCuentaAsync">
+
+    <SearchExtras>
+        <button class="btn btn-sm btn-outline-secondary position-relative flex-shrink-0"
+                type="button" @onclick="_filtro.Abrir" title="Filtros"
+                style="width:31px;padding-inline:0">
+            <i class="bi bi-funnel@(_filtro.HayFiltros ? "-fill text-primary" : "")"></i>
+            @if (_filtro.HayFiltros)
+            {
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary"
+                      style="font-size:.55rem;padding:2px 4px;min-width:14px">
+                    @_filtro.Count
+                </span>
+            }
+        </button>
+    </SearchExtras>
+
+    <ListaBody>
+        <VirtualList @ref="_refLista" TItem="CuentaResponse"
+                    IconoVacio="bi-journal-x"
+                    ItemsProvider="CargarItemsAsync"
+                    OnTotalChanged="t => _totalItems = t">
+            <SkeletonItem>
+                <div class="cuenta-row placeholder-glow">
+                    <span class="placeholder col-4 d-block mb-1" style="height:11px"></span>
+                    <span class="placeholder col-8" style="height:13px"></span>
+                </div>
+            </SkeletonItem>
+            <ItemTemplate Context="c">
+                <button type="button"
+                        class="cuenta-row w-100 text-start @(Id == c.Id ? "active" : "") @(c.EsObsoleta ? "obsoleta" : "")"
+                        @onclick="() => SeleccionarItem(c.Id)">
+                    <div class="cuenta-codigo font-monospace text-muted">@c.Codigo</div>
+                    <div class="fw-semibold text-truncate small">@c.Descripcion</div>
+                </button>
+            </ItemTemplate>
+        </VirtualList>
+    </ListaBody>
+
+    <ListaFooterExtra>
+        <div class="d-flex align-items-center gap-1">
+            <button class="btn btn-link btn-sm text-muted p-0" type="button"
+                    @onclick="ToggleOrdenDescAsync" title="@(_ordenDesc ? "Descendente" : "Ascendente")"
+                    style="font-size:.8rem; box-shadow:none">
+                <i class="bi @(_ordenDesc ? "bi-sort-alpha-up" : "bi-sort-alpha-down")"></i>
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-link btn-sm text-muted text-decoration-none dropdown-toggle p-0"
+                        type="button" data-bs-toggle="dropdown" style="font-size:.75rem; box-shadow:none">
+                    @_camposOrden.First(c => c.Valor == _ordenarPor).Label
+                </button>
+                <ul class="dropdown-menu dropdown-menu-start shadow-sm">
+                    @foreach (var campo in _camposOrden)
+                    {
+                        <li>
+                            <button class="dropdown-item small" type="button"
+                                    @onclick="() => SetOrdenAsync(campo.Valor)">
+                                <i class="bi bi-check me-2 @(_ordenarPor == campo.Valor ? "" : "invisible")"></i>@campo.Label
+                            </button>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </ListaFooterExtra>
+
+    <!-- ── Formulario nueva cuenta ─────────────────────────────── -->
+    <FormNuevo>
+        @if (_errorCrear is not null)
+        {
+            <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+                <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                <span>@_errorCrear</span>
+            </div>
+        }
+
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="bi bi-journal-plus text-primary"></i>
+                <span class="fw-semibold">Datos de la cuenta</span>
+            </div>
+            <div class="card-body py-4">
+                <div class="row g-3">
+                    <div class="col-sm-4">
+                        <label class="form-label">Código <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control font-monospace" @ref="_refNuevoCodigo"
+                               @bind="_nuevoCodigo" autocomplete="off" maxlength="9" />
+                    </div>
+                    <div class="col-sm-8">
+                        <label class="form-label">Descripción <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" @bind="_nuevoDescripcion" autocomplete="off" maxlength="60" />
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label">Descripción SII</label>
+                        <input type="text" class="form-control" @bind="_nuevoDescripcionSII" autocomplete="off" maxlength="60" />
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label">NIF</label>
+                        <input type="text" class="form-control" @bind="_nuevoNif" autocomplete="off" maxlength="15" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary px-4" @onclick="CrearCuentaAsync" disabled="@_creando">
+                @if (_creando)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                }
+                else
+                {
+                    <i class="bi bi-journal-check me-2"></i>
+                }
+                Crear cuenta
+            </button>
+            <button class="btn btn-outline-secondary" @onclick="VolverALista">Cancelar</button>
+        </div>
+    </FormNuevo>
+
+    <!-- ── Detalle (edición + tabs) ────────────────────────────── -->
+    <FormEdicion>
+        <div class="px-4 pt-4 flex-shrink-0">
+
+            <!-- Header de detalle -->
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <button class="btn btn-sm btn-light d-lg-none" @onclick="VolverALista">
+                    <i class="bi bi-arrow-left"></i>
+                </button>
+
+                @if (_cargandoDetalle)
+                {
+                    <div class="d-flex align-items-center gap-3 placeholder-glow flex-grow-1">
+                        <div>
+                            <span class="placeholder d-block mb-1" style="height:11px;width:80px"></span>
+                            <span class="placeholder" style="height:14px;width:220px"></span>
+                        </div>
+                    </div>
+                }
+                else if (_cuentaDetalle is not null)
+                {
+                    <div class="flex-grow-1 overflow-hidden">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <h5 class="mb-0 fw-semibold text-truncate">@_cuentaDetalle.Descripcion</h5>
+                            @if (_cuentaDetalle.EsObsoleta)
+                            {
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis flex-shrink-0">Obsoleta</span>
+                            }
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="font-monospace text-muted small">@_cuentaDetalle.Codigo</span>
+                            @if (_cuentaDetalle.Nif is not null)
+                            {
+                                <span class="vr opacity-25"></span>
+                                <span class="badge bg-primary-subtle text-primary-emphasis small fw-normal">
+                                    <i class="bi bi-person-vcard me-1"></i>@_cuentaDetalle.Nif
+                                </span>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @if (_errorDetalle is not null)
+            {
+                <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                    <span>@_errorDetalle</span>
+                </div>
+            }
+        </div>
+
+        @if (!_cargandoDetalle && _cuentaDetalle is not null)
+        {
+            <Tabs Items="_tabsCuenta" ActiveTab="@Tab" ActiveTabChanged="CambiarTab">
+
+                <!-- ── Tab: Cuenta ─────────────────────────────── -->
+                @if ((Tab ?? "extracto") == "cuenta")
+                {
+                    @if (_errorGuardar is not null)
+                    {
+                        <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+                            <i class="bi bi-x-circle-fill flex-shrink-0"></i>
+                            <span>@_errorGuardar</span>
+                        </div>
+                    }
+
+                    <div class="row g-2">
+                        <!-- Descripción (ancho completo) -->
+                        <div class="col-12">
+                            <label class="form-label form-label-sm">Descripción <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm" @ref="_refEditDescripcion"
+                                   @bind="_editDescripcion" autocomplete="off" maxlength="60" />
+                        </div>
+
+                        <!-- Desc SII grupo (readonly) + Desc SII cuenta en la misma fila -->
+                        <div class="col-sm-6">
+                            <label class="form-label form-label-sm text-muted">
+                                Desc. SII grupo
+                                <span class="font-monospace ms-1">@_cuentaDetalle.CuentaPadreCodigo</span>
+                            </label>
+                            <input type="text" class="form-control form-control-sm bg-body-secondary"
+                                   value="@(_cuentaDetalle.CuentaPadreDescripcionSII ?? "")"
+                                   readonly tabindex="-1" />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label form-label-sm">Desc. SII cuenta</label>
+                            <input type="text" class="form-control form-control-sm" @bind="_editDescripcionSII"
+                                   autocomplete="off" maxlength="60" />
+                        </div>
+
+                        <!-- NIF + Obsoleta en la misma fila -->
+                        <div class="col-sm-6">
+                            <label class="form-label form-label-sm">NIF</label>
+                            <input type="text" class="form-control form-control-sm" @bind="_editNif"
+                                   autocomplete="off" maxlength="15" />
+                        </div>
+                        <div class="col-sm-6 d-flex align-items-end pb-1">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="chkObsoleta"
+                                       @bind="_editEsObsoleta" />
+                                <label class="form-check-label small" for="chkObsoleta">Cuenta obsoleta</label>
+                            </div>
+                        </div>
+
+                        <!-- Separador parámetros -->
+                        <div class="col-12 mt-1">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="small fw-semibold text-muted">
+                                    <i class="bi bi-link-45deg me-1"></i>Parámetros asociados
+                                </span>
+                                <hr class="flex-grow-1 my-0 opacity-25" />
+                            </div>
+                        </div>
+
+                        <!-- Cta Amortización + Cta Pago Delegado -->
+                        <div class="col-sm-6">
+                            <label class="form-label form-label-sm">Cta Amort. <small class="text-muted fw-normal">(Gasto)</small></label>
+                            <ItemSelector @key="@($"amort-{Id}")" TItem="CuentaResponse"
+                                          SearchAsync="BuscarCuentasAsync"
+                                          GetId="c => c.Id"
+                                          GetLabel='c => $"{c.Codigo} — {c.Descripcion}"'
+                                          GetSubLabel="c => c.Nif"
+                                          Value="_editCuentaAmortizacionId"
+                                          ValueChanged="id => _editCuentaAmortizacionId = id"
+                                          PreselectedItem="_preselCuentaAmortizacion"
+                                          Placeholder="Buscar cuenta..." />
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label form-label-sm">Cta Pago Delegado</label>
+                            <ItemSelector @key="@($"pagdel-{Id}")" TItem="CuentaResponse"
+                                          SearchAsync="BuscarCuentasAsync"
+                                          GetId="c => c.Id"
+                                          GetLabel='c => $"{c.Codigo} — {c.Descripcion}"'
+                                          GetSubLabel="c => c.Nif"
+                                          Value="_editCuentaPagoDelegadoId"
+                                          ValueChanged="id => _editCuentaPagoDelegadoId = id"
+                                          PreselectedItem="_preselCuentaPagoDelegado"
+                                          Placeholder="Buscar cuenta..." />
+                        </div>
+
+                        <!-- Empresa Vinculada + Cliente Asociado + Concepto Analítica -->
+                        <div class="col-sm-6">
+                            <label class="form-label form-label-sm">Empresa Vinculada</label>
+                            <ItemSelector @key="@($"empvinc-{Id}")" TItem="EmpresaResponse"
+                                          SearchAsync="BuscarEmpresasAsync"
+                                          GetId="e => e.Id"
+                                          GetLabel="e => e.Nombre"
+                                          GetSubLabel="e => e.Cif"
+                                          Value="_editEmpresaVinculadaId"
+                                          ValueChanged="id => _editEmpresaVinculadaId = id"
+                                          PreselectedItem="_preselEmpresaVinculada"
+                                          Placeholder="Buscar empresa..." />
+                        </div>
+                        <div class="col-sm-3">
+                            <label class="form-label form-label-sm">Cliente <small class="text-muted fw-normal">(ID)</small></label>
+                            <input type="number" class="form-control form-control-sm" @bind="_editClienteAsociadoId"
+                                   placeholder="pendiente" />
+                        </div>
+                        <div class="col-sm-3">
+                            <label class="form-label form-label-sm">Analítica <small class="text-muted fw-normal">(ID)</small></label>
+                            <input type="number" class="form-control form-control-sm" @bind="_editConceptoAnaliticaId"
+                                   placeholder="pendiente" />
+                        </div>
+                    </div>
+                }
+
+                <!-- ── Tab: Extracto ──────────────────────────── -->
+                @if ((Tab ?? "extracto") == "extracto")
+                {
+                    <!-- Barra de filtros -->
+                    <div class="extracto-filtros d-flex flex-wrap gap-3 mb-3 align-items-end">
+                        <div>
+                            <label class="form-label small text-muted mb-1">Tipo diario</label>
+                            <select class="form-select form-select-sm" style="min-width:170px"
+                                    @bind="_filtroDiarioId" @bind:after="AplicarFiltroExtractoAsync">
+                                <option value="0">Todos</option>
+                                @foreach (var t in _tiposDiario)
+                                {
+                                    <option value="@t.Id">@t.Codigo – @t.Descripcion</option>
+                                }
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label small text-muted mb-1">Centro coste</label>
+                            <select class="form-select form-select-sm" style="min-width:160px"
+                                    @bind="_filtroCentroId" @bind:after="AplicarFiltroExtractoAsync">
+                                <option value="0">Todos</option>
+                                @foreach (var c in _centros)
+                                {
+                                    <option value="@c.Id">@c.Codigo – @c.Descripcion</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="vr opacity-25 align-self-stretch"></div>
+
+                        <div>
+                            <label class="form-label small text-muted mb-1">Desde</label>
+                            <input type="date" class="form-control form-control-sm" style="width:140px"
+                                   @bind="_filtroDesde" @bind:after="AplicarFiltroExtractoAsync" />
+                        </div>
+                        <div>
+                            <label class="form-label small text-muted mb-1">Hasta</label>
+                            <input type="date" class="form-control form-control-sm" style="width:140px"
+                                   @bind="_filtroHasta" @bind:after="AplicarFiltroExtractoAsync" />
+                        </div>
+
+                        <button class="btn btn-sm btn-outline-secondary align-self-end" @onclick="LimpiarFiltroExtractoAsync"
+                                title="Limpiar filtros">
+                            <i class="bi bi-x-circle"></i>
+                        </button>
+                    </div>
+
+                    <!-- Grid de apuntes -->
+                    @if (_cargandoExtracto)
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <span class="spinner-border spinner-border-sm me-2"></span>Cargando extracto...
+                        </div>
+                    }
+                    else if (_apuntes.Count == 0)
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-journal-x d-block fs-2 mb-2"></i>
+                            No hay apuntes con los filtros actuales
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle extracto-table mb-0">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th class="text-muted small">Fecha</th>
+                                        <th class="text-muted small">Asiento</th>
+                                        <th class="text-muted small">Tipo</th>
+                                        <th class="text-muted small">C.Coste</th>
+                                        <th class="text-muted small">Concepto</th>
+                                        <th class="text-end text-muted small">Debe</th>
+                                        <th class="text-end text-muted small">Haber</th>
+                                        <th class="text-end text-muted small">Saldo</th>
+                                        <th class="text-center text-muted small" style="width:40px" title="Punteado">
+                                            <i class="bi bi-check2-all"></i>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        double saldoAcum = 0;
+                                        foreach (var a in _apuntes)
+                                        {
+                                            saldoAcum += a.Debe - a.Haber;
+                                            <tr class="@(!a.EsDefinitivo ? "text-muted fst-italic" : "")">
+                                                <td class="small font-monospace">@a.Fecha.ToString("dd/MM/yy")</td>
+                                                <td class="small text-muted">@a.Asiento</td>
+                                                <td class="small">
+                                                    @if (a.CodigoTipoDiario is not null)
+                                                    {
+                                                        <span class="badge bg-secondary-subtle text-secondary-emphasis">@a.CodigoTipoDiario</span>
+                                                    }
+                                                </td>
+                                                <td class="small text-muted">@a.CodigoCentroCoste</td>
+                                                <td class="small text-truncate" style="max-width:200px">@a.Concepto</td>
+                                                <td class="text-end small font-monospace">
+                                                    @(a.Debe > 0 ? a.Debe.ToString("N2") : string.Empty)
+                                                </td>
+                                                <td class="text-end small font-monospace">
+                                                    @(a.Haber > 0 ? a.Haber.ToString("N2") : string.Empty)
+                                                </td>
+                                                <td class="text-end small font-monospace @(saldoAcum < 0 ? "text-danger" : "")">
+                                                    @saldoAcum.ToString("N2")
+                                                </td>
+                                                <td class="text-center">
+                                                    @if (a.IdPunteo.HasValue)
+                                                    {
+                                                        <i class="bi bi-check2 text-success"></i>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Totales -->
+                        <div class="extracto-totales mt-2 p-2 border-top d-flex align-items-center small">
+                            <div class="d-flex gap-3 me-auto">
+                                <div class="form-check form-check-inline mb-0">
+                                    <input class="form-check-input" type="checkbox" id="chkDefinitivo"
+                                           @bind="_filtroDefinitivo" @bind:after="AplicarFiltroExtractoAsync" />
+                                    <label class="form-check-label" for="chkDefinitivo">Solo definitivos</label>
+                                </div>
+                                <div class="form-check form-check-inline mb-0">
+                                    <input class="form-check-input" type="checkbox" id="chkSinPuntear"
+                                           @bind="_filtroSinPuntear" @bind:after="AplicarFiltroExtractoAsync" />
+                                    <label class="form-check-label" for="chkSinPuntear">Sin puntear</label>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-4">
+                                <span>
+                                    <span class="text-muted me-1">Debe:</span>
+                                    <strong class="font-monospace">@_apuntes.Sum(a => a.Debe).ToString("N2")</strong>
+                                </span>
+                                <span>
+                                    <span class="text-muted me-1">Haber:</span>
+                                    <strong class="font-monospace">@_apuntes.Sum(a => a.Haber).ToString("N2")</strong>
+                                </span>
+                                <span>
+                                    <span class="text-muted me-1">Saldo:</span>
+                                    <strong class="font-monospace @(_saldoPeriodo < 0 ? "text-danger" : "")">
+                                        @_saldoPeriodo.ToString("N2")
+                                    </strong>
+                                </span>
+                            </div>
+                        </div>
+                    }
+                }
+
+                <!-- ── Tab: Saldos ─────────────────────────────── -->
+                @if ((Tab ?? "extracto") == "saldos")
+                {
+                    <!-- Selector de año -->
+                    <div class="d-flex gap-2 mb-3">
+                        @for (var y = DateTime.Now.Year; y >= DateTime.Now.Year - 4; y--)
+                        {
+                            var anio = y;
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio"
+                                       name="anioSaldos" id="anio@anio"
+                                       checked="@(_anioSaldos == anio)"
+                                       @onchange="() => CambiarAnioSaldosAsync(anio)" />
+                                <label class="form-check-label" for="anio@anio">@anio</label>
+                            </div>
+                        }
+                    </div>
+
+                    @if (_cargandoSaldos)
+                    {
+                        <div class="text-center py-5 text-muted">
+                            <span class="spinner-border spinner-border-sm me-2"></span>Cargando saldos...
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle saldos-table mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="text-muted small">Mes</th>
+                                        <th class="text-end text-muted small">Debe</th>
+                                        <th class="text-end text-muted small">Haber</th>
+                                        <th class="text-end text-muted small">Saldo Mes</th>
+                                        <th class="text-end text-muted small">Saldo Acum.</th>
+                                        <th class="text-center text-muted small">Apuntes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var s in _saldosMensuales)
+                                    {
+                                        <tr>
+                                            <td class="small fw-semibold">@NombreMes(s.Mes)</td>
+                                            <td class="text-end small font-monospace">@(s.Debe > 0 ? s.Debe.ToString("N2") : "-")</td>
+                                            <td class="text-end small font-monospace">@(s.Haber > 0 ? s.Haber.ToString("N2") : "-")</td>
+                                            <td class="text-end small font-monospace @(s.SaldoMes < 0 ? "text-danger" : "")">@s.SaldoMes.ToString("N2")</td>
+                                            <td class="text-end small font-monospace @(s.SaldoAcumulado < 0 ? "text-danger" : "")">@s.SaldoAcumulado.ToString("N2")</td>
+                                            <td class="text-center small text-muted">@s.NumApuntes</td>
+                                        </tr>
+                                    }
+                                    @if (_saldosMensuales.Count > 0)
+                                    {
+                                        <tr class="table-light fw-semibold">
+                                            <td class="small">TOTAL</td>
+                                            <td class="text-end small font-monospace">@_saldosMensuales.Sum(s => s.Debe).ToString("N2")</td>
+                                            <td class="text-end small font-monospace">@_saldosMensuales.Sum(s => s.Haber).ToString("N2")</td>
+                                            <td class="text-end small font-monospace @(_saldosMensuales.Sum(s => s.SaldoMes) < 0 ? "text-danger" : "")">
+                                                @_saldosMensuales.Sum(s => s.SaldoMes).ToString("N2")
+                                            </td>
+                                            <td></td>
+                                            <td class="text-center small">@_saldosMensuales.Sum(s => s.NumApuntes)</td>
+                                        </tr>
+                                    }
+                                    else
+                                    {
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted py-4 small">
+                                                <i class="bi bi-bar-chart d-block fs-2 mb-1"></i>
+                                                Sin movimientos en @_anioSaldos
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                }
+
+            </Tabs>
+        }
+    </FormEdicion>
+
+    <!-- ── Bottom toolbar ──────────────────────────────────────── -->
+    <DetailToolbar>
+        @if (!_cargandoDetalle && _cuentaDetalle is not null)
+        {
+            <button class="btn btn-outline-danger me-auto"
+                    @onclick="AbrirModalEliminar">
+                <i class="bi bi-trash3 me-1"></i>Eliminar cuenta
+            </button>
+            @if (_errorGuardar is not null)
+            {
+                <span class="text-danger small me-auto d-flex align-items-center gap-1">
+                    <i class="bi bi-x-circle-fill"></i>@_errorGuardar
+                </span>
+            }
+            <button class="btn btn-primary" @onclick="GuardarDatosAsync"
+                    disabled="@_guardandoDatos">
+                @if (_guardandoDatos)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                }
+                Guardar cambios
+            </button>
+        }
+    </DetailToolbar>
+
+    <ModalesExtra>
+        <!-- Modal: filtro de cuentas -->
+        <Modal Title="Filtrar cuentas" @bind-IsVisible="_filtro.ModalVisible">
+            <ChildContent>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Descripción</label>
+                    <input type="text" class="form-control form-control-sm" @bind="_filtro.Editando.Descripcion"
+                           autocomplete="off" maxlength="60" />
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-5">
+                        <label class="form-label fw-semibold small">Código</label>
+                        <input type="text" class="form-control form-control-sm" @bind="_filtro.Editando.Codigo"
+                               autocomplete="off" maxlength="9" />
+                    </div>
+                    <div class="col-7">
+                        <label class="form-label fw-semibold small @(_filtro.Editando.ConNif == false ? "text-muted" : "")">NIF</label>
+                        <input type="text" class="form-control form-control-sm" @bind="_filtro.Editando.Nif"
+                               autocomplete="off" maxlength="15"
+                               disabled="@(_filtro.Editando.ConNif == false)" />
+                    </div>
+                </div>
+                <div class="row g-3 mb-1">
+                    <div class="col-6">
+                        <label class="form-label fw-semibold small d-block mb-2">Con NIF</label>
+                        <TriEstadoControl @bind-Value="_filtro.Editando.ConNif" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-semibold small d-block mb-2">Con Desc. SII</label>
+                        <TriEstadoControl @bind-Value="_filtro.Editando.ConDescripcionSii" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-semibold small d-block mb-2">Con Apuntes</label>
+                        <TriEstadoControl @bind-Value="_filtro.Editando.SoloConApuntes" />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-semibold small d-block mb-2">Con Saldo</label>
+                        <TriEstadoControl @bind-Value="_filtro.Editando.ConSaldo" />
+                    </div>
+                </div>
+            </ChildContent>
+            <Footer>
+                <button class="btn btn-outline-secondary btn-sm me-auto" @onclick="LimpiarFiltroAsync">
+                    <i class="bi bi-x-circle me-1"></i>Limpiar
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" @onclick="_filtro.Cancelar">Cancelar</button>
+                <button class="btn btn-primary btn-sm" @onclick="AplicarFiltroAsync">Aplicar</button>
+            </Footer>
+        </Modal>
+    </ModalesExtra>
+
+</ErpPage>

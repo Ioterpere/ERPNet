@@ -4,6 +4,7 @@ using ERPNet.Infrastructure.Database.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ERPNet.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ERPNetDbContext))]
-    partial class ERPNetDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260401195852_AgregarContabilidad")]
+    partial class AgregarContabilidad
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -524,16 +527,10 @@ namespace ERPNet.Infrastructure.Database.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("ClienteAsociadoId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Codigo")
                         .IsRequired()
                         .HasMaxLength(9)
                         .HasColumnType("nvarchar(9)");
-
-                    b.Property<int?>("ConceptoAnaliticaId")
-                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -541,13 +538,7 @@ namespace ERPNet.Infrastructure.Database.Migrations
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
 
-                    b.Property<int?>("CuentaAmortizacionId")
-                        .HasColumnType("int");
-
                     b.Property<int?>("CuentaPadreId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("CuentaPagoDelegadoId")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("DeletedAt")
@@ -566,9 +557,6 @@ namespace ERPNet.Infrastructure.Database.Migrations
                         .HasColumnType("nvarchar(60)");
 
                     b.Property<int>("EmpresaId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("EmpresaVinculadaId")
                         .HasColumnType("int");
 
                     b.Property<bool>("EsNoOficial")
@@ -592,15 +580,9 @@ namespace ERPNet.Infrastructure.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CuentaAmortizacionId");
-
                     b.HasIndex("CuentaPadreId");
 
-                    b.HasIndex("CuentaPagoDelegadoId");
-
                     b.HasIndex("EmpresaId");
-
-                    b.HasIndex("EmpresaVinculadaId");
 
                     b.HasIndex("Codigo", "EmpresaId")
                         .IsUnique();
@@ -2035,20 +2017,10 @@ namespace ERPNet.Infrastructure.Database.Migrations
 
             modelBuilder.Entity("ERPNet.Domain.Entities.Cuenta", b =>
                 {
-                    b.HasOne("ERPNet.Domain.Entities.Cuenta", "CuentaAmortizacion")
-                        .WithMany()
-                        .HasForeignKey("CuentaAmortizacionId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.HasOne("ERPNet.Domain.Entities.Cuenta", "CuentaPadre")
                         .WithMany("CuentasHijas")
                         .HasForeignKey("CuentaPadreId")
                         .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("ERPNet.Domain.Entities.Cuenta", "CuentaPagoDelegado")
-                        .WithMany()
-                        .HasForeignKey("CuentaPagoDelegadoId")
-                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("ERPNet.Domain.Entities.Empresa", "Empresa")
                         .WithMany()
@@ -2056,20 +2028,9 @@ namespace ERPNet.Infrastructure.Database.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ERPNet.Domain.Entities.Empresa", "EmpresaVinculada")
-                        .WithMany()
-                        .HasForeignKey("EmpresaVinculadaId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.Navigation("CuentaAmortizacion");
-
                     b.Navigation("CuentaPadre");
 
-                    b.Navigation("CuentaPagoDelegado");
-
                     b.Navigation("Empresa");
-
-                    b.Navigation("EmpresaVinculada");
                 });
 
             modelBuilder.Entity("ERPNet.Domain.Entities.Empleado", b =>

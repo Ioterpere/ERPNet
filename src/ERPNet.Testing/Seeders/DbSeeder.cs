@@ -80,8 +80,9 @@ public class DbSeeder(ITestOutputHelper output)
         var menuMantenimiento = new Menu { Nombre = "Mantenimiento", Orden = 3, Icon = "bi-tools", Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
         var menuProduccion = new Menu { Nombre = "Produccion y Calidad", Orden = 4, Icon = "bi-graph-up-arrow", Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
         var menuComercial = new Menu { Nombre = "Gestion Comercial", Orden = 5, Icon = "bi-briefcase-fill", Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+        var menuContabilidad = new Menu { Nombre = "Contabilidad", Orden = 6, Icon = "bi-journal-text", Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
 
-        context.Menus.AddRange(menuAdmin, menuRRHH, menuMantenimiento, menuProduccion, menuComercial);
+        context.Menus.AddRange(menuAdmin, menuRRHH, menuMantenimiento, menuProduccion, menuComercial, menuContabilidad);
         await context.SaveChangesAsync();
 
         // ── Menus hijos ────────────────────────────────────────────────────
@@ -113,12 +114,16 @@ public class DbSeeder(ITestOutputHelper output)
         var menuClientes = new Menu { Nombre = "Clientes", Path = "/clientes", Icon = "bi-person-circle", Orden = 1, MenuPadreId = menuComercial.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
         var menuFacturas = new Menu { Nombre = "Facturas", Path = "/facturas", Icon = "bi-receipt", Orden = 2, MenuPadreId = menuComercial.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
 
+        // 6. Contabilidad
+        var menuPlanCuentas = new Menu { Nombre = "Plan de Cuentas", Path = "/plan-cuentas", Icon = "bi-journal-bookmark", Orden = 1, MenuPadreId = menuContabilidad.Id, Plataforma = Plataforma.WebBlazor, CreatedAt = DateTime.UtcNow };
+
         context.Menus.AddRange(
             menuUsuarios, menuRoles, menuMenus, menuEmpresas,
             menuEmpleados, menuJornadas, menuIncidencias, menuValidar,
             menuMaquinaria, menuOrdenesMant, menuTareasMant, menuReportarAveria,
             menuArticulos, menuOrdenesFab, menuControlCalidad,
-            menuClientes, menuFacturas);
+            menuClientes, menuFacturas,
+            menuPlanCuentas);
         await context.SaveChangesAsync();
 
         // ── Roles ──────────────────────────────────────────────────────────
@@ -161,6 +166,7 @@ public class DbSeeder(ITestOutputHelper output)
             menuMantenimiento, menuMaquinaria, menuOrdenesMant, menuTareasMant, menuReportarAveria,
             menuProduccion, menuArticulos, menuOrdenesFab, menuControlCalidad,
             menuComercial, menuClientes, menuFacturas,
+            menuContabilidad, menuPlanCuentas,
         };
         menusRoles.AddRange(todosMenus.Select(m => new MenuRol { MenuId = m.Id, RolId = rolAdmin.Id }));
 
@@ -215,6 +221,10 @@ public class DbSeeder(ITestOutputHelper output)
         // 5.2 Facturas: Contabilidad
         menusRoles.Add(new MenuRol { MenuId = menuFacturas.Id, RolId = rolContabilidad.Id });
 
+        // 6. Contabilidad padre + Plan de Cuentas: rol Contabilidad
+        menusRoles.Add(new MenuRol { MenuId = menuContabilidad.Id, RolId = rolContabilidad.Id });
+        menusRoles.Add(new MenuRol { MenuId = menuPlanCuentas.Id, RolId = rolContabilidad.Id });
+
         context.MenusRoles.AddRange(menusRoles);
         await context.SaveChangesAsync();
 
@@ -268,9 +278,10 @@ public class DbSeeder(ITestOutputHelper output)
         // 17. Comercial: Clientes C+E+D, Global
         permisos.Add(Permiso(rolComercial.Id, RecursoCodigo.Clientes, true, true, true, Alcance.Global));
 
-        // 18. Contabilidad: Facturas C+E+D Global, Clientes read Global
+        // 18. Contabilidad: Facturas C+E+D Global, Clientes read Global, Contabilidad C+E+D Global
         permisos.Add(Permiso(rolContabilidad.Id, RecursoCodigo.Facturas, true, true, true, Alcance.Global));
         permisos.Add(Permiso(rolContabilidad.Id, RecursoCodigo.Clientes, false, false, false, Alcance.Global));
+        permisos.Add(Permiso(rolContabilidad.Id, RecursoCodigo.Contabilidad, true, true, true, Alcance.Global));
 
         // 19. GestorAlmacen: Articulos C+E+D, Global
         permisos.Add(Permiso(rolGestorAlmacen.Id, RecursoCodigo.Articulos, true, true, true, Alcance.Global));
@@ -503,6 +514,228 @@ public class DbSeeder(ITestOutputHelper output)
         context.UsuarioEmpresas.AddRange(usuarioEmpresasNuevos);
         await context.SaveChangesAsync();
         output.WriteLine($"  {usuariosNuevos.Count} usuarios creados (password: Test123!).");
+
+        // ── Contabilidad ───────────────────────────────────────────────────
+
+        // Tipos de diario
+        var tiposDiarioDatos = new[]
+        {
+            ("AP", "Apertura",       false),
+            ("VT", "Ventas",         false),
+            ("CP", "Compras",        false),
+            ("PG", "Pagos",          false),
+            ("CB", "Cobros",         false),
+            ("NK", "Nominas",        false),
+            ("FI", "Financiero",     false),
+            ("RG", "Regularizacion", true),
+            ("CI", "Cierre",         true),
+        };
+
+        var tiposDiario = tiposDiarioDatos.Select(t => new TipoDiario
+        {
+            Codigo      = t.Item1,
+            Descripcion = t.Item2,
+            EsNoOficial = t.Item3,
+            EmpresaId   = empresa1.Id,
+            CreatedAt   = DateTime.UtcNow,
+        }).ToArray();
+
+        context.TiposDiario.AddRange(tiposDiario);
+        await context.SaveChangesAsync();
+        output.WriteLine($"  {tiposDiario.Length} tipos de diario creados.");
+
+        // Centros de coste
+        var centrosDatos = new[]
+        {
+            ("ADM", "Administracion"),
+            ("COM", "Comercial"),
+            ("PRO", "Produccion"),
+            ("LOG", "Logistica"),
+        };
+
+        var centros = centrosDatos.Select(c => new CentroCoste
+        {
+            Codigo      = c.Item1,
+            Descripcion = c.Item2,
+            EmpresaId   = empresa1.Id,
+            CreatedAt   = DateTime.UtcNow,
+        }).ToArray();
+
+        context.CentrosCosto.AddRange(centros);
+        await context.SaveChangesAsync();
+        output.WriteLine($"  {centros.Length} centros de coste creados.");
+
+        // Plan de cuentas (jerarquía PGC simplificada)
+        // Cuentas de grupo (EsNoOficial=true): 1 dígito
+        // Cuentas de subgrupo (EsNoOficial=true): 2 dígitos
+        // Cuentas contables (EsNoOficial=false): 8 dígitos
+        var cuentasGrupo = new[]
+        {
+            ("1", "FINANCIACION BASICA"),
+            ("2", "ACTIVO NO CORRIENTE"),
+            ("3", "EXISTENCIAS"),
+            ("4", "ACREEDORES Y DEUDORES"),
+            ("6", "COMPRAS Y GASTOS"),
+            ("7", "VENTAS E INGRESOS"),
+        }.Select(c => new Cuenta
+        {
+            Codigo      = c.Item1,
+            Descripcion = c.Item2,
+            EsNoOficial = true,
+            EmpresaId   = empresa1.Id,
+            CreatedAt   = DateTime.UtcNow,
+        }).ToArray();
+
+        context.Cuentas.AddRange(cuentasGrupo);
+        await context.SaveChangesAsync();
+
+        var grp1 = cuentasGrupo[0]; // 1
+        var grp2 = cuentasGrupo[1]; // 2
+        var grp3 = cuentasGrupo[2]; // 3
+        var grp4 = cuentasGrupo[3]; // 4
+        var grp6 = cuentasGrupo[4]; // 6
+        var grp7 = cuentasGrupo[5]; // 7
+
+        // Subgrupos
+        var cuentasSubGrupo = new[]
+        {
+            ("10", "CAPITAL",                  grp1.Id),
+            ("11", "RESERVAS Y OTROS FONDOS",  grp1.Id),
+            ("17", "DEUDAS A LARGO PLAZO",     grp1.Id),
+            ("21", "INMOVILIZADO MATERIAL",    grp2.Id),
+            ("30", "COMERCIALES",              grp3.Id),
+            ("43", "CLIENTES",                 grp4.Id),
+            ("41", "PROVEEDORES VARIOS",       grp4.Id),
+            ("57", "TESORERIA",                grp4.Id),
+            ("62", "SERVICIOS EXTERIORES",     grp6.Id),
+            ("64", "GASTOS DE PERSONAL",       grp6.Id),
+            ("70", "VENTAS DE MERCANCIAS",     grp7.Id),
+            ("75", "OTROS INGRESOS",           grp7.Id),
+        }.Select(c => new Cuenta
+        {
+            Codigo        = c.Item1,
+            Descripcion   = c.Item2,
+            EsNoOficial   = true,
+            EmpresaId     = empresa1.Id,
+            CuentaPadreId = c.Item3,
+            CreatedAt     = DateTime.UtcNow,
+        }).ToArray();
+
+        context.Cuentas.AddRange(cuentasSubGrupo);
+        await context.SaveChangesAsync();
+
+        var sub10 = cuentasSubGrupo[0]; // 10
+        var sub43 = cuentasSubGrupo[5]; // 43
+        var sub41 = cuentasSubGrupo[6]; // 41
+        var sub57 = cuentasSubGrupo[7]; // 57
+        var sub62 = cuentasSubGrupo[8]; // 62
+        var sub64 = cuentasSubGrupo[9]; // 64
+        var sub70 = cuentasSubGrupo[10]; // 70
+        var sub75 = cuentasSubGrupo[11]; // 75
+
+        // Cuentas contables (EsNoOficial=false, 8 dígitos)
+        var cuentasContablesDatos = new[]
+        {
+            ("10000000", "Capital social",                           sub10.Id),
+            ("43000001", "Clientes nacionales",                      sub43.Id),
+            ("43000002", "Clientes exportacion",                     sub43.Id),
+            ("43000003", "Clientes varios",                          sub43.Id),
+            ("41000001", "Proveedor suministros",                    sub41.Id),
+            ("41000002", "Proveedor servicios tecnicos",             sub41.Id),
+            ("41000003", "Proveedor energia electrica",              sub41.Id),
+            ("57000000", "Caja principal",                           sub57.Id),
+            ("57200001", "Cuenta corriente Banco Santander",         sub57.Id),
+            ("57200002", "Cuenta corriente BBVA",                    sub57.Id),
+            ("62100000", "Arrendamientos y canones",                 sub62.Id),
+            ("62200000", "Reparaciones y conservacion",              sub62.Id),
+            ("62300000", "Servicios de profesionales independientes",sub62.Id),
+            ("62500000", "Primas de seguros",                        sub62.Id),
+            ("62700000", "Publicidad y propaganda",                  sub62.Id),
+            ("64000000", "Sueldos y salarios",                       sub64.Id),
+            ("64200000", "Seguridad Social empresa",                 sub64.Id),
+            ("70000000", "Ventas de mercancias en Spain",            sub70.Id),
+            ("70100000", "Ventas de mercancias export",              sub70.Id),
+            ("75100000", "Ingresos por arrendamientos",              sub75.Id),
+        };
+
+        var cuentasContables = cuentasContablesDatos.Select(c => new Cuenta
+        {
+            Codigo        = c.Item1,
+            Descripcion   = c.Item2,
+            EsNoOficial   = false,
+            EmpresaId     = empresa1.Id,
+            CuentaPadreId = c.Item3,
+            CreatedAt     = DateTime.UtcNow,
+        }).ToArray();
+
+        context.Cuentas.AddRange(cuentasContables);
+        await context.SaveChangesAsync();
+        output.WriteLine($"  {cuentasGrupo.Length + cuentasSubGrupo.Length + cuentasContables.Length} cuentas contables creadas.");
+
+        // Apuntes contables: ~200 asientos equilibrados (debe == haber por asiento)
+        var fakerApunte = new Faker("es") { Random = new Randomizer(99) };
+        var apuntes = new List<ApunteContable>();
+
+        var cuentasParaApuntes = cuentasContables;
+        var tiposDiarioActivos = tiposDiario.Where(t => !t.EsNoOficial).ToArray();
+        var centrosIds = centros.Select(c => c.Id).ToArray();
+        var fechaBase = new DateOnly(DateTime.UtcNow.Year, 1, 1);
+
+        var numDiario = 1;
+        var numAsiento = 1;
+
+        for (var i = 0; i < 100; i++) // 100 asientos con 2 apuntes cada uno = 200 apuntes
+        {
+            var fecha = fechaBase.AddDays(fakerApunte.Random.Int(0, 364));
+            var importe = Math.Round((decimal)fakerApunte.Random.Double(100, 10000), 2);
+            var tipo = fakerApunte.PickRandom(tiposDiarioActivos);
+            var concepto = fakerApunte.PickRandom("Pago proveedor", "Cobro cliente", "Compra suministros",
+                "Ingreso ventas", "Pago nominas", "Gasto corriente", "Ingreso servicios", "Liquidacion impuestos");
+
+            var cuentaDebe = fakerApunte.PickRandom(cuentasParaApuntes);
+            var cuentaHaber = fakerApunte.PickRandom(cuentasParaApuntes.Where(c => c.Id != cuentaDebe.Id).ToArray());
+            var centroId = fakerApunte.Random.Bool(0.7f) ? (int?)fakerApunte.PickRandom(centrosIds) : null;
+
+            apuntes.Add(new ApunteContable
+            {
+                CuentaId     = cuentaDebe.Id,
+                TipoDiarioId = tipo.Id,
+                CentroCosteId = centroId,
+                EmpresaId    = empresa1.Id,
+                Asiento      = numAsiento,
+                NumLinea     = 1,
+                NumDiario    = numDiario,
+                Fecha        = fecha,
+                Concepto     = concepto,
+                Debe         = importe,
+                Haber        = 0,
+                EsDefinitivo = fakerApunte.Random.Bool(0.8f),
+                CreatedAt    = DateTime.UtcNow,
+            });
+            apuntes.Add(new ApunteContable
+            {
+                CuentaId     = cuentaHaber.Id,
+                TipoDiarioId = tipo.Id,
+                CentroCosteId = centroId,
+                EmpresaId    = empresa1.Id,
+                Asiento      = numAsiento,
+                NumLinea     = 2,
+                NumDiario    = numDiario,
+                Fecha        = fecha,
+                Concepto     = concepto,
+                Debe         = 0,
+                Haber        = importe,
+                EsDefinitivo = fakerApunte.Random.Bool(0.8f),
+                CreatedAt    = DateTime.UtcNow,
+            });
+
+            numAsiento++;
+            numDiario = ((numDiario - 1) % 12) + 1;
+        }
+
+        context.ApuntesContables.AddRange(apuntes);
+        await context.SaveChangesAsync();
+        output.WriteLine($"  {apuntes.Count} apuntes contables creados ({apuntes.Count / 2} asientos).");
 
         output.WriteLine("Seed completado.");
         output.WriteLine("  admin@erpnet.com / Admin123! (Administrador - acceso a ERP Demo SA y ERP Test SL)");

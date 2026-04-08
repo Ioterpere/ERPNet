@@ -43,6 +43,11 @@ public class ERPNetDbContext(DbContextOptions<ERPNetDbContext> options) : DbCont
     public DbSet<FormatoArticulo> FormatosArticulo => Set<FormatoArticulo>();
     public DbSet<ConfiguracionCaducidad> ConfiguracionesCaducidad => Set<ConfiguracionCaducidad>();
 
+    public DbSet<Cuenta> Cuentas => Set<Cuenta>();
+    public DbSet<ApunteContable> ApuntesContables => Set<ApunteContable>();
+    public DbSet<TipoDiario> TiposDiario => Set<TipoDiario>();
+    public DbSet<CentroCoste> CentrosCosto => Set<CentroCoste>();
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
         configurationBuilder.Properties<Email>()
